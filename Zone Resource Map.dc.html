@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif}
+html[data-theme="dark"]{--beam:#7fd39a;--bg:#0f1115;--panel:#181b22;--panel2:#1f232c;--line:#2a2f3a;--txt:#e8eaed;--dim:#9aa0ac;--faint:#6b7280;--accent:#4f9cff;--stage:#0c0e12;--chip:#232733;--crit:#f0609c;--shadow:rgba(0,0,0,.5);--todo:#6b7482;--wip:#f5b23c;--done:#43d18a;--heat0:#20304a;--heat1:#66aaff}
+:root,[data-theme="light"]{--bg:#f2f4f7;--panel:#ffffff;--panel2:#eef0f3;--line:#dde0e6;--txt:#1b1e26;--dim:#5b6271;--faint:#969cab;--accent:#2563eb;--stage:#e9edf2;--chip:#eef0f3;--crit:#c23a72;--shadow:rgba(0,0,0,.14);--beam:#2f6d3a;--todo:#94a3b8;--wip:#e59517;--done:#1faa5a;--heat0:#dce7f5;--heat1:#1d4ed8}
+html,body{height:100%}
+body{background:var(--bg);color:var(--txt);overflow:hidden;font-size:13px}
+a{color:var(--accent);text-decoration:none}a:hover{color:var(--txt)}
+#app{display:flex;flex-direction:column;height:100vh}
+header{display:flex;align-items:center;gap:10px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0;flex-wrap:wrap}
+header .mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#4f9cff,#3ecf8e);flex-shrink:0}
+header h1{font-size:14.5px;font-weight:600;white-space:nowrap}
+header .sub{font-size:11px;color:var(--dim)}
+.spacer{flex:1}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-shrink:0}
+.seg button{background:var(--panel2);border:0;color:var(--dim);padding:6px 11px;font-size:11px;font-weight:600;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+#body{display:flex;flex:1;min-height:0}
+#rail{width:78px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 9px;gap:8px;flex-shrink:0;overflow-y:auto}
+.rbtn{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:9px 4px 8px;cursor:pointer;text-align:center;transition:.12s;position:relative}
+.rbtn:hover{border-color:var(--accent)}
+.rbtn.on{background:var(--accent);border-color:var(--accent)}
+.rbtn.on .code,.rbtn.on .nm{color:#fff}
+.rbtn.on .rpb{background:rgba(255,255,255,.28)}
+.rbtn .code{font-size:15px;font-weight:700;color:var(--txt)}
+.rbtn .nm{font-size:8px;color:var(--dim);margin-top:1px;line-height:1.1}
+.rbtn .rpb{height:4px;border-radius:2px;background:var(--panel);margin-top:5px;overflow:hidden}
+.rbtn .rpb>i{display:block;height:100%;background:var(--done)}
+.rbtn .rpct{font-size:8.5px;font-weight:700;margin-top:2px;color:var(--dim)}
+.rbtn.on .rpct{color:#fff}
+.rbtn.tpl{border-style:dashed;opacity:.92}
+.rbtn.tpl .code{color:var(--dim)}
+.rbtn .tag{font-size:6.5px;font-weight:800;letter-spacing:.4px;color:var(--faint);margin-top:5px;border:1px solid var(--line);border-radius:4px;padding:1px 0}
+#center{flex:1;display:flex;flex-direction:column;min-width:0}
+#metrics{display:flex;gap:7px;padding:9px 14px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
+.mlbl{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-right:2px}
+.divv{width:1px;height:20px;background:var(--line);margin:0 4px}
+.mchip{background:var(--chip);border:1px solid var(--line);border-radius:20px;padding:6px 13px;cursor:pointer;font-size:11.5px;font-weight:600;color:var(--dim);display:flex;gap:7px;align-items:center}
+.mchip .v{color:var(--txt);font-weight:700}
+.mchip.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.mchip.on .v{color:var(--accent)}
+.tchip{border:1px solid var(--line);border-radius:20px;padding:6px 11px;cursor:pointer;font-size:11px;font-weight:600;color:var(--dim);display:flex;gap:6px;align-items:center;user-select:none}
+.tchip .dash{width:16px;height:0;border-top:2px dashed currentColor;display:inline-block}
+.tchip.on{color:var(--txt)}
+.tchip.off{opacity:.45}
+.modeseg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.modeseg button{background:var(--panel2);border:0;color:var(--dim);padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+.modeseg button .dt{width:9px;height:9px;border-radius:50%}
+.modeseg button.on{background:var(--txt);color:var(--panel)}
+#stagewrap{flex:1;position:relative;min-height:0;overflow:hidden;background:radial-gradient(circle at 50% 40%,var(--stage) 0%,var(--bg) 90%)}
+#svg{width:100%;height:100%;cursor:grab;display:block}
+#svg.drag{cursor:grabbing}
+.zone{stroke:var(--line);stroke-width:120;cursor:pointer;transition:fill-opacity .15s}
+.zone:hover{stroke:var(--accent);stroke-width:340}
+.zone.sel{stroke:#111;stroke-width:520}
+[data-theme="dark"] .zone.sel{stroke:#fff}
+.zone.critln{stroke:var(--crit);stroke-width:900;stroke-opacity:1;stroke-dasharray:none}
+.ovl{fill:none;pointer-events:none;vector-effect:non-scaling-stroke}
+.beamln{fill:none;stroke:var(--beam);stroke-width:1.1;stroke-opacity:.7;pointer-events:none;vector-effect:non-scaling-stroke}
+.zlabel{font-weight:700;fill:var(--txt);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--stage);stroke-width:520px}
+.zname{font-weight:700;fill:var(--txt);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--stage);stroke-width:600px}
+.zname.crit{fill:var(--crit)}
+.zarea{fill:var(--faint);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--stage);stroke-width:300px}
+.zpct{font-weight:800;text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--stage);stroke-width:420px}
+.critdot{fill:var(--crit);pointer-events:none}
+.seqbadge circle{stroke:var(--stage);stroke-width:240px}
+.seqbadge text{fill:#fff;font-weight:800;text-anchor:middle;pointer-events:none}
+#tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:11.5px;box-shadow:0 8px 24px var(--shadow);opacity:0;transition:opacity .08s;max-width:270px;z-index:9}
+#tip h4{font-size:12.5px;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+#tip .grp{color:var(--faint);font-weight:400;font-size:10.5px;margin-bottom:4px}
+#tip .cat{display:inline-block;padding:1px 7px;border-radius:10px;font-size:9.5px;font-weight:700;color:#fff}
+#tip .row{display:flex;justify-content:space-between;gap:16px;padding:1.5px 0;color:var(--dim)}
+#tip .row b{color:var(--txt)}
+#tip .badge{font-size:9px;padding:1px 6px;border-radius:10px;background:var(--crit);color:#fff;font-weight:700}
+#tip .tpb{height:6px;border-radius:3px;background:var(--panel2);overflow:hidden;margin:5px 0 3px}
+#tip .tpb>i{display:block;height:100%}
+#legend{position:absolute;left:14px;bottom:12px;background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(3px);border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:10.5px;color:var(--dim);box-shadow:0 4px 14px var(--shadow);max-width:216px;max-height:calc(100% - 24px);overflow-y:auto;z-index:6}
+#legend .lr{display:flex;align-items:center;gap:7px;padding:2px 0}
+#legend .sw{width:13px;height:13px;border-radius:3px;flex-shrink:0}
+#legend .dash{width:18px;border-top:2px dashed;display:inline-block}
+#legend .grad{height:10px;border-radius:3px;width:100%;margin:3px 0}
+#legend .gl{display:flex;justify-content:space-between;font-size:9px;color:var(--faint)}
+#zoomhint{position:absolute;right:14px;bottom:12px;font-size:10px;color:var(--faint);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+.areabound{fill:none;stroke-linejoin:round;pointer-events:none;stroke-opacity:1}
+#emptyfloor{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;pointer-events:none;text-align:center;padding:34px;z-index:5}
+#emptyfloor .frame{width:min(66%,500px);aspect-ratio:1.34;border:2px dashed var(--line);border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:12.5px;font-weight:700;background:color-mix(in srgb,var(--panel) 40%,transparent)}
+#emptyfloor .ttl{font-size:17px;font-weight:800}
+#emptyfloor .desc{font-size:12px;color:var(--dim);max-width:440px;line-height:1.65}
+#areastrip{display:flex;align-items:stretch;gap:9px;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0}
+.astrip-card{flex:1;min-width:0;border:1px solid var(--line);border-top:3px solid var(--c);border-radius:9px;padding:8px 11px 9px;background:var(--panel2);cursor:pointer;transition:box-shadow .12s,border-color .12s,opacity .12s;display:flex;flex-direction:column;gap:5px}
+.astrip-card:hover{border-color:var(--c)}
+.astrip-card.on{box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 55%,transparent)}
+.astrip-card.dim{opacity:.4}
+.astrip-card .asc-top{display:flex;align-items:center;gap:7px}
+.astrip-card .asc-dot{width:11px;height:11px;border-radius:3px;background:var(--c);flex-shrink:0}
+.astrip-card .asc-nm{font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.astrip-card .asc-pct{font-size:19px;font-weight:800;line-height:1}
+.astrip-card .asc-mid{display:flex;align-items:baseline;gap:8px}
+.astrip-card .asc-zn{font-size:10px;color:var(--dim);font-weight:700;white-space:nowrap}
+.astrip-card .asc-area{font-size:13px;font-weight:800}
+.astrip-card .asc-area small{font-size:9px;color:var(--dim);font-weight:600}
+.astrip-card .asc-qty{display:flex;gap:4px;flex-wrap:wrap}
+.astrip-card .asc-qc{font-size:8.5px;font-weight:700;color:var(--dim);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-family:'Consolas',monospace}
+.astrip-card .asc-bar{height:8px;border-radius:5px;background:var(--panel);overflow:hidden;display:flex}
+.astrip-card .asc-bar>i{height:100%}
+.astrip-card .asc-foot{display:flex;justify-content:space-between;font-size:9.5px;color:var(--dim)}
+#schedpage{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:70}
+#schedpage.open{display:flex}
+#schedpage .shd{display:flex;align-items:center;gap:14px;padding:11px 20px;background:var(--panel);border-bottom:1px solid var(--line);flex-shrink:0}
+#schedpage .stt{font-size:15px;font-weight:800}
+#schedpage .ssub{font-size:11px;color:var(--dim);margin-top:2px}
+#schedareas{display:flex;gap:6px}
+.schip{border:1px solid var(--line);background:var(--panel2);color:var(--dim);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+.schip.on{color:var(--txt);border-color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent)}
+.schip .sdot{width:10px;height:10px;border-radius:3px}
+#schedlegend{display:flex;gap:18px;flex-wrap:wrap;padding:9px 20px;background:var(--panel2);border-bottom:1px solid var(--line);font-size:10.5px;color:var(--dim);flex-shrink:0}
+#schedlegend .sl-item{display:flex;align-items:center;gap:6px}
+#schedlegend .sl-sw{width:13px;height:13px;border-radius:3px}
+#schedlegend .sl-plan{width:24px;height:13px;border-radius:3px;border:1px solid var(--faint);background:color-mix(in srgb,var(--faint) 20%,var(--panel))}
+#schedlegend .sl-fill{width:16px;height:13px;border-radius:3px;background:var(--faint)}
+#schedlegend .sl-today{width:2px;height:15px;background:var(--crit)}
+#schedlegend .sl-lag{width:16px;height:13px;border-radius:3px;background:transparent;box-shadow:0 0 0 2px var(--crit)}
+#schedbody{flex:1;overflow:auto;padding:0 20px 34px}
+.gwrap{position:relative;min-width:840px}
+.gtimehead{position:sticky;top:0;height:30px;margin-left:150px;background:var(--bg);border-bottom:1px solid var(--line);z-index:6}
+.gtick{position:absolute;top:9px;font-size:10px;color:var(--faint);transform:translateX(-50%);white-space:nowrap}
+.glines{position:absolute;top:30px;bottom:0;left:150px;right:0;pointer-events:none;z-index:0}
+.gline{position:absolute;top:0;bottom:0;width:1px;background:var(--line);opacity:.5}
+.gtoday{position:absolute;top:0;bottom:0;width:2px;background:var(--crit);z-index:3}
+.gtoday span{position:absolute;top:3px;left:5px;font-size:9.5px;color:var(--crit);font-weight:800;white-space:nowrap}
+.gbody{position:relative;z-index:1;padding-top:2px}
+.ggroup{position:relative;display:flex;align-items:center;height:32px;margin-top:12px}
+.ggroup .gg-band{width:5px;height:20px;border-radius:3px;background:var(--c);margin-right:11px;flex-shrink:0}
+.ggroup .gg-nm{font-size:13px;font-weight:800}
+.ggroup .gg-meta{font-size:11px;color:var(--dim);font-weight:600;margin-left:11px}
+.ggroup .gg-pct{font-size:15px;font-weight:800;margin-left:11px}
+.glane{position:relative;display:flex;align-items:center;height:29px;border-radius:5px}
+.glane:hover{background:color-mix(in srgb,var(--panel) 55%,transparent)}
+.glane .gname{width:150px;flex-shrink:0;font-size:11px;font-weight:700;color:var(--dim);padding-right:12px;text-align:right;white-space:nowrap}
+.glane .gtrack{position:relative;flex:1;height:100%}
+.gbar{position:absolute;top:50%;transform:translateY(-50%);height:20px;border-radius:4px;background:color-mix(in srgb,var(--c) 20%,var(--panel));border:1px solid var(--c);overflow:hidden;cursor:pointer;display:flex;align-items:center}
+.gbar:hover{outline:2px solid var(--txt);z-index:5}
+.gbar.sel{outline:2px solid var(--txt);z-index:6}
+.gbar.lag{box-shadow:0 0 0 2px var(--crit)}
+.zs-grid{display:grid;align-items:stretch;font-size:10px;min-width:940px}
+.zs-corner{position:sticky;left:0;top:0;z-index:7;background:var(--panel);border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:7px 9px;font-weight:800;color:var(--dim);display:flex;align-items:center}
+.zs-mh{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:7px 2px;text-align:center;font-size:9.5px;color:var(--faint);font-weight:700;white-space:nowrap}
+.zs-mh.cur{color:var(--crit);box-shadow:inset 0 -2px 0 var(--crit)}
+.zs-group{grid-column:1/-1;display:flex;align-items:center;gap:9px;padding:11px 9px 6px;font-size:12.5px;font-weight:800;position:sticky;left:0;background:var(--bg)}
+.zs-group .zs-gb{width:5px;height:16px;border-radius:3px;background:var(--c)}
+.zs-group .zs-gm{font-size:10.5px;color:var(--dim);font-weight:600}
+.zs-name{position:sticky;left:0;z-index:4;background:var(--panel);border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:5px 9px;font-size:10.5px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:5px;white-space:nowrap;cursor:pointer;font-family:'Consolas',monospace}
+.zs-name:hover{color:var(--accent)}
+.zs-name.crit{color:var(--crit)}
+.zs-name .zs-pct{margin-left:auto;font-weight:800;font-size:10px}
+.zs-cell{border-bottom:1px solid var(--line);border-left:1px solid color-mix(in srgb,var(--line) 55%,transparent);min-height:27px;padding:3px 4px;display:flex;flex-direction:column;gap:2px;justify-content:center}
+.zs-cell.cur{background:color-mix(in srgb,var(--crit) 7%,transparent)}
+.zs-cell.has{cursor:pointer}
+.zs-cell.has:hover{background:color-mix(in srgb,var(--accent) 13%,transparent)}
+.zs-cell.sel{outline:2px solid var(--accent);outline-offset:-2px;position:relative;z-index:2}
+.zs-bar{position:relative;height:5px;border-radius:3px;overflow:hidden;display:block}
+.zs-bar .zs-track{position:absolute;inset:0;border-radius:3px}
+.zs-bar .zs-fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;z-index:1}
+.zsd{position:fixed;top:0;right:0;bottom:0;width:344px;background:var(--panel);border-left:1px solid var(--line);box-shadow:-8px 0 30px var(--shadow);z-index:80;padding:16px 16px 30px;overflow-y:auto}
+.zsd-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:14px}
+.zsd-note{font-size:10.5px;color:var(--dim);margin-bottom:12px;line-height:1.4}
+.zsd-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.zsd-sw{width:8px;height:8px;border-radius:2px;flex:0 0 auto}
+.zsd-w{flex:1;font-size:10.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zsd-plan{font-size:9px;color:var(--faint);white-space:nowrap}
+.zsd-in{width:54px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:3px 5px;font-size:10.5px;color:var(--txt);text-align:right;font-family:inherit}
+.zsd-in:focus{outline:none;border-color:var(--accent)}
+.zsd-pct{font-size:10.5px;font-weight:800;width:36px;text-align:right}
+#schedpage{background:#e8edf3}
+#schedpage .shd{background:#e8edf3;border-bottom:1px solid #d3dbe6}
+#schedpage .stt{color:#2e3a59}
+#schedpage .ssub{color:#7d8ea0}
+#schedpage #schQ{background:#f0f4f9;border:1px solid #cdd8e6;color:#2e3a59}
+#schedpage .shd .hbtn{background:#eef2f7;color:#2e3a59;box-shadow:0 0 0 1px #cdd8e6}
+#schedbody{background:#e8edf3}
+#schedlegend{background:#e8edf3;border-bottom:1px solid #d3dbe6;color:#7d8ea0}
+#schedMonths{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:9px 20px;background:#e8edf3;border-bottom:1px solid #d3dbe6}
+.gbar .gfill{position:absolute;left:0;top:0;bottom:0;background:var(--c);opacity:.85}
+.gbar .glab{position:relative;z-index:1;font-size:9.5px;font-weight:700;color:var(--txt);padding:0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 3px var(--panel),0 0 3px var(--panel)}
+#side{width:344px;background:var(--panel);border-left:1px solid var(--line);flex-shrink:0;display:flex;flex-direction:column;min-height:0}
+#side .hd{padding:12px 14px;border-bottom:1px solid var(--line);font-weight:700;font-size:12.5px;display:flex;justify-content:space-between;align-items:center}
+#side .hd .pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--panel2);color:var(--dim)}
+#kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 9px}
+.kpi .n{font-size:16px;font-weight:700}
+.kpi .l{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+#progroll{padding:10px 14px;border-bottom:1px solid var(--line)}
+#progroll .ph{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+#progroll .ph .t{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--accent)}
+#progroll .ph .big{font-size:18px;font-weight:800}
+.statusbar{height:12px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:6px}
+.statusbar>i{height:100%}
+.statuskeys{display:flex;gap:12px;font-size:10px;color:var(--dim)}
+.statuskeys span{display:flex;align-items:center;gap:5px}
+.statuskeys .d{width:9px;height:9px;border-radius:50%}
+#areabreak{padding:10px 14px 12px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+#areabreak .abh{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--faint);display:flex;justify-content:space-between}
+.acard{border:1px solid var(--line);border-left:3px solid var(--c);border-radius:9px;padding:8px 10px;background:var(--panel2)}
+.acard .at{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.acard .adot{width:11px;height:11px;border-radius:3px;background:var(--c);flex-shrink:0}
+.acard .anm{font-size:11.5px;font-weight:700}
+.acard .azn{margin-left:auto;font-size:9.5px;color:var(--dim);font-weight:700}
+.acard .awl{display:flex;gap:6px;align-items:baseline;margin-bottom:6px}
+.acard .awl .big{font-size:17px;font-weight:800;line-height:1}
+.acard .awl .u{font-size:9.5px;color:var(--dim)}
+.acard .qty{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:7px}
+.acard .qc{font-size:8.5px;font-weight:700;color:var(--dim);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-family:'Consolas',monospace}
+.acard .apb{height:7px;border-radius:4px;background:var(--panel);overflow:hidden;display:flex}
+.acard .apb>i{height:100%}
+.acard .apf{display:flex;justify-content:space-between;font-size:9.5px;margin-top:4px;color:var(--dim)}
+.acard .apf b{font-weight:800}
+.acard{cursor:pointer;transition:opacity .12s,border-color .12s}
+.acard:hover{border-color:var(--c)}
+.acard.on{box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 55%,transparent)}
+#sidebody{flex:1;overflow-y:auto;padding:10px 14px}
+#sidebody .sub{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.5px;margin:2px 0 8px;display:flex;justify-content:space-between}
+.cmp{margin-bottom:12px}
+.cmp .crow{display:flex;align-items:center;gap:8px;margin-bottom:4px;cursor:pointer}
+.cmp .clv{width:34px;font-size:10.5px;font-weight:700;color:var(--dim);flex-shrink:0}
+.cmp .ctrack{flex:1;height:15px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.cmp .ctrack>i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.cmp .cval{width:44px;text-align:right;font-size:11px;font-weight:700;flex-shrink:0}
+.cmp .crow.on .clv,.cmp .crow.on .cval{color:var(--accent)}
+.zrow{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;margin-bottom:3px;border:1px solid transparent}
+.zrow:hover{background:var(--panel2)}
+.zrow.sel{background:color-mix(in srgb,var(--accent) 15%,transparent);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.zrow .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.zrow .zmid{flex:1;min-width:0}
+.zrow .nm{font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
+.zrow .cnts{display:flex;gap:4px;margin-top:3px}
+.zrow .ct{font-size:8.5px;font-weight:700;color:var(--dim);background:var(--panel2);border-radius:4px;padding:1px 5px;font-family:'Consolas',monospace}
+.zrow .rt{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.zrow .val{font-weight:800;font-size:13px}
+.zrow .mpb{width:52px;height:4px;border-radius:2px;background:var(--panel2);overflow:hidden}
+.zrow .mpb>i{display:block;height:100%}
+.stbadge{font-size:8px;font-weight:800;padding:1px 5px;border-radius:9px;color:#fff;flex-shrink:0}
+.detail h3{font-size:14px;display:flex;align-items:center;gap:7px;margin-bottom:2px}
+.detail .g{color:var(--faint);font-size:10.5px;margin-bottom:9px}
+.progblock{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 11px;margin-bottom:11px}
+.progblock .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.progblock .top .pc{font-size:22px;font-weight:800}
+.progblock .pbar{height:8px;border-radius:5px;background:var(--panel);overflow:hidden;margin-bottom:8px}
+.progblock .pbar>i{display:block;height:100%}
+.progblock .prows{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;font-size:10.5px}
+.progblock .prows .pr{display:flex;justify-content:space-between;color:var(--dim)}
+.progblock .prows .pr b{color:var(--txt)}
+.statgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:11px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 9px}
+.stat .n{font-size:15px;font-weight:700}.stat .l{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.3px}
+.sec{margin-bottom:10px}
+.sec .t{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--accent);margin-bottom:5px;display:flex;justify-content:space-between}
+.sec .t span{color:var(--faint);font-weight:600}
+.idrow{display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 6px;border-radius:5px;color:var(--dim)}
+.idrow:nth-child(odd){background:var(--panel2)}
+.idrow .id{font-weight:600;color:var(--txt);font-family:'Consolas',monospace;font-size:10.5px}
+.idrow.crit .id{color:var(--crit)}
+.idrow .meta{color:var(--faint);font-size:10px;text-align:right;white-space:nowrap;flex:1}
+.elchip{flex-shrink:0;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;cursor:pointer;color:var(--c);border:1px solid var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);user-select:none;min-width:52px;text-align:center}
+.elchip:hover{background:var(--c);color:#fff}
+.eltool{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:11px}
+.eltool .lb{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--dim)}
+.eltool .eb{flex:1;height:9px;border-radius:5px;background:var(--panel);overflow:hidden;display:flex;min-width:90px}
+.eltool .eb>i{height:100%}
+.eltool .frac{font-size:11px;font-weight:800}
+.eltool button{border:1px solid var(--line);background:var(--panel);color:var(--txt);border-radius:7px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer}
+.eltool button:hover{border-color:var(--accent);color:var(--accent)}
+.sec .t .allbtn{color:var(--faint);font-weight:700;cursor:pointer;font-size:9.5px}
+.sec .t .allbtn:hover{color:var(--accent)}
+.span{color:var(--accent);font-weight:600}
+.back{color:var(--accent);cursor:pointer;font-size:11px;font-weight:600;margin-bottom:9px;display:inline-block}
+.foot{padding:8px 14px;font-size:9.5px;color:var(--faint);border-top:1px solid var(--line);line-height:1.5}
+.empty{color:var(--faint);font-size:10.5px;font-style:italic}
+.hbtn{border:1px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:8px;padding:7px 12px;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap}
+.hbtn:hover{border-color:var(--accent)}
+.hbtn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.hbtn .cnt{background:var(--crit);color:#fff;border-radius:10px;font-size:9.5px;padding:1px 6px;min-width:16px;text-align:center}
+.updform{background:var(--panel2);border:1px solid var(--accent);border-radius:10px;padding:11px;margin-bottom:11px}
+.updform .fh{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--accent);margin-bottom:9px;display:flex;align-items:center;gap:6px}
+.updform .fg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.updform label{font-size:9.5px;color:var(--dim);font-weight:700;display:block;margin-bottom:3px}
+.updform input,.updform select,.updform textarea{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:12px;color:var(--txt);font-family:inherit}
+.updform input:focus,.updform select:focus,.updform textarea:focus{outline:none;border-color:var(--accent)}
+.updform textarea{resize:vertical;min-height:34px}
+.updform .full{grid-column:1/3}
+.updform .save{width:100%;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px;font-size:12px;font-weight:800;cursor:pointer;margin-top:2px}
+.updform .save:hover{filter:brightness(1.08)}
+.updhist{margin-top:8px}
+.updhist .uh{font-size:9.5px;color:var(--faint);font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.updhist .ur{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;padding:3px 6px;border-radius:5px;color:var(--dim)}
+.updhist .ur:nth-child(even){background:var(--panel)}
+.updhist .ur b{color:var(--txt)}
+.mkbadge{font-size:8.5px;font-weight:800;padding:1px 6px;border-radius:9px;background:var(--accent);color:#fff}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:26px}
+#modal.open{display:flex}
+#modal .mbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(940px,96vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+#modal .mhd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+#modal .mt{font-size:14px;font-weight:700}
+#modal .mbody{overflow:auto;padding:6px 0}
+table.reg{width:100%;border-collapse:collapse;font-size:11px}
+table.reg th{position:sticky;top:0;background:var(--panel2);color:var(--dim);font-size:9.5px;text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.reg td{padding:7px 10px;border-bottom:1px solid var(--line);color:var(--txt);white-space:nowrap}
+table.reg tr:hover td{background:var(--panel2)}
+table.reg .num{text-align:right;font-variant-numeric:tabular-nums}
+table.reg .mrk td{border-left:2px solid var(--accent)}
+table.reg .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+</style>
+<script src="zone-data.global.js"></script>
+<script src="zp-data.global.js"></script>
+<script src="floor-templates.global.js"></script>
+</helmet>
+<div id="app" ref="{{ rootRef }}">
+  <header>
+    <div class="mark"></div>
+    <div><h1>RWS P1 · CJ — Zone Resource &amp; Progress Map (P1 Planning)</h1><div class="sub">Quantities &amp; site progress per zone</div></div>
+    <div class="spacer"></div>
+    <span id="autosave" style="font-size:10px;color:var(--faint);font-weight:600">Autosave on</span>
+    <button class="hbtn primary" id="openSched">📅 Construction Schedule</button>
+    <button class="hbtn primary" id="saveLock" title="Save the whole page — all progress embedded — as one HTML file to forward or archive">💾 Save</button>
+    <button class="hbtn" id="loadLock" title="Open a previously saved file to continue from its data">📂 Open</button>
+    <button class="hbtn" id="exportXls" title="Export the progress table to Excel">⬇ Excel</button>
+    <button class="hbtn" id="openTable" title="Full progress table of every zone (review / print)">▤ Table <span class="cnt" id="elemCnt">0</span></button>
+    <input id="lockFile" type="file" accept=".json,.html,.xls,.csv" style="display:none">
+    <div class="seg" id="themeseg"><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
+  </header>
+  <div id="body">
+    <div id="rail"></div>
+    <div id="center">
+      <div id="metrics"></div>
+      <div id="areastrip"></div>
+      <div id="stagewrap">
+        <svg id="svg"></svg>
+        <div id="tip"></div>
+        <div id="legend"></div>
+        <div id="zoomhint">scroll = zoom · drag = pan · dbl-click = reset</div>
+        <div id="emptyfloor"></div>
+      </div>
+    </div>
+    <div id="side">
+      <div class="hd" id="sideTitle">Level summary</div>
+      <div id="kpis"></div>
+      <div id="progroll"></div>
+      <div id="sidebody"></div>
+      <div class="foot" id="foot"></div>
+    </div>
+  </div>
+  <div id="modal"><div class="mbox"><div class="mhd"><div class="mt">Site Update Register</div><div style="display:flex;gap:8px"><button class="hbtn primary" id="mExport">↓ Export Excel</button><button class="hbtn" id="mClose">Close</button></div></div><div class="mbody" id="mbody"></div></div></div>
+  <div id="schedpage">
+    <div class="shd">
+      <div><div class="stt">Construction Schedule</div><div class="ssub">Grouped by area → level → zone. Each card shows a zone's trades as of the selected month, filled by % complete. Click a card to enter completed quantities.</div></div>
+      <div class="spacer"></div>
+      <input id="schQ" type="text" placeholder="Find a zone…" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:11.5px;color:var(--txt);font-family:inherit;width:130px;outline:none">
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--dim);cursor:pointer"><input type="checkbox" id="schCrit" style="accent-color:var(--crit);cursor:pointer">Critical only</label>
+      <div id="schedareas"></div>
+      <button class="hbtn" id="schedClose">Close ✕</button>
+    </div>
+    <div id="schedMonths"></div>
+    <div id="schedlegend"></div>
+    <div id="schedbody"></div>
+  </div>
+</div>
+
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#1f4a73"/><g transform="translate(30,28)"><rect x="0" y="0" width="18" height="18" rx="2" fill="#4a90e2"/><rect x="22" y="0" width="18" height="18" rx="2" fill="#35c08e"/><rect x="0" y="22" width="18" height="18" rx="2" fill="#f5a623"/><rect x="22" y="22" width="18" height="18" rx="2" fill="#ef5f7a"/></g></svg></template></x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){ return { rootRef: el => { this.root = el; } }; }
+
+  componentDidMount(){
+    const boot=(DATA,CAT,OVL,ZP,T)=>{ this.DATA=DATA; this.CAT=CAT; this.OVL=OVL; this.ZP=ZP;
+      T.order.forEach(lv=>{if(!this.DATA.levels[lv]){this.DATA.order.push(lv);this.DATA.levels[lv]=T.levels[lv];this.DATA.levelTotals[lv]={...T.totals};}});
+      try{this.zpSetup();}catch(e){console.error('zp setup',e);}
+      this.init(); };
+    const g=window.__RWS;
+    if(g&&g.DATA&&g.ZP&&g.FLOOR_TEMPLATES){ boot(g.DATA,g.CAT,g.OVL,g.ZP,g.FLOOR_TEMPLATES); return; }
+    Promise.all([import('./zone-data.js'),import('./floor-templates.js'),import('./zp-data.js')]).then(([m,t,zp]) => {
+      boot(m.DATA, m.CAT, m.OVL, zp.ZP, t.FLOOR_TEMPLATES);
+    }).catch(e => { console.error('data load failed', e); });
+  }
+
+  init(){
+    this.METRICS = [
+      {k:'columns',label:'Columns'},{k:'pilecap',label:'Pile Caps'},{k:'mainbeam',label:'Main Beams'},
+      {k:'steelbeam',label:'Steel Beams'},{k:'liftstairAll',label:'Lift / Stair'},{k:'area',label:'Area m²'}];
+    this.STATUS = {todo:{v:'--todo',label:'Not started'},wip:{v:'--wip',label:'In progress'},done:{v:'--done',label:'Complete'}};
+    // axis: months since Jan 2024
+    this.axisA = 5; this.axisB = 36; this.today = 30; // Jul 2026
+    this.bands = {B2:[6,13],B1:[10,18],B1M:[15,22],L1:[20,28],L2:[24,35]};
+    this.bias  = {B2:0.93,B1:0.80,B1M:0.63,L1:0.42,L2:0.20};
+    this.curLevel = this.DATA.order[0];
+    this.colorMode = 'progress';
+    this.curMetric = 'columns';
+    this.selKey = null;
+    this.filterCat = 'all';
+    this.BCOL = {EB:'#c2410c',NB:'#be0f56',MA:'#1747b8'};
+    this.BDASH = {EB:'0',NB:'2600 1100',MA:'220 900'};
+    this.BCAP = {EB:'butt',NB:'butt',MA:'round'};
+    this.ASHORT = {EB:'Existing',NB:'New',MA:'Marine'};
+    this.showOvl = {podium:true,transfer:false,podcis:false};
+    this.showBeams = false; this.showSeq = true; this.showCrit = true; this.showAreaBounds = true;
+    this.loadUpdates();
+    this.loadElem();
+    this.deriveProgress();
+    this.svg = this.root.querySelector('#svg');
+    this.tip = this.root.querySelector('#tip');
+    this.vb = {x:0,y:0,w:1,h:1}; this.base = {x:0,y:0,w:1,h:1};
+    this.bindGlobal();
+    this.buildRail(); this.buildMetrics(); this.buildTimeline();
+    this.root.querySelector('#foot').innerHTML = 'Zones coloured by construction area / derived progress / quantity heat. Geometry & quantities from RWS P1 CJ source; progress derived from activity counts + bottom-up schedule model (demo).';
+    this.render();
+  }
+
+  /* ---------- helpers ---------- */
+  hash(s){s=String(s);let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return ((h>>>0)%100000)/100000;}
+  clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  lsAll(c){return (c.liftcw||0)+(c.stair||0)+(c.liftstair||0);}
+  mval(z,k){if(k==='area')return z.area||0;if(k==='liftstairAll')return this.lsAll(z.counts);return z.counts[k]||0;}
+  fmt(n){return (n||0).toLocaleString('en-US');}
+  esc(s){return (s+'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+  proj(p,H){return [p[0],H-p[1]];}
+  centroid(r,H){let x=0,y=0;r.forEach(p=>{x+=p[0];y+=H-p[1];});return[x/r.length,y/r.length];}
+  ml(m){const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return names[((m%12)+12)%12]+' '+(2024+Math.floor(m/12));}
+  hex2rgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+  lerpHex(a,b,t){const A=this.hex2rgb(a),B=this.hex2rgb(b);return 'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')';}
+  progColor(p){p=p/100;return p<0.5?this.lerpHex('#e5484d','#f5b23c',p/0.5):this.lerpHex('#f5b23c','#22c55e',(p-0.5)/0.5);}
+  cssvar(v){return getComputedStyle(this.root).getPropertyValue(v).trim();}
+  zid(z){return z.mk||('_'+z.lid);}
+  zoneVisible(z){return this.filterCat==='all'||(z.cat||'NB')===this.filterCat;}
+  progFilter(lv){const seen={},uniq=[];this.DATA.levels[lv].zones.forEach(z=>{if(!this.zoneVisible(z))return;const k=this.zid(z);if(!seen[k]){seen[k]=1;uniq.push(z);}});
+    let done=0,wip=0,todo=0,ws=0,wa=0;uniq.forEach(z=>{const p=z._p||{pct:0,status:'todo'};ws+=p.pct*(z.area||1);wa+=(z.area||1);if(p.status==='done')done++;else if(p.status==='wip')wip++;else todo++;});
+    return {avg:Math.round(ws/Math.max(1,wa)),done,wip,todo,count:uniq.length};}
+
+  deriveProgress(){
+    this.DATA.order.forEach(lv=>{
+      const seen={}, uniq=[];
+      this.DATA.levels[lv].zones.forEach(z=>{const k=z.mk||('_'+z.lid);if(!seen[k]){seen[k]=1;uniq.push(z);}});
+      uniq.sort((a,b)=>(a.lx||0)-(b.lx||0) || (a.ly||0)-(b.ly||0));
+      const n=uniq.length, band=this.bands[lv]||[this.axisA,this.axisB], a=band[0], b=band[1], slot=(b-a)/Math.max(1,n);
+      uniq.forEach((z,i)=>{
+        const seq=i+1;
+        const start=a+slot*i;
+        const dur=Math.max(1.2,Math.min(b-start, slot*0.85 + (z.n_acts||0)/55));
+        const end=start+dur;
+        const sched=this.clamp((this.today-start)/dur,0,1);
+        const jitter=(this.hash((z.mk||z.lid)+lv)-0.5)*0.28;
+        let pct=Math.round(this.clamp(sched*0.68 + this.bias[lv]*0.32 + jitter,0,1)*100);
+        if(pct>=95)pct=100;
+        z._base={pct,seq,start,end,dur};
+      });
+      const byMk={}; uniq.forEach(z=>{if(z.mk)byMk[z.mk]=z._base;});
+      this.DATA.levels[lv].zones.forEach(z=>{if(!z._base&&z.mk&&byMk[z.mk])z._base=byMk[z.mk];});
+    });
+    this.applyUpdates();
+  }
+
+  statusFor(pct){return pct>=95?'done':(pct<=8?'todo':'wip');}
+
+  // Merge element-level status (priority) then per-zone manual updates over the derived baseline, then roll up.
+  applyUpdates(){
+    const emap={};
+    this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{
+      if(!z.mk)return;const k=lv+'|'+z.mk;if(emap[k])return;
+      const es=this.zoneElemStats(lv,z);if(es.total)emap[k]=es;
+    }));
+    this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{
+      if(!z._base)return;
+      const es=z.mk&&emap[lv+'|'+z.mk];
+      if(es&&es.total&&(es.done+es.wip)>0){
+        const pct=Math.round(es.done/es.total*100);
+        const status=es.done===es.total?'done':'wip';
+        z._p={...z._base,pct,status,manual:true,source:'elem',es,udate:null,note:''};
+      } else {
+        const u=this.latestUpdate(z.mk);
+        const pct=u&&u.pct!=null?u.pct:z._base.pct;
+        const status=u&&u.status?u.status:this.statusFor(pct);
+        z._p={...z._base,pct,status,manual:!!u,source:u?'zone':'derived',es:es||null,udate:u?u.date:null,note:u?u.note:''};
+      }
+    }));
+    this.computeRollup();
+  }
+
+  computeRollup(){
+    this.levelProg={}; let wSum=0,wArea=0;
+    this.DATA.order.forEach(lv=>{
+      const seen={},uniq=[];
+      this.DATA.levels[lv].zones.forEach(z=>{const k=z.mk||('_'+z.lid);if(!seen[k]){seen[k]=1;uniq.push(z);}});
+      let done=0,wip=0,todo=0,sum=0;
+      uniq.forEach(z=>{const p=z._p||{pct:0,status:'todo'};sum+=p.pct;wSum+=p.pct*(z.area||1);wArea+=(z.area||1);
+        if(p.status==='done')done++;else if(p.status==='wip')wip++;else todo++;});
+      this.levelProg[lv]={avg:Math.round(sum/Math.max(1,uniq.length)),done,wip,todo,count:uniq.length};
+    });
+    this.projPct=Math.round(wSum/Math.max(1,wArea));
+  }
+
+  /* ---------- site-update store (persistent, per zone) ---------- */
+  loadUpdates(){try{this.updates=JSON.parse(localStorage.getItem('rws_zone_updates')||'{}');}catch(e){this.updates={};}}
+  saveUpdatesStore(){try{localStorage.setItem('rws_zone_updates',JSON.stringify(this.updates));}catch(e){}}
+  latestUpdate(mk){const a=mk&&this.updates[mk];return a&&a.length?a[a.length-1]:null;}
+  updateCount(){return Object.values(this.updates).reduce((n,a)=>n+a.length,0);}
+  addUpdate(mk,e){if(!mk)return;(this.updates[mk]=this.updates[mk]||[]).push({...e,ts:Date.now()});this.saveUpdatesStore();this.applyUpdates();
+    this.buildRail();this.buildTimeline();this.render();
+    const z=this.DATA.levels[this.curLevel].zones.find(x=>x.mk===mk);if(z){this.selectZone(z);this.paintSel();this.paintTimelineSel();}
+    this.refreshUpdBadge();if(this.root.querySelector('#modal').classList.contains('open'))this.openTable();
+    if(this.ZP&&this.root.querySelector('#schedpage')&&this.root.querySelector('#schedpage').classList.contains('open'))this.buildSchedule();}
+  refreshUpdBadge(){const c=this.root.querySelector('#updCnt');if(c)c.textContent=this.updateCount();const e=this.root.querySelector('#elemCnt');if(e)e.textContent=this.doneCount();
+    const a=this.root.querySelector('#autosave');if(a){if(this.doneCount()+this.updateCount()>0){const t=new Date();a.textContent='✓ Autosaved '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');a.style.color='var(--done)';}else{a.textContent='Autosave on';a.style.color='var(--faint)';}}}
+
+  /* ---------- element-level status store ---------- */
+  loadElem(){
+    try{this.elem=JSON.parse(localStorage.getItem('rws_elem_status')||'{}');}catch(e){this.elem={};}
+    const emb=document.getElementById('locked-data');
+    if(emb){try{const d=JSON.parse(emb.textContent||'{}');if(d.elem)this.elem={...d.elem,...this.elem};if(d.updates)this.updates={...d.updates,...this.updates};if(d.zpOv){this._embZpOv=d.zpOv;if(this._zpOv){this._zpOv={...d.zpOv,...this._zpOv};if(this.zpApplyOv)this.zpApplyOv();}}}catch(e){}}
+  }
+  saveElem(){try{localStorage.setItem('rws_elem_status',JSON.stringify(this.elem));}catch(e){}}
+  elemStatus(k){return this.elem[k]||'todo';}
+  doneCount(){return Object.values(this.elem).filter(v=>v==='done').length;}
+  elemMarked(){return Object.keys(this.elem).length;}
+  ekey(lv,z,type,id){return lv+'||'+(z.mk||z.lid)+'||'+type+'||'+id;}
+  zoneElems(lv,z){
+    const out=[];
+    (z.cols||[]).forEach(x=>out.push({key:this.ekey(lv,z,'col',x.id),type:'col'}));
+    (z.piles||[]).forEach(x=>out.push({key:this.ekey(lv,z,'pile',x.id),type:'pile'}));
+    (z.beams||[]).forEach(x=>out.push({key:this.ekey(lv,z,'beam',x.id),type:'beam'}));
+    (z.lifts||[]).forEach(x=>out.push({key:this.ekey(lv,z,'lift',x.id),type:'lift'}));
+    (z.stairs||[]).forEach(x=>out.push({key:this.ekey(lv,z,'stair',x.id),type:'stair'}));
+    (z.cores||[]).forEach(x=>out.push({key:this.ekey(lv,z,'core',x),type:'core'}));
+    return out;
+  }
+  zoneElemStats(lv,z){const items=this.zoneElems(lv,z);let done=0,wip=0;items.forEach(it=>{const s=this.elemStatus(it.key);if(s==='done')done++;else if(s==='wip')wip++;});return{total:items.length,done,wip,todo:items.length-done-wip};}
+  cycleElem(key){const o=['todo','wip','done'];const nx=o[(o.indexOf(this.elemStatus(key))+1)%3];if(nx==='todo')delete this.elem[key];else this.elem[key]=nx;this.commitElem();}
+  setElem(key,st){if(st==='todo')delete this.elem[key];else this.elem[key]=st;this.commitElem();}
+  setZoneElems(lv,z,st){this.zoneElems(lv,z).forEach(it=>{if(st==='todo')delete this.elem[it.key];else this.elem[it.key]=st;});this.commitElem();}
+  commitElem(){this.saveElem();this.applyUpdates();this.buildRail();this.buildTimeline();this.render();
+    const z=this.selKey&&this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z){this.selectZone(z);this.paintSel();this.paintTimelineSel();}
+    this.refreshUpdBadge();if(this.root.querySelector('#modal').classList.contains('open'))this.openTable();}
+
+  levelMax(){let m=0;this.DATA.levels[this.curLevel].zones.forEach(z=>m=Math.max(m,this.mval(z,this.curMetric)));return m||1;}
+
+  catTypesFor(metric){return {columns:['col'],pilecap:['pile'],mainbeam:['beam'],liftstairAll:['lift','stair']}[metric]||null;}
+  catLabel(metric){return {columns:'Columns',pilecap:'Pile Caps',mainbeam:'Main Beams',liftstairAll:'Lift/Stair',steelbeam:'Steel Beams',area:'Area'}[metric]||metric;}
+  catStats(lv,z,types){let total=0,done=0,wip=0;const src={col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores};
+    types.forEach(t=>(src[t]||[]).forEach(x=>{const s=this.elemStatus(this.ekey(lv,z,t,typeof x==='string'?x:x.id));total++;if(s==='done')done++;else if(s==='wip')wip++;}));
+    return {total,done,wip};}
+  // progress % shown on the map: tied to the selected category when it maps to elements, else overall zone
+  zoneDisplayPct(z){const types=this.catTypesFor(this.curMetric);
+    if(types){const s=this.catStats(this.curLevel,z,types);if(s.total>0)return {pct:Math.round(s.done/s.total*100),cat:true,s};}
+    return {pct:z._p?z._p.pct:0,cat:false};}
+  progCategoryActive(){const t=this.catTypesFor(this.curMetric);if(!t)return false;return this.DATA.levels[this.curLevel].zones.some(z=>this.catStats(this.curLevel,z,t).total>0);}
+
+  zoneFill(z){
+    if(this.colorMode==='area') return (this.CAT[z.cat]||this.CAT.NB).c;
+    if(this.colorMode==='progress') return this.progColor(this.zoneDisplayPct(z).pct);
+    // quantity heat
+    const t=this.clamp(this.mval(z,this.curMetric)/this.levelMax(),0,1);
+    return this.lerpHex(this.cssvar('--heat0')||'#dce7f5', this.cssvar('--heat1')||'#1d4ed8', t);
+  }
+
+  /* ---------- SVG render ---------- */
+  render(){
+    const L=this.DATA.levels[this.curLevel],H=L.h,W=L.w;
+    this.base={x:-W*0.03,y:-H*0.03,w:W*1.06,h:H*1.06};this.vb={...this.base};
+    const ef=this.root.querySelector('#emptyfloor');
+    const lgEl=this.root.querySelector('#legend');
+    if(!L.zones.length){ef.style.display='flex';lgEl.style.display='none';ef.innerHTML=`<div class="frame">Floor-plan placeholder</div><div class="ttl">${this.curLevel} · Awaiting floor plan</div><div class="desc">Template ready. Send me this floor plan and I will drop in zone geometry, quantities and area boundaries; colouring, progress marks, area filters and export all work instantly.</div><div style="display:flex;gap:14px;pointer-events:none">${Object.keys(this.CAT).map(k=>`<span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--dim);font-weight:700"><span style="width:13px;height:13px;border-radius:3px;background:${this.CAT[k].c}"></span>${this.CAT[k].label}</span>`).join('')}</div>`;}
+    else {ef.style.display='none';lgEl.style.display='';}
+    let s='';
+    L.zones.forEach((z,i)=>{
+      const vis=this.zoneVisible(z);
+      const pts=z.ring.map(p=>{const q=this.proj(p,H);return q[0].toFixed(1)+','+q[1].toFixed(1);}).join(' ');
+      const crit=vis&&this.showCrit&&z.crit?' critln':'';
+      const op=vis?(this.colorMode==='area'?0.5:0.72):0.05;
+      s+=`<polygon class="zone${vis?'':' dim'}${crit}" data-i="${i}" points="${pts}" fill="${this.zoneFill(z)}" fill-opacity="${op}"/>`;
+    });
+    ['podcis','podium','transfer'].forEach(k=>{
+      if(!this.showOvl[k])return;const o=this.OVL[k];
+      (this.DATA.overlays[k]||[]).forEach(seg=>{
+        const p=seg.pts.map(pt=>{const q=this.proj(pt,H);return q[0].toFixed(1)+','+q[1].toFixed(1);}).join(' ');
+        const tag=seg.closed?'polygon':'polyline';
+        s+=`<${tag} class="ovl" points="${p}" stroke="${o.c}" stroke-width="${(o.w*0.58).toFixed(0)}" stroke-dasharray="5 4" stroke-opacity="0.85"/>`;
+      });
+    });
+    if(this.showBeams && this.DATA.beamlines && this.DATA.beamlines[this.curLevel]){
+      this.DATA.beamlines[this.curLevel].forEach(seg=>{
+        const p=seg.map(pt=>pt[0].toFixed(0)+','+(H-pt[1]).toFixed(0)).join(' ');
+        s+=`<polyline class="beamln" points="${p}"/>`;
+      });
+    }
+    if(this.showAreaBounds){
+      this._areaGrid=this._areaGrid||{};
+      if(!this._areaGrid[this.curLevel])this._areaGrid[this.curLevel]=this.buildAreaGrid(this.curLevel);
+      this._areaGrid[this.curLevel].segs.forEach(g=>{
+        if(this.filterCat!=='all' && g.a!==this.filterCat && g.b!==this.filterCat)return;
+        const solo=g.a&&g.b?null:(g.a||g.b);
+        const bc=solo?(this.BCOL[solo]||this.cssvar('--txt')):this.cssvar('--txt');
+        const dash=solo?(this.BDASH[solo]||'0'):'0';
+        const cap=solo?(this.BCAP[solo]||'butt'):'butt';
+        s+=`<line class="areabound" x1="${g.p[0][0].toFixed(0)}" y1="${g.p[0][1].toFixed(0)}" x2="${g.p[1][0].toFixed(0)}" y2="${g.p[1][1].toFixed(0)}" stroke="${bc}" stroke-width="900" stroke-dasharray="${dash}" stroke-linecap="${cap}"/>`;});
+    }
+    L.zones.forEach((z,i)=>{
+      if(!this.zoneVisible(z))return;
+      let cx,cy;if(z.lx!=null){cx=z.lx;cy=H-z.ly;}else{const c=this.centroid(z.ring,H);cx=c[0];cy=c[1];}
+      const isCrit=z.crit&&this.showCrit;
+      s+=`<text class="zname${isCrit?' crit':''}" style="font-size:3500px" x="${cx.toFixed(0)}" y="${(cy-500).toFixed(0)}">${this.esc(z.label)}</text>`;
+      if(this.colorMode==='progress' && z._p){
+        const d=this.zoneDisplayPct(z);const col=this.progColor(d.pct);
+        s+=`<text class="zpct" style="font-size:2600px;fill:${col}" x="${cx.toFixed(0)}" y="${(cy+2500).toFixed(0)}">${d.pct}%</text>`;
+      } else if(this.colorMode==='quantity'){
+        s+=`<text class="zarea" style="font-size:2200px" x="${cx.toFixed(0)}" y="${(cy+2500).toFixed(0)}">${this.fmt(this.mval(z,this.curMetric))}</text>`;
+      } else {
+        s+=`<text class="zarea" style="font-size:2000px" x="${cx.toFixed(0)}" y="${(cy+2500).toFixed(0)}">${this.fmt(z.area)} m²</text>`;
+      }
+      if(this.showSeq && z._p){
+        const bx=cx-3800, by=cy-2600;
+        const bc=z._p.status==='done'?this.cssvar('--done'):z._p.status==='wip'?this.cssvar('--wip'):this.cssvar('--todo');
+        s+=`<g class="seqbadge"><circle cx="${bx.toFixed(0)}" cy="${by.toFixed(0)}" r="1650" fill="${bc}"/><text x="${bx.toFixed(0)}" y="${(by+820).toFixed(0)}" style="font-size:2300px">${z._p.seq}</text></g>`;
+      }
+    });
+    this.svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);
+    this.svg.innerHTML=s;
+    this.svg.querySelectorAll('.zone').forEach(el=>{
+      el.addEventListener('mousemove',ev=>this.showTip(ev,+el.dataset.i));
+      el.addEventListener('mouseleave',()=>this.tip.style.opacity=0);
+      el.addEventListener('click',()=>{const z=L.zones[+el.dataset.i];if(!this.zoneVisible(z))return;this.selKey=this.zid(z);this.selectZone(z);this.paintSel();this.paintTimelineSel();});
+    });
+    this.paintSel();this.drawLegend();this.buildKPIs();this.buildProgRoll();this.buildAreaBreak();this.buildList();
+  }
+
+  paintSel(){const L=this.DATA.levels[this.curLevel],H=L.h;
+    const old=this.svg.querySelector('#selovl');if(old)old.remove();
+    this.svg.querySelectorAll('.zone').forEach(el=>el.classList.remove('sel'));
+    if(!this.selKey)return;
+    const col=this.cssvar('--txt');let ov='';
+    L.zones.forEach((z,i)=>{if(this.zid(z)!==this.selKey)return;
+      const el=this.svg.querySelector('.zone[data-i="'+i+'"]');if(el)el.classList.add('sel');
+      const pts=z.ring.map(p=>{const q=this.proj(p,H);return q[0].toFixed(1)+','+q[1].toFixed(1);}).join(' ');
+      ov+=`<polygon points="${pts}" fill="none" stroke="${col}" stroke-width="560" stroke-linejoin="round" pointer-events="none"/><polygon points="${pts}" fill="none" stroke="var(--accent)" stroke-width="200" stroke-linejoin="round" pointer-events="none"/>`;});
+    if(ov)this.svg.insertAdjacentHTML('beforeend',`<g id="selovl">${ov}</g>`);
+  }
+
+  showTip(ev,i){
+    const z=this.DATA.levels[this.curLevel].zones[i],c=z.counts,ct=this.CAT[z.cat]||this.CAT.NB,p=z._p||{pct:0,status:'todo',seq:'-'};
+    const st=this.STATUS[p.status];
+    const types=this.catTypesFor(this.curMetric);const cs=types?this.catStats(this.curLevel,z,types):null;
+    const catRow=(this.colorMode==='progress'&&cs&&cs.total)?`<div class="row" style="color:var(--accent)"><span>${this.catLabel(this.curMetric)}</span><b>${Math.round(cs.done/cs.total*100)}% · ${cs.done}/${cs.total}</b></div>`:'';
+    this.tip.innerHTML=`<h4>${this.esc(z.label)} ${z.crit?'<span class="badge">CRIT PATH</span>':''}</h4>
+     <div class="grp"><span class="cat" style="background:${ct.c}">${ct.label}</span> · <b style="color:var(--txt)">${this.fmt(z.area)} m²</b></div>
+     <div class="tpb"><i style="width:${p.pct}%;background:${this.progColor(p.pct)}"></i></div>
+     <div class="row"><span>Progress</span><b>${p.pct}% · ${st?st.label:''}</b></div>
+     ${catRow}
+     <div class="row"><span>Pour seq</span><b>#${p.seq}</b></div>
+     <div class="row"><span>Plan</span><b>${this.ml(Math.round(p.start))} → ${this.ml(Math.round(p.end))}</b></div>
+     <div class="row" style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"><span>Columns / Piles</span><b>${c.columns||0} / ${c.pilecap||0}</b></div>
+     <div class="row"><span>Beams (M/S)</span><b>${c.mainbeam||0} / ${c.steelbeam||0}</b></div>
+     <div class="row"><span>Lifts / Stairs</span><b>${z.lifts.length} / ${z.stairs.length}</b></div>
+     <div style="margin-top:5px;color:var(--faint);font-size:10px">click for full IDs, spans &amp; schedule</div>`;
+    const r=this.svg.getBoundingClientRect();let x=ev.clientX-r.left+14,y=ev.clientY-r.top+14;
+    if(x>r.width-280)x-=300;if(y>r.height-240)y-=240;
+    this.tip.style.left=x+'px';this.tip.style.top=y+'px';this.tip.style.opacity=1;
+  }
+
+  drawLegend(){
+    const lg=this.root.querySelector('#legend');let s='';
+    if(this.colorMode==='area'){
+      s+='<div style="font-weight:700;color:var(--txt);margin-bottom:4px">Construction area</div>';
+      Object.values(this.CAT).forEach(v=>s+=`<div class="lr"><span class="sw" style="background:${v.c}"></span>${v.label}</div>`);
+    } else if(this.colorMode==='progress'){
+      const catOn=this.progCategoryActive();
+      s+=`<div style="font-weight:700;color:var(--txt);margin-bottom:4px">Progress %</div>`;
+      s+=`<div style="font-size:9.5px;color:${catOn?'var(--accent)':'var(--faint)'};margin-bottom:4px">Map % = ${catOn?'current category “'+this.catLabel(this.curMetric)+'” progress':'overall zone progress (no element marks for this category)'}</div>`;
+      s+=`<div class="grad" style="background:linear-gradient(90deg,#e5484d,#f5b23c,#22c55e)"></div><div class="gl"><span>0%</span><span>50%</span><span>100%</span></div>`;
+      s+='<div style="height:5px"></div>';
+      Object.keys(this.STATUS).forEach(k=>{const st=this.STATUS[k];s+=`<div class="lr"><span class="sw" style="border-radius:50%;background:var(${st.v})"></span>${st.label}</div>`;});
+    } else {
+      const mx=this.levelMax();const m=this.METRICS.find(x=>x.k===this.curMetric);
+      s+=`<div style="font-weight:700;color:var(--txt);margin-bottom:4px">Quantity heat ${m.label}</div>`;
+      s+=`<div class="grad" style="background:linear-gradient(90deg,var(--heat0),var(--heat1))"></div><div class="gl"><span>0</span><span>${this.curMetric==='area'?this.fmt(mx):mx}</span></div>`;
+    }
+    s+='<div style="height:6px"></div>';
+    Object.keys(this.OVL).forEach(k=>{if(this.showOvl[k]){const o=this.OVL[k];s+=`<div class="lr"><span class="dash" style="border-color:${o.c}"></span>${o.label}</div>`;}});
+    if(this.showBeams && this.DATA.beamlines && this.DATA.beamlines[this.curLevel]) s+=`<div class="lr"><span style="width:18px;border-top:2px solid var(--beam)"></span>Main-beam lines (approx.)</div>`;
+    if(this.showCrit)s+=`<div class="lr"><span style="width:13px;color:var(--crit);font-weight:800;text-align:center">Ab</span>Red zone name = critical path</div>`;
+    if(this.showSeq)s+=`<div class="lr"><span class="sw" style="border-radius:50%;background:var(--dim);color:#fff;font-size:8px;text-align:center;line-height:13px;font-weight:800">#</span>Pour sequence</div>`;
+    if(this.showAreaBounds){s+=`<div style="font-weight:700;color:var(--txt);margin:5px 0 2px">Area boundaries</div>`;
+      const ld={EB:'solid',NB:'dashed',MA:'dotted'};
+      Object.keys(this.BCOL).forEach(k=>{const cc=this.CAT[k];s+=`<div class="lr"><span style="width:18px;border-top:3px ${ld[k]||'solid'} ${this.BCOL[k]}"></span>${cc.label}</div>`;});
+      s+=`<div class="lr"><span style="width:18px;border-top:3px solid var(--txt)"></span>Solid line = boundary between adjacent areas</div>`;}
+    lg.innerHTML=s;
+  }
+
+  buildKPIs(){
+    const seen={},uniq=[];this.DATA.levels[this.curLevel].zones.forEach(z=>{if(!this.zoneVisible(z))return;const k=this.zid(z);if(!seen[k]){seen[k]=1;uniq.push(z);}});
+    const t={columns:0,pilecap:0,mainbeam:0,steelbeam:0,ls:0,area:0};
+    uniq.forEach(z=>{const c=z.counts;t.columns+=c.columns||0;t.pilecap+=c.pilecap||0;t.mainbeam+=c.mainbeam||0;t.steelbeam+=c.steelbeam||0;t.ls+=this.lsAll(c);t.area+=z.area||0;});
+    const items=[['Columns',t.columns],['Pile Caps',t.pilecap],['Main Beams',t.mainbeam],['Steel Beams',t.steelbeam],['Lift/Stair',t.ls],['Area m²',this.fmt(t.area)]];
+    this.root.querySelector('#kpis').innerHTML=items.map(([l,n])=>`<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');}
+
+  buildProgRoll(){
+    const lp=this.progFilter(this.curLevel), tot=lp.done+lp.wip+lp.todo||1;
+    const dc=this.cssvar('--done'),wc=this.cssvar('--wip'),tc=this.cssvar('--todo');
+    const scope=this.filterCat==='all'?'All areas':`${this.ASHORT[this.filterCat]||this.filterCat}`;
+    this.root.querySelector('#progroll').innerHTML=`
+      <div class="ph"><div class="t">Site progress · <span style="color:${this.filterCat==='all'?'var(--faint)':this.BCOL[this.filterCat]}">${scope}</span></div><div class="big" style="color:${this.progColor(lp.avg)}">${lp.avg}%</div></div>
+      <div class="statusbar">
+        <i style="width:${lp.done/tot*100}%;background:${dc}"></i>
+        <i style="width:${lp.wip/tot*100}%;background:${wc}"></i>
+        <i style="width:${lp.todo/tot*100}%;background:${tc}"></i>
+      </div>
+      <div class="statuskeys">
+        <span><i class="d" style="background:${dc}"></i>Complete ${lp.done}</span>
+        <span><i class="d" style="background:${wc}"></i>In progress ${lp.wip}</span>
+        <span><i class="d" style="background:${tc}"></i>Not started ${lp.todo}</span>
+      </div>`;
+  }
+
+  areaBreakdown(lv){
+    const cats={},seen={},uniq=[];
+    this.DATA.levels[lv].zones.forEach(z=>{const k=z.mk||('_'+z.lid);if(!seen[k]){seen[k]=1;uniq.push(z);}});
+    uniq.forEach(z=>{const cat=z.cat||'NB';const c=z.counts;
+      const o=cats[cat]=cats[cat]||{cat,zones:0,area:0,columns:0,pilecap:0,mainbeam:0,steelbeam:0,liftstair:0,pctSum:0,pctW:0,done:0,wip:0,todo:0};
+      o.zones++;o.area+=z.area||0;o.columns+=c.columns||0;o.pilecap+=c.pilecap||0;o.mainbeam+=c.mainbeam||0;o.steelbeam+=c.steelbeam||0;o.liftstair+=this.lsAll(c);
+      const p=z._p||{pct:0,status:'todo'};o.pctSum+=p.pct*(z.area||1);o.pctW+=(z.area||1);
+      if(p.status==='done')o.done++;else if(p.status==='wip')o.wip++;else o.todo++;});
+    return Object.values(cats).map(o=>({...o,pct:Math.round(o.pctSum/Math.max(1,o.pctW))}));
+  }
+
+  buildAreaBreak(){
+    const host=this.root.querySelector('#areastrip');
+    let rows=this.areaBreakdown(this.curLevel);
+    if(!rows.length){host.style.display='none';host.innerHTML='';return;}
+    host.style.display='flex';
+    const order=Object.keys(this.CAT);rows.sort((a,b)=>order.indexOf(a.cat)-order.indexOf(b.cat));
+    const dc=this.cssvar('--done'),wc=this.cssvar('--wip'),tc=this.cssvar('--todo');
+    host.innerHTML=rows.map(r=>{const cc=this.CAT[r.cat]||this.CAT.NB,tot=r.zones||1;
+      const active=this.filterCat===r.cat,dim=this.filterCat!=='all'&&!active;
+      return `<div class="astrip-card${active?' on':''}${dim?' dim':''}" data-cat="${r.cat}" style="--c:${cc.c}">
+        <div class="asc-top"><span class="asc-dot"></span><span class="asc-nm">${cc.label}</span><span style="flex:1"></span><span class="asc-pct" style="color:${this.progColor(r.pct)}">${r.pct}%</span></div>
+        <div class="asc-mid"><span class="asc-area">${this.fmt(r.area)} <small>m\u00b2</small></span><span class="asc-zn">${active?'\u2713 ':''}${r.zones} zones</span></div>
+        <div class="asc-qty"><span class="asc-qc">Col ${r.columns}</span><span class="asc-qc">Cap ${r.pilecap}</span><span class="asc-qc">MB ${r.mainbeam}</span><span class="asc-qc">SB ${r.steelbeam}</span><span class="asc-qc">L/S ${r.liftstair}</span></div>
+        <div class="asc-bar"><i style="width:${r.done/tot*100}%;background:${dc}"></i><i style="width:${r.wip/tot*100}%;background:${wc}"></i><i style="width:${r.todo/tot*100}%;background:${tc}"></i></div>
+        <div class="asc-foot"><span><b style="color:${dc}">${r.done}</b> done · <b style="color:${wc}">${r.wip}</b> wip · <b style="color:${tc}">${r.todo}</b> todo</span><span>${this.filterCat==='all'?'Click a card to filter':'Filtered · click to clear'}</span></div>
+      </div>`;}).join('');
+    host.querySelectorAll('.astrip-card').forEach(el=>el.addEventListener('click',()=>{const c=el.dataset.cat;this.filterCat=(this.filterCat===c)?'all':c;this.selKey=null;this.buildMetrics();this.render();this.paintTimelineSel();}));
+  }
+
+  // Clean outer boundary + between-area seams for the three big areas, via a coverage grid
+  // (robust to imperfect shared vertices). Cached per level. Neutral bold dividing lines.
+  ptIn(ring,x,y){let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))inside=!inside;}return inside;}
+  buildAreaGrid(lv){
+    const L=this.DATA.levels[lv],W=L.w,H=L.h;
+    if(!L.zones.length)return {segs:[]};
+    const cols=210,cw=W/cols,rows=Math.max(1,Math.round(H/cw)),chh=H/rows;
+    const zb=L.zones.map(z=>{let x0=1e18,y0=1e18,x1=-1e18,y1=-1e18;z.ring.forEach(p=>{if(p[0]<x0)x0=p[0];if(p[0]>x1)x1=p[0];if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1];});return{z,x0,y0,x1,y1};});
+    const cat=[];
+    for(let r=0;r<rows;r++){cat[r]=[];const py=(r+0.5)*chh;
+      for(let c=0;c<cols;c++){const px=(c+0.5)*cw;let cc=null;
+        for(let i=0;i<zb.length;i++){const b=zb[i];if(px<b.x0||px>b.x1||py<b.y0||py>b.y1)continue;if(this.ptIn(b.z.ring,px,py)){cc=b.z.cat||'NB';break;}}
+        cat[r][c]=cc;}}
+    const get=(r,c)=>(r>=0&&r<rows&&c>=0&&c<cols)?cat[r][c]:null;
+    // close thin inter-zone gaps so only true outer edges & inter-area seams remain
+    for(let pass=0;pass<5;pass++){const nc=cat.map(row=>row.slice());
+      for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){if(cat[r][c]!=null)continue;
+        const l=get(r,c-1),rt=get(r,c+1),u=get(r-1,c),d=get(r+1,c);
+        if(l&&l===rt)nc[r][c]=l;else if(u&&u===d)nc[r][c]=u;}
+      for(let r=0;r<rows;r++)cat[r]=nc[r];}
+    const proj=(x,y)=>[x,H-y];const segs=[];
+    for(let r=0;r<rows;r++)for(let c=0;c<=cols;c++){const a=get(r,c-1),b=get(r,c);if(a!==b){const x=c*cw;segs.push({p:[proj(x,r*chh),proj(x,(r+1)*chh)],a,b});}}
+    for(let r=0;r<=rows;r++)for(let c=0;c<cols;c++){const a=get(r-1,c),b=get(r,c);if(a!==b){const y=r*chh;segs.push({p:[proj(c*cw,y),proj((c+1)*cw,y)],a,b});}}
+    return {segs};
+  }
+
+  buildList(){
+    const L=this.DATA.levels[this.curLevel],seen={},arr=[];
+    L.zones.forEach(z=>{if(!this.zoneVisible(z))return;const k=this.zid(z);if(!seen[k]){seen[k]=1;arr.push(z);}});
+    arr.sort((a,b)=>this.mval(b,this.curMetric)-this.mval(a,this.curMetric));
+    const m=this.METRICS.find(x=>x.k===this.curMetric),mx=this.levelMax();
+    this.root.querySelector('#sideTitle').innerHTML=`<span>${this.curLevel} · ${this.esc(this.DATA.levels[this.curLevel].title)}</span><span class="pill">${arr.length} zones</span>`;
+    // level totals comparison
+    let cmpMax=0;this.DATA.order.forEach(lv=>{const t=this.DATA.levelTotals[lv];const v=this.curMetric==='liftstairAll'?(t.liftcw+t.stair+t.liftstair):(t[this.curMetric]||0);cmpMax=Math.max(cmpMax,v);});
+    let cmp=`<div class="cmp"><div class="sub">Level totals · ${m.label} by level</div>`;
+    this.DATA.order.forEach(lv=>{const t=this.DATA.levelTotals[lv];const v=this.curMetric==='liftstairAll'?(t.liftcw+t.stair+t.liftstair):(t[this.curMetric]||0);
+      cmp+=`<div class="crow ${lv===this.curLevel?'on':''}" data-lv="${lv}"><div class="clv">${lv}</div><div class="ctrack"><i style="width:${v/(cmpMax||1)*100}%"></i></div><div class="cval">${this.curMetric==='area'?this.fmt(v):v}</div></div>`;});
+    cmp+='</div>';
+    let s=cmp+`<div class="sub"><span>Zones · ranked by ${m.label}</span><span>${arr.length} zones</span></div>
+     <div style="display:flex;flex-wrap:wrap;gap:4px 10px;font-size:9px;color:var(--faint);margin:-3px 0 8px"><span><b style="color:var(--dim)">C</b> Col</span><span><b style="color:var(--dim)">P</b> Cap</span><span><b style="color:var(--dim)">B</b> MB</span><span><b style="color:var(--dim)">S</b> SB</span><span><b style="color:var(--dim)">L</b> Lift/Stair</span></div>`;
+    arr.forEach(z=>{const v=this.mval(z,this.curMetric),col=(this.CAT[z.cat]||this.CAT.NB).c,c=z.counts,p=z._p||{pct:0,status:'todo'};
+      const stc=p.status==='done'?this.cssvar('--done'):p.status==='wip'?this.cssvar('--wip'):this.cssvar('--todo');
+      s+=`<div class="zrow ${this.selKey===this.zid(z)?'sel':''}" data-k="${this.esc(this.zid(z))}">
+        <div class="sw" style="background:${col}"></div>
+        <div class="zmid"><div class="nm">${this.esc(z.label)}${z.crit?' <span style="color:var(--crit)">◆</span>':''} <span class="stbadge" style="background:${stc}">${p.pct}%</span></div>
+          <div class="cnts"><span class="ct">C${c.columns||0}</span><span class="ct">P${c.pilecap||0}</span><span class="ct">B${c.mainbeam||0}</span><span class="ct">S${c.steelbeam||0}</span><span class="ct">L${this.lsAll(c)}</span></div></div>
+        <div class="rt"><div class="val">${this.curMetric==='area'?this.fmt(v):v}</div><div class="mpb"><i style="width:${p.pct}%;background:${this.progColor(p.pct)}"></i></div></div>
+      </div>`;});
+    const sb=this.root.querySelector('#sidebody');
+    if(!this.selKey||arr.every(z=>this.zid(z)!==this.selKey))sb.innerHTML=s;
+    sb.querySelectorAll('.crow').forEach(el=>el.addEventListener('click',()=>{this.setLevel(el.dataset.lv);}));
+    sb.querySelectorAll('.zrow').forEach(el=>el.addEventListener('click',()=>{const z=arr.find(x=>this.zid(x)===el.dataset.k);this.selKey=this.zid(z);this.selectZone(z);this.paintSel();this.paintTimelineSel();}));
+  }
+
+  idList(items,render,empty){if(!items||!items.length)return `<div class="empty">${empty}</div>`;return items.map(render).join('');}
+  elChip(key){const s=this.elemStatus(key);const m={todo:['Not started','--todo'],wip:['In progress','--wip'],done:['Complete','--done']}[s];return `<span class="elchip s-${s}" data-key="${this.esc(key)}" style="--c:var(${m[1]})" title="Click to cycle: Not started → In progress → Complete">${m[0]}</span>`;}
+  elRows(lv,z,type,items,metaFn,empty,critFn){if(!items||!items.length)return `<div class="empty">${empty}</div>`;
+    return items.map(x=>{const id=(typeof x==='string')?x:x.id;const key=this.ekey(lv,z,type,id);const crit=critFn&&critFn(x);
+      return `<div class="idrow ${crit?'crit':''}"><span class="id">${this.esc(id)}</span><span class="meta">${metaFn?metaFn(x):''}</span>${this.elChip(key)}</div>`;}).join('');}
+
+  /* ---------- schedule-record (ZP) integration — enriches the detail panel only; map unchanged ---------- */
+  zpNorm(s){return String(s).replace(/[^a-z0-9]/gi,'').toLowerCase();}
+  zpMi(m){return this.ZP.months.indexOf(m);}
+  zpSetup(){
+    if(!this.ZP)return;
+    this.ZWT=[
+      {re:/corbel/,short:'CRB',color:'#d46aa0',label:'Corbel'},
+      {re:/steel beam/,short:'STL',color:'#f5a623',label:'Steel beam'},
+      {re:/slab/,short:'SLAB',color:'#35c08e',label:'Slab'},
+      {re:/main beam|rc beam/,short:'BEAM',color:'#f2795b',label:'Main beam'},
+      {re:/column/,short:'COL',color:'#4a90e2',label:'Columns'},
+      {re:/core wall/,short:'CORE',color:'#9b6cd6',label:'Core wall'},
+      {re:/lift|stair/,short:'L/S',color:'#2ec4b6',label:'Lift/Stair'},
+      {re:/excavat|demol|piling|pilecap|working platform|precast/,short:'PREP',color:'#8a94a6',label:'Prep'}
+    ];
+    const Z=this.ZP,N=s=>this.zpNorm(s),planIdx={};
+    const keyVars=k=>{const s=new Set([k]);s.add(k.replace(/\s*\([^)]*\)/g,''));s.add(k.replace(/-\d+$/,''));s.add(k.replace(/\+.*$/,''));k.split(/[+,]/).forEach(t=>s.add(t.trim()));return[...s].filter(Boolean);};
+    Object.keys(Z.plan).forEach(k=>keyVars(k).forEach(v=>{const n=N(v);if(!planIdx[n])planIdx[n]=k;}));
+    const excelPour={},qtyByNorm={};for(const k in Z.qty){const n=N(k);excelPour[n]=Z.qty[k].pour;qtyByNorm[n]=k;}
+    this._zpIdx={planIdx,excelPour,qtyByNorm};this._zpMatch={};
+    this._zpOrig={};for(const z in Z.plan){this._zpOrig[z]={};for(const m in Z.plan[z]){this._zpOrig[z][m]=Z.plan[z][m].map(r=>({d:r.d,pct:r.pct}));}}
+    try{this._zpOv=JSON.parse(localStorage.getItem('rws_zp_ov')||'{}');}catch(e){this._zpOv={};}
+    if(this._embZpOv)this._zpOv={...this._embZpOv,...this._zpOv};
+    this._zpRev={};this._zpRevAll={};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{const nm=this.zpMatchOf(z);if(!nm)return;if(!this._zpRev[nm])this._zpRev[nm]={lv,mk:this.zid(z)};(this._zpRevAll[nm]=this._zpRevAll[nm]||[]).push({lv,mk:this.zid(z)});}));
+    this._schFilter=this._schFilter||'all';this._schEdit=null;
+    this.zpApplyOv();
+  }
+  zpClassify(w){const s=String(w).toLowerCase();for(const t of this.ZWT)if(t.re.test(s))return t;return {short:'OTH',color:'#94a3b8',label:'Other'};}
+  zpCellVars(z){const s=new Set();let b=String(z).replace(/\s*\([^)]*\)/g,'').trim();[z,b].forEach(c=>{s.add(c);s.add(c.replace(/^Z/,''));s.add(c.replace(/^Slab\s*/i,'SLAB '));s.add(c.replace(/-\d+$/,''));s.add(c.replace(/[+&].*$/,''));s.add(c.replace(/B2\./g,'B-2.').replace(/B3\./g,'B-3.'));});return[...s].filter(Boolean);}
+  zpResolvePlan(z){if(!z)return null;const ix=this._zpIdx,N=s=>this.zpNorm(s);for(const v of this.zpCellVars(z)){const n=N(v);if(ix.planIdx[n])return ix.planIdx[n];}for(const v of this.zpCellVars(z)){const pour=ix.excelPour[N(v)];if(pour){for(const tok of [pour,...pour.split(/[+,]/)].map(t=>t.trim())){for(const tv of [tok,tok.replace(/-\d+$/,''),tok.replace(/\s*\([^)]*\)/g,'')]){const n=N(tv);if(ix.planIdx[n])return ix.planIdx[n];}}}}return null;}
+  zpResolveGeo(z){for(const c of [z.label,z.fam,z.grp].filter(Boolean)){const r=this.zpResolvePlan(c);if(r)return r;}return null;}
+  zpMatchOf(z){const k=z.mk||('_'+z.lid);if(k in this._zpMatch)return this._zpMatch[k];const r=this.zpResolveGeo(z);this._zpMatch[k]=r;return r;}
+  zpApplyOv(){const P=this.ZP.plan;if(!this._zpOrig)return;for(const z in P){for(const m in P[z]){P[z][m].forEach((r,i)=>{const o=this._zpOrig[z]&&this._zpOrig[z][m]&&this._zpOrig[z][m][i];if(o){r.d=o.d;r.pct=o.pct;}});}}for(const k in (this._zpOv||{})){const p=k.split('||');const rec=P[p[0]]&&P[p[0]][p[1]]&&P[p[0]][p[1]][+p[2]];if(rec){const v=this._zpOv[k];rec.d=v;rec.pct=(v!=null&&rec.p>0)?Math.round(v/rec.p*100):(v!=null?0:null);}}}
+  zpSetDone(z,m,idx,raw){const s=String(raw==null?'':raw).replace(/,/g,'').trim();let v=s===''?null:parseFloat(s);if(v!=null&&(isNaN(v)||v<0))return;const key=z+'||'+m+'||'+idx;if(v==null)delete this._zpOv[key];else this._zpOv[key]=v;try{localStorage.setItem('rws_zp_ov',JSON.stringify(this._zpOv));}catch(e){}this.zpApplyOv();}
+  zpSection(z){
+    if(!this.ZP)return '';
+    const name=this.zpMatchOf(z);
+    if(!name)return `<div class="sec"><div class="t">Schedule <span style="color:var(--faint);font-weight:600;text-transform:none">No linked schedule record</span></div></div>`;
+    const pz=this.ZP.plan[name]?name:this.zpResolvePlan(name);const zd=pz?this.ZP.plan[pz]:null;if(!zd)return '';
+    const cur=this.ZP.current;const short=m=>m.replace(' 20',"'");
+    let blocks='';
+    this.ZP.months.forEach(m=>{const items=zd[m];if(!items||!items.length)return;
+      const wp=items.filter(x=>x.pct!=null);let apct=null;if(wp.length)apct=Math.round(wp.reduce((a,b)=>a+(b.pct||0),0)/wp.length);
+      const past=this.zpMi(m)<=this.zpMi(cur);let sLabel,sCol,sBg;
+      if(apct!=null&&apct>=99){sLabel='Done';sCol='#218a5c';sBg='rgba(53,192,142,.16)';}
+      else if(apct!=null){if(past){sLabel='Behind '+apct+'%';sCol='#cf2f4c';sBg='rgba(239,95,122,.16)';}else{sLabel='WIP '+apct+'%';sCol='#a9720f';sBg='rgba(245,166,35,.18)';}}
+      else{if(past){sLabel='Due';sCol='#b06a12';sBg='rgba(217,138,42,.16)';}else{sLabel='Planned';sCol='var(--faint)';sBg='var(--panel)';}}
+      const rowsH=items.map((it,idx)=>{const pct=it.pct;const wt=this.zpClassify(it.w);const bc=pct>=100?'#35c08e':(pct>0?wt.color:'var(--faint)');
+        const pctText=pct==null?'—':pct+'%';
+        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="width:7px;height:7px;border-radius:2px;background:${wt.color};flex:0 0 auto"></span>
+          <span style="flex:1;font-size:10px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${this.esc(it.w)}">${this.esc(it.w)}</span>
+          <span style="width:44px;height:5px;border-radius:3px;background:var(--panel);overflow:hidden;flex:0 0 auto"><i style="display:block;height:100%;width:${Math.min(pct||0,100)}%;background:${bc}"></i></span>
+          <span style="width:44px;text-align:right;font-size:10px;color:var(--dim);flex:0 0 auto;font-variant-numeric:tabular-nums">${it.d==null?'—':(Math.round(it.d*100)/100).toLocaleString('en-US')}</span>
+          <span style="font-size:9px;color:var(--faint);width:20px;text-align:right;flex:0 0 auto">${it.u||''}</span>
+          <span style="font-size:9.5px;font-weight:700;width:30px;text-align:right;flex:0 0 auto;color:${pct==null?'var(--faint)':bc}">${pctText}</span>
+        </div>`;}).join('');
+      blocks+=`<div style="margin-bottom:8px;border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:var(--panel2)${m===cur?';box-shadow:inset 0 0 0 1.5px var(--accent)':''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-size:10.5px">${short(m)}${m===cur?' · current':''}</b><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:${sBg};color:${sCol}">${sLabel}</span></div>
+        ${rowsH}</div>`;
+    });
+    if(!blocks)return '';
+    return `<div class="sec"><div class="t">Schedule progress <span style="color:var(--faint);font-weight:600;text-transform:none">Record ${this.esc(name)} · view only — edit on Construction Schedule</span></div>${blocks}</div>`;
+  }
+
+  zpIsCrit(name){ if(!this.ZP)return false; if(this.ZP.critical.indexOf(name)>=0)return true; const p=this.zpResolvePlan(name); return p?this.ZP.critical.indexOf(p)>=0:false; }
+  zpAgg(name){ const pz=this.ZP.plan[name]?name:this.zpResolvePlan(name); const zd=pz?this.ZP.plan[pz]:null; if(!zd)return {pct:null}; const cur=this.ZP.months.indexOf(this.ZP.current); const rep=[]; for(const m in zd){ const idx=this.ZP.months.indexOf(m); if(idx>cur)continue; zd[m].forEach(it=>{ if(it.pct!=null)rep.push(it.pct); }); } if(!rep.length)return {pct:null}; return {pct:Math.round(rep.reduce((a,b)=>a+b,0)/rep.length)}; }
+  jumpToZone(name){ const r=this._zpRev&&this._zpRev[name]; this.root.querySelector('#schedpage').classList.remove('open'); this._schEdit=null; if(r){ if(r.lv!==this.curLevel){this.curLevel=r.lv;this.syncRail();this.buildMetrics();} this.selKey=r.mk; this.render(); const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===r.mk); if(z){this.selectZone(z);this.paintSel();} } }
+  schedDrawer(){ if(!this._schEdit)return ''; const z=this._schEdit.z,m=this._schEdit.m; const zd=this.ZP.plan[z]; const items=zd&&zd[m]; if(!items)return ''; const short=s=>s.replace(' 20',"'");
+    const rows=items.map((it,idx)=>{ const wt=this.zpClassify(it.w); const pct=it.pct; const bc=pct>=100?'#35c08e':(pct>0?wt.color:'var(--faint)');
+      return `<div class="zsd-row"><span class="zsd-sw" style="background:${wt.color}"></span><span class="zsd-w" title="${this.esc(it.w)}">${this.esc(it.w)}</span><span class="zsd-plan">plan ${it.p!=null?this.fmt(it.p):'—'} ${this.esc(it.u||'')}</span><input class="zsd-in zp-done" data-z="${this.esc(z)}" data-m="${this.esc(m)}" data-i="${idx}" value="${it.d==null?'':it.d}" placeholder="done"><span class="zsd-pct" style="color:${pct==null?'var(--faint)':bc}">${pct==null?'—':pct+'%'}</span></div>`; }).join('');
+    return `<div class="zsd"><div class="zsd-hd"><div><b class="mono" style="font-family:'Consolas',monospace">${this.esc(z)}</b> <span style="color:var(--dim);font-size:11px">${short(m)}</span></div><button class="hbtn" id="zsdClose">Close ✕</button></div><div class="zsd-note">Enter the completed quantity for each work package — the % updates automatically and is saved into this file.</div>${rows}</div>`; }
+
+  selectZone(z){
+    const c=z.counts,ct=this.CAT[z.cat]||this.CAT.NB,p=z._p||{pct:0,status:'todo',seq:'-',start:0,end:0};
+    const st=this.STATUS[p.status];
+    const lv=this.curLevel;
+    const es=this.zoneElemStats(lv,z);
+    const subHtml=z.sub&&z.sub.length>1?`<div class="g">Sub-zones: ${z.sub.map(s=>this.esc(s.n)+' ('+this.fmt(s.a)+' m²)').join(', ')}</div>`:'';
+    const secHead=(title,cnt,type,items)=>{const ck=(items||[]).map(x=>this.ekey(lv,z,type,typeof x==='string'?x:x.id));const nd=ck.filter(k=>this.elemStatus(k)==='done').length;return `<div class="t">${title} <span>${nd}/${cnt} done · <span class="allbtn" data-bulk="${type}">All ✓</span></span></div>`;};
+    const colHtml=this.elRows(lv,z,'col',z.cols,x=>this.esc(x.sz||'')+(x.c?' · crit':''),'none listed',x=>x.c);
+    const pileHtml=this.elRows(lv,z,'pile',z.piles,x=>this.esc(x.rl||''),'none listed');
+    const beamHtml=this.elRows(lv,z,'beam',z.beams,x=>this.esc(x.sz||''),'none listed');
+    const liftHtml=this.elRows(lv,z,'lift',z.lifts,x=>x.f?'<span class="span">'+this.esc(x.f)+' → '+this.esc(x.t)+'</span>':'','no lifts');
+    const stairHtml=this.elRows(lv,z,'stair',z.stairs,x=>x.f?'<span class="span">'+this.esc(x.f)+' → '+this.esc(x.t)+'</span>':'','no stairs');
+    const coreSec=z.cores&&z.cores.length?`<div class="sec">${secHead('Core Walls',z.cores.length,'core',z.cores)}${this.elRows(lv,z,'core',z.cores,null,'none')}</div>`:'';
+    const dc=this.cssvar('--done'),wc=this.cssvar('--wip'),tc=this.cssvar('--todo');
+    const eltool=es.total?`<div class="eltool">
+        <span class="lb">Elements done</span>
+        <span class="frac" style="color:${this.progColor(es.total?Math.round(es.done/es.total*100):0)}">${es.done}/${es.total}</span>
+        <span class="eb"><i style="width:${es.done/es.total*100}%;background:${dc}"></i><i style="width:${es.wip/es.total*100}%;background:${wc}"></i></span>
+        <button data-bulk-all="done">All done</button>
+        <button data-bulk-all="wip">All WIP</button>
+        <button data-bulk-all="todo">Clear</button>
+      </div>`:'<div class="g" style="color:var(--faint)">No element ID list in the source for this zone — use the zone-level entry below.</div>';
+    const hist=(this.updates[z.mk]||[]);
+    const todayISO=new Date().toISOString().slice(0,10);
+    const last=hist.length?hist[hist.length-1]:null;
+    const dPct=last?last.pct:p.pct, dStatus=last&&last.status?last.status:p.status, dNote=last?last.note||'':'', dDate=last?last.date:todayISO;
+    const opt=(v,l)=>`<option value="${v}" ${dStatus===v?'selected':''}>${l}</option>`;
+    const histHtml=hist.length?`<div class="updhist"><div class="uh">Update history · ${hist.length}</div>${hist.slice().reverse().map(u=>`<div class="ur"><b>${this.esc(u.date||'')}</b><span>${u.pct}% · ${this.STATUS[u.status]?this.STATUS[u.status].label:''}${u.note?' · '+this.esc(u.note):''}</span></div>`).join('')}</div>`:'';
+    const formHtml=`<div class="updform">
+      <div class="fh">✎ Zone-level entry <span style="color:var(--faint);font-weight:600;text-transform:none">(use when there is no element list; marked elements take priority)</span> ${last?'<span class="mkbadge">Entered</span>':''}</div>
+      <div class="fg">
+        <div><label>Actual %</label><input id="in_pct" type="number" min="0" max="100" value="${dPct}"></div>
+        <div><label>Status</label><select id="in_status">${opt('todo','Not started')}${opt('wip','In progress')}${opt('done','Complete')}</select></div>
+        <div><label>Update date</label><input id="in_date" type="date" value="${dDate}"></div>
+        <div><label>Crew</label><input id="in_crew" type="text" value="${last&&last.crew?this.esc(last.crew):''}" placeholder="e.g. Team A"></div>
+        <div class="full"><label>Note</label><textarea id="in_note" placeholder="Site notes / issues">${this.esc(dNote)}</textarea></div>
+      </div>
+      <button class="save" id="in_save">Save update → register</button>
+      ${histHtml}
+    </div>`;
+    this.root.querySelector('#sidebody').innerHTML=
+     `<span class="back" id="back">‹ back to list</span>
+      <div class="detail"><h3>${this.esc(z.label)} ${z.crit?'<span class="badge" style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--crit);color:#fff">CRITICAL</span>':''}</h3>
+      <div class="g"><span class="cat" style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:9.5px;font-weight:700;color:#fff;background:${ct.c}">${ct.label}</span> · ${z.grp&&z.grp!=='Ungrouped'?'Pour group: '+this.esc(z.grp):'Family: '+this.esc(z.fam)} · ${this.curLevel}</div>
+      ${subHtml}
+      <div class="progblock">
+        <div class="top"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--dim)">Site progress ${p.manual?'<span class="mkbadge">Site entry</span>':'<span style="color:var(--faint);font-weight:600;text-transform:none">Derived</span>'}</div><div class="pc" style="color:${this.progColor(p.pct)}">${p.pct}%</div></div>
+        <div class="pbar"><i style="width:${p.pct}%;background:${this.progColor(p.pct)}"></i></div>
+        <div class="prows">
+          <div class="pr"><span>Status</span><b style="color:var(${st.v})">${st.label}</b></div>
+          <div class="pr"><span>Pour seq</span><b>#${p.seq}</b></div>
+          <div class="pr"><span>Plan start</span><b>${this.ml(Math.round(p.start))}</b></div>
+          <div class="pr"><span>Plan end</span><b>${this.ml(Math.round(p.end))}</b></div>
+          <div class="pr"><span>Activities</span><b>${z.n_acts||0}</b></div>
+          <div class="pr"><span>${p.udate?'Updated':'Critical acts'}</span><b style="color:${z.n_crit&&!p.udate?'var(--crit)':'var(--txt)'}">${p.udate||z.n_crit||0}</b></div>
+        </div>
+      </div>
+      <div class="statgrid">
+        <div class="stat"><div class="n">${this.fmt(z.area)}</div><div class="l">Area m²</div></div>
+        <div class="stat"><div class="n">${c.columns||0}</div><div class="l">Columns</div></div>
+        <div class="stat"><div class="n">${c.pilecap||0}</div><div class="l">Pile Caps</div></div>
+        <div class="stat"><div class="n">${c.mainbeam||0}</div><div class="l">Main Beams</div></div>
+        <div class="stat"><div class="n">${c.steelbeam||0}</div><div class="l">Steel Beams</div></div>
+        <div class="stat"><div class="n">${z.lifts.length}/${z.stairs.length}</div><div class="l">Lift / Stair</div></div>
+      </div>
+      ${this.zpSection(z)}
+      ${eltool}
+      <div class="sec">${secHead('Columns',z.cols.length,'col',z.cols)}${colHtml}</div>
+      <div class="sec">${secHead('Pile Caps',z.piles.length,'pile',z.piles)}${pileHtml}</div>
+      <div class="sec">${secHead('Main Beams',z.beams.length,'beam',z.beams)}${beamHtml}</div>
+      <div class="sec">${secHead('Lifts',z.lifts.length,'lift',z.lifts)}${liftHtml}</div>
+      <div class="sec">${secHead('Staircases',z.stairs.length,'stair',z.stairs)}${stairHtml}</div>
+      ${coreSec}
+      ${formHtml}
+      </div>`;
+    this.root.querySelector('#back').addEventListener('click',()=>{this.selKey=null;this.paintSel();this.paintTimelineSel();this.buildList();});
+    const sv=this.root.querySelector('#in_save');
+    if(sv)sv.addEventListener('click',()=>{
+      const pct=this.clamp(Math.round(+this.root.querySelector('#in_pct').value||0),0,100);
+      const status=this.root.querySelector('#in_status').value;
+      const date=this.root.querySelector('#in_date').value||new Date().toISOString().slice(0,10);
+      const note=this.root.querySelector('#in_note').value.trim();
+      const crew=this.root.querySelector('#in_crew').value.trim();
+      this.addUpdate(z.mk,{pct,status,date,note,crew,level:this.curLevel,zone:z.label});
+    });
+    const sb=this.root.querySelector('#sidebody');
+    sb.querySelectorAll('.elchip').forEach(el=>el.addEventListener('click',()=>this.cycleElem(el.dataset.key)));
+    sb.querySelectorAll('[data-bulk]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();
+      const type=el.dataset.bulk;const items=({col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores})[type]||[];
+      items.forEach(x=>{this.elem[this.ekey(this.curLevel,z,type,typeof x==='string'?x:x.id)]='done';});this.commitElem();}));
+    sb.querySelectorAll('[data-bulk-all]').forEach(el=>el.addEventListener('click',()=>this.setZoneElems(this.curLevel,z,el.dataset.bulkAll)));
+
+  }
+
+  /* ---------- schedule (secondary page · Gantt) ---------- */
+  buildTimeline(){ this.refreshSched(); }
+  refreshSched(){ if(this.root.querySelector('#schedpage').classList.contains('open')) this.buildSchedule(); }
+  openSched(){ const pg=this.root.querySelector('#schedpage'); pg.classList.add('open'); if(!this._schFilter)this._schFilter='all'; if(!this._schMonth)this._schMonth=this.ZP.current;
+    const q=this.root.querySelector('#schQ'); if(q&&!q._b){q._b=1;q.addEventListener('input',()=>{this._schQ=q.value;this._schEdit=null;this.buildSchedule();});}
+    const c=this.root.querySelector('#schCrit'); if(c&&!c._b){c._b=1;c.addEventListener('change',()=>{this._schCrit=c.checked;this._schEdit=null;this.buildSchedule();});}
+    this.buildSchedule(); }
+
+  _schMonthIdx(){ return this.ZP.months.indexOf(this._schMonth||this.ZP.current); }
+  zoneTint(name){ const pal=['#eaf1fa','#e8f2ee','#f1efe7','#ecebf6','#e6f1f3','#eef1e8','#e9edf8','#f0ecf3','#e7f1f6','#edeff4','#eef0e9','#e9eef4']; let h=0; const s=String(name); for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0; return pal[h%pal.length]; }
+  zpLevel(w){ const s=String(w).toLowerCase();
+    if(/roof|top slab/.test(s))return'Roof'; if(/l5/.test(s))return'L5'; if(/l4/.test(s))return'L4'; if(/l3/.test(s))return'L3';
+    if(/l2/.test(s))return'L2'; if(/l1/.test(s))return'L1'; if(/b1m/.test(s))return'B1M'; if(/\bb1\b/.test(s))return'B1';
+    if(/\bb2\b/.test(s))return'B2'; if(/piling|working platform|precast/.test(s))return'Piling'; if(/rc beam|slab cast|slab/.test(s))return'L1'; return null; }
+  _elemShort(t){return {col:'COL',core:'CORE',lift:'L/S',stair:'L/S',beam:'BEAM',pile:'PREP'}[t]||null;}
+  zpElemAggAt(name,level){ const arr=(this._zpRevAll&&this._zpRevAll[name])||[]; const byType={}; let total=0,done=0,wip=0;
+    arr.filter(r=>r.lv===level).forEach(r=>{ const z=this.DATA.levels[r.lv].zones.find(x=>this.zid(x)===r.mk); if(!z)return;
+      const src={col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores};
+      Object.keys(src).forEach(t=>(src[t]||[]).forEach(x=>{ const s=this.elemStatus(this.ekey(r.lv,z,t,typeof x==='string'?x:x.id)); const o=byType[t]||(byType[t]={total:0,done:0}); o.total++; total++; if(s==='done'){o.done++;done++;} else if(s==='wip')wip++; })); });
+    return {pct: total?Math.round(done/total*100):null, total, done, wip, byType}; }
+  zpElemAgg(name){ const arr=(this._zpRevAll&&this._zpRevAll[name])||[]; let total=0,done=0,wip=0;
+    arr.forEach(r=>{ const z=this.DATA.levels[r.lv].zones.find(x=>this.zid(x)===r.mk); if(!z)return; const s=this.zoneElemStats(r.lv,z); total+=s.total; done+=s.done; wip+=s.wip; });
+    return {pct: total?Math.round(done/total*100):null, total, done, wip}; }
+  zoneOverallPct(name){ const e=this.zpElemAgg(name); if(e.total>0)return e.pct; return this.zpAgg(name).pct; }
+  schedBars(planZone, level, name){ const planned=this.schedTradeBars(planZone, level); const e=this.zpElemAggAt(name, level); const bt=e.byType||{};
+    const byShort={}; Object.keys(bt).forEach(t=>{ const sh=this._elemShort(t); if(!sh)return; const o=byShort[sh]||(byShort[sh]={total:0,done:0}); o.total+=bt[t].total; o.done+=bt[t].done; });
+    return planned.map(b=>{ const eo=byShort[b.short]; if(eo&&eo.total>0){ const pct=Math.round(eo.done/eo.total*100); return Object.assign({},b,{fill:pct,op:'1',trackCss: pct>0?'background:#e4e9f1;box-shadow:inset 0 0 0 1px #bfccdb':'background:transparent;box-shadow:inset 0 0 0 1px '+b.color+'55'}); } return b; }); }
+  schedTradeBars(planZone, level){ const zd=this.ZP.plan[planZone]; if(!zd)return [];
+    const selMi=this._schMonthIdx(); const g={};
+    for(const m in zd){ const idx=this.ZP.months.indexOf(m); zd[m].forEach(it=>{ if((this.zpLevel(it.w)||'Other')!==level)return;
+      const wt=this.zpClassify(it.w); const o=g[wt.short]||(g[wt.short]={wt,past:false,max:null}); if(idx<=selMi){o.past=true; if(it.pct!=null)o.max=Math.max(o.max==null?0:o.max,it.pct);} }); }
+    const order=['PREP','COL','CORE','L/S','STL','BEAM','CRB','SLAB','OTH']; const out=[];
+    order.forEach(sh=>{ const o=g[sh]; if(!o)return; let fill,op='1',track;
+      if(!o.past){ fill=0; op='.85'; track='background:transparent;box-shadow:inset 0 0 0 1px '+o.wt.color+'55'; }
+      else if(o.max!=null&&o.max>=100){ fill=100; track='background:#e4e9f1;box-shadow:inset 0 0 0 1px #bfccdb'; }
+      else if(o.max!=null&&o.max>0){ fill=o.max; track='background:#e4e9f1;box-shadow:inset 0 0 0 1px #bfccdb'; }
+      else { fill=0; track='background:rgba(239,95,122,.12);box-shadow:inset 0 0 0 1px #ef5f7a88'; }
+      out.push({short:o.wt.short,color:o.wt.color,fill,op,trackCss:track}); });
+    return out; }
+  schedDrawer(){ if(!this._schEdit||!this._schEdit.zone)return ''; const name=this._schEdit.zone;
+    const pz=this.ZP.plan[name]?name:this.zpResolvePlan(name); const zd=pz?this.ZP.plan[pz]:null; if(!zd)return '';
+    const cur=this.ZP.current; const short=m=>m.replace(' 20',"'"); let blocks='';
+    this.ZP.months.forEach(m=>{ const items=zd[m]; if(!items||!items.length)return;
+      const rowsH=items.map((it,idx)=>{ const wt=this.zpClassify(it.w); const pct=it.pct; const bc=pct>=100?'#35c08e':(pct>0?wt.color:'#c3ccd6');
+        return `<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><span style="width:7px;height:7px;border-radius:2px;background:${wt.color};flex:0 0 auto"></span><span style="flex:1;font-size:10.5px;color:#4b5566;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${this.esc(it.w)}">${this.esc(it.w)}</span><span style="width:44px;height:6px;border-radius:4px;background:#e4e9f1;box-shadow:inset 0 0 0 1px #bccadb;overflow:hidden;flex:0 0 auto"><span style="display:block;height:100%;width:${Math.min(pct||0,100)}%;background:${bc}"></span></span><span style="width:48px;text-align:right;font-size:10.5px;color:#2e3a59;font-family:'IBM Plex Mono',monospace;flex:0 0 auto">${it.d==null?'—':(Math.round(it.d*100)/100).toLocaleString('en-US')}</span><span style="font-size:8.5px;color:#9aa6b6;width:24px;flex:0 0 auto">${this.esc(it.u||'')}</span><span style="font-size:10px;font-weight:700;width:34px;text-align:right;flex:0 0 auto;color:${pct==null?'#aab4c2':bc}">${pct==null?'—':pct+'%'}</span></div>`; }).join('');
+      blocks+=`<div style="margin-bottom:9px;border-radius:12px;padding:10px 11px;background:#e8edf3;box-shadow:inset 0 0 0 1px #cdd8e6${m===cur?';outline:1.5px solid #4a90e2':''}"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;margin-bottom:7px">${short(m)}${m===cur?' · current':''}</div>${rowsH}</div>`; });
+    return `<div class="zsd" style="background:#eef1f7;color:#2e3a59;border-left:1px solid #cdd8e6"><div class="zsd-hd"><div><b style="font-family:'IBM Plex Mono',monospace">${this.esc(name)}</b></div><button id="zsdClose" style="border:none;background:#e4e9f1;color:#5b6472;width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:15px">✕</button></div><div class="zsd-note">Planned schedule (view only). Actual progress is driven by checking off elements on the map — open this zone on the map and mark its columns / beams done.</div>${blocks||'<div style="color:#aab4c2;font-size:11px">No scheduled work.</div>'}</div>`; }
+  buildSchedule(){
+    const host=this.root.querySelector('#schedbody');
+    if(!this.ZP){ host.innerHTML='<div style="padding:44px;text-align:center;color:#8a94a6">No schedule data.</div>'; return; }
+    const Z=this.ZP, cur=Z.current; const filt=this._schFilter||'all', q=(this._schQ||'').trim().toLowerCase(), critOnly=!!this._schCrit;
+    const short=m=>m.replace(' 20',"'");
+    const mHost=this.root.querySelector('#schedMonths');
+    if(mHost){ mHost.innerHTML='<span style="font-size:10.5px;font-weight:800;color:#8a94a6;text-transform:uppercase;letter-spacing:.6px;margin-right:2px">Progress as of</span>'+Z.months.map(m=>{const on=m===(this._schMonth||cur);return `<button data-m="${m}" style="white-space:nowrap;border:none;cursor:pointer;font-family:Archivo,sans-serif;font-weight:700;border-radius:8px;padding:6px 11px;font-size:11.5px;color:#2e3a59;${on?'background:#f5a623;box-shadow:inset 2px 2px 5px #c88b1e,inset -2px -2px 5px #ffc24d':'background:#eef2f7;box-shadow:0 0 0 1px #b6c3d5,2px 2px 6px #aebccf,-2px -2px 6px #ffffff'}">${short(m)}</button>`;}).join('');
+      mHost.querySelectorAll('button').forEach(b=>b.onclick=()=>{this._schMonth=b.dataset.m;this.buildSchedule();}); }
+    const aHost=this.root.querySelector('#schedareas');
+    const chips=[['all','All','#8a94a6'],['NB','New',this.CAT.NB.c],['EB','Existing',this.CAT.EB.c],['MA','Marine',this.CAT.MA.c]];
+    aHost.innerHTML=chips.map(([k,l,c])=>{const on=k===filt;return `<button data-cat="${k}" style="white-space:nowrap;border:none;cursor:pointer;font-family:Archivo;font-weight:800;border-radius:10px;padding:7px 13px;font-size:12px;color:#2e3a59;display:inline-flex;align-items:center;gap:6px;background:#eef2f7;${on?'box-shadow:inset 0 0 0 1px #bccadb,inset 2px 2px 5px #aebccf,inset -2px -2px 5px #ffffff':'box-shadow:0 0 0 1px #b6c3d5,3px 3px 8px #aebccf,-3px -3px 7px #ffffff'}"><span style="width:9px;height:9px;border-radius:3px;background:${c}"></span>${l}</button>`;}).join('');
+    aHost.querySelectorAll('button').forEach(el=>el.onclick=()=>{this._schFilter=el.dataset.cat;this._schEdit=null;this.buildSchedule();});
+    this.root.querySelector('#schedlegend').innerHTML=this.ZWT.slice().reverse().map(w=>`<div class="sl-item"><span class="sl-sw" style="background:${w.color}"></span>${w.label}</div>`).join('')+'<div class="sl-item"><span class="sl-fill"></span>Solid = % done</div><div class="sl-item"><span class="sl-lag"></span>Red = due / behind</div>';
+    const bldMap={NB:'NB',EB:'EB',MA:'M'}; const areas=(filt==='all'?['NB','EB','MA']:[filt]);
+    const levOrder=['Roof','L5','L4','L3','L2','L1','B1M','B1','B2','Piling','Other']; let outHtml='';
+    areas.forEach(aK=>{ const bld=Z.buildings.find(b=>b.key===bldMap[aK]); if(!bld)return; const cc=this.CAT[aK];
+      const cardBg={NB:'#f3e8ef',EB:'#f6f0e4',MA:'#e7f0fa'}[aK]||'#eef1f7';
+      const zones=bld.zones.filter(n=>{ if(critOnly&&!this.zpIsCrit(n))return false; if(q&&n.toLowerCase().indexOf(q)<0)return false; return true; });
+      if(!zones.length)return;
+      const byLev={}, doneCards=[]; let pctSum=0,pctN=0,crit=0,tasks=0;
+      zones.forEach(n=>{ const pz=Z.plan[n]?n:this.zpResolvePlan(n); const zd=pz?Z.plan[pz]:null; const ov=this.zoneOverallPct(n); if(ov!=null){pctSum+=ov;pctN++;} if(this.zpIsCrit(n))crit++;
+        const levs=new Set(); if(zd){for(const m in zd)zd[m].forEach(it=>{tasks++;levs.add(this.zpLevel(it.w)||'Other');});} if(!levs.size)levs.add('Other');
+        if(ov!=null&&ov>=99){doneCards.push({n,pz});} else { levs.forEach(L=>{(byLev[L]||(byLev[L]=[])).push({n,pz});}); } });
+      const bpct=pctN?Math.round(pctSum/pctN):0;
+      outHtml+=`<section style="background:#eef1f7;border-radius:20px;box-shadow:0 0 0 1px #aebdd1,10px 10px 22px #a8b6cb,-8px -8px 20px #ffffff;overflow:hidden;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:15px;padding:15px 18px;border-bottom:1px solid #e2e8f1;flex-wrap:wrap">
+          <div style="width:6px;height:38px;border-radius:3px;background:${cc.c}"></div>
+          <div style="min-width:150px"><div style="font-size:16px;font-weight:800">${cc.label}</div><div style="font-size:11px;color:#7d8ea0;font-weight:600">${zones.length} zones · as of ${short(this._schMonth||cur)}</div></div>
+          <div style="flex:1;min-width:180px"><div style="display:flex;justify-content:space-between;font-size:9.5px;font-weight:800;color:#7d8ea0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px"><span>Overall</span><span style="font-family:'IBM Plex Mono',monospace;color:#2e3a59">${bpct}%</span></div><div style="height:10px;background:#e4e9f1;box-shadow:inset 0 0 0 1px #bccadb,inset 2px 2px 4px #aebccf,inset -2px -2px 4px #ffffff;border-radius:6px;overflow:hidden"><div style="height:100%;width:${bpct}%;background:${this.progColor(bpct)};border-radius:6px"></div></div></div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <div style="background:#eef1f7;box-shadow:0 0 0 1px #b6c3d5,4px 4px 9px #aebccf,-3px -3px 8px #ffffff;border-radius:11px;padding:6px 11px;text-align:center;min-width:48px"><div style="font-size:14px;font-weight:800;font-family:'IBM Plex Mono',monospace">${tasks}</div><div style="font-size:8.5px;color:#7d8ea0;font-weight:700;text-transform:uppercase">Tasks</div></div>
+            <div style="background:rgba(239,95,122,.1);border-radius:11px;padding:6px 11px;text-align:center;min-width:48px"><div style="font-size:14px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#ef5f7a">${crit}</div><div style="font-size:8.5px;color:#ef5f7a;font-weight:700;text-transform:uppercase">Critical</div></div>
+          </div>
+        </div>`;
+      levOrder.filter(L=>byLev[L]).forEach(L=>{ const cards=byLev[L]; const lopen=!(this._schLevClosed&&this._schLevClosed[aK+'|'+L]);
+        outHtml+=`<div class="zs-levhd" data-lk="${aK}|${L}" style="padding:11px 16px 4px;display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none"><span style="font-size:10px;color:#8a94a6;width:12px;text-align:center">${lopen?'▾':'▸'}</span><span style="font-size:12.5px;font-weight:800;color:#2e3a59">${L}</span><span style="font-size:10px;color:#8a94a6;font-weight:600">${cards.length} zones</span><span style="flex:1;height:1px;background:#dbe2ec"></span></div>`;
+        if(lopen){ outHtml+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:9px;padding:6px 16px 14px">`;
+        cards.forEach(o=>{ const n=o.n, pz=o.pz; const bars=this.schedBars(pz,L,n); const eAt=this.zpElemAggAt(n,L); const pct=eAt.total?eAt.pct:this.zpAgg(n).pct; const isC=this.zpIsCrit(n);
+          const badge=pct==null?'—':pct+'%'; const bcol=pct==null?'#aab4c2':(pct>=99?'#218a5c':(pct>0?'#d98a2a':'#aab4c2'));
+          const sel=this._schEdit&&this._schEdit.zone===n;
+          const barsH=bars.length?bars.map(b=>`<div style="display:flex;align-items:center;gap:7px"><span style="flex:0 0 42px;font-size:8px;font-weight:800;font-family:'IBM Plex Mono',monospace;color:${b.color};text-align:right">${b.short}</span><div style="flex:1;height:8px;border-radius:5px;${b.trackCss}"><div style="height:100%;border-radius:5px;width:${b.fill}%;background:${b.color};opacity:${b.op}"></div></div></div>`).join(''):`<div style="font-size:10px;color:#b9c3ce;font-weight:600;padding:3px 0">not scheduled</div>`;
+          outHtml+=`<div data-zone="${this.esc(n)}" class="zsc-card" style="background:${this.zoneTint(n)};border-radius:13px;box-shadow:${isC?'0 0 0 3px #ef2d55,':''}${sel?'0 0 0 1px #b6c3d5,4px 4px 10px #aebccf,-3px -3px 8px #ffffff,inset 0 0 0 1.5px #4a90e2':'0 0 0 1px #c6d1de,3px 3px 8px #b3c1d3,-3px -3px 7px #ffffff'};padding:10px 12px;cursor:pointer">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px"><span style="display:flex;align-items:center;gap:5px;min-width:0">${isC?'<span style="font-size:8px;font-weight:800;color:#fff;background:#ef2d55;border-radius:4px;padding:1px 5px;flex:0 0 auto;letter-spacing:.4px">CRIT</span>':''}<span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:700;color:#2e3a59;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${this.esc(n)}</span></span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:800;color:${bcol}">${badge}</span></div>
+            <div style="display:flex;flex-direction:column;gap:4px">${barsH}</div></div>`; });
+        outHtml+=`</div>`; } });
+      if(doneCards.length){ const dopen=!!(this._schDoneOpen&&this._schDoneOpen[aK]);
+        outHtml+=`<div class="zs-donehd" data-area="${aK}" style="margin:6px 16px ${dopen?'2px':'14px'};padding:9px 13px;display:flex;align-items:center;gap:9px;cursor:pointer;border-radius:12px;background:rgba(53,192,142,.12);box-shadow:inset 0 0 0 1px #b3d9c4"><span style="color:#218a5c;font-weight:800;font-size:12.5px">✓ Completed</span><span style="font-size:10.5px;color:#4e8a6f;font-weight:700">${doneCards.length} zones</span><span style="flex:1"></span><span style="font-size:11px;color:#218a5c;font-weight:800">${dopen?'Hide ▾':'Show ▸'}</span></div>`;
+        if(dopen){ outHtml+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:9px;padding:6px 16px 14px">`;
+          doneCards.forEach(o=>{ const n=o.n; const isC=this.zpIsCrit(n); const sel=this._schEdit&&this._schEdit.zone===n;
+            outHtml+=`<div data-zone="${this.esc(n)}" class="zsc-card" style="background:${this.zoneTint(n)};border-radius:13px;box-shadow:${isC?'0 0 0 3px #ef2d55,':''}${sel?'0 0 0 1px #9fceb5,inset 0 0 0 1.5px #4a90e2':'0 0 0 1px #bfe0cd'};padding:9px 12px;cursor:pointer"><div style="display:flex;align-items:center;justify-content:space-between;gap:6px"><span style="display:flex;align-items:center;gap:5px;min-width:0">${isC?'<span style="font-size:8px;font-weight:800;color:#fff;background:#ef2d55;border-radius:4px;padding:1px 5px;flex:0 0 auto;letter-spacing:.4px">CRIT</span>':''}<span style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;font-weight:700;color:#2e3a59;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${this.esc(n)}</span></span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:800;color:#218a5c">✓ 100%</span></div></div>`; });
+          outHtml+=`</div>`; } }
+      outHtml+=`</section>`; });
+    if(!outHtml)outHtml='<div style="padding:44px;text-align:center;color:#8a94a6;font-weight:600">No zones match this filter.</div>';
+    host.innerHTML=`<div style="max-width:1180px;margin:0 auto;padding-top:14px">${outHtml}</div>`+this.schedDrawer();
+    host.querySelectorAll('.zsc-card').forEach(el=>el.onclick=()=>{this._schEdit={zone:el.dataset.zone};this.buildSchedule();});
+    host.querySelectorAll('.zs-donehd').forEach(el=>el.onclick=()=>{this._schDoneOpen=this._schDoneOpen||{};const k=el.dataset.area;this._schDoneOpen[k]=!this._schDoneOpen[k];this.buildSchedule();});
+    host.querySelectorAll('.zs-levhd').forEach(el=>el.onclick=()=>{this._schLevClosed=this._schLevClosed||{};const k=el.dataset.lk;this._schLevClosed[k]=!this._schLevClosed[k];this.buildSchedule();});
+    const cl=this.root.querySelector('#zsdClose'); if(cl)cl.onclick=()=>{this._schEdit=null;this.buildSchedule();};
+    const jb=this.root.querySelector('#zsdJump'); if(jb)jb.onclick=()=>this.jumpToZone(jb.dataset.zone);
+  }
+  paintTimelineSel(){this.root.querySelectorAll('#schedbody .gbar').forEach(el=>el.classList.toggle('sel',this.selKey&&el.dataset.k===this.selKey));}
+
+  /* ---------- controls ---------- */
+  setLevel(lv){this.curLevel=lv;this.selKey=null;this.syncRail();this.buildMetrics();this.render();this.paintTimelineSel();}
+  syncRail(){this.root.querySelectorAll('.rbtn').forEach(x=>x.classList.toggle('on',x.dataset.lv===this.curLevel));}
+
+  buildRail(){
+    const rail=this.root.querySelector('#rail');rail.innerHTML='';
+    this.DATA.order.forEach(lv=>{const b=document.createElement('div');b.className='rbtn'+(lv===this.curLevel?' on':'');b.dataset.lv=lv;
+      const lp=this.levelProg[lv];const empty=!this.DATA.levels[lv].zones.length;
+      if(empty){b.className+=' tpl';b.innerHTML=`<div class="code">${lv}</div><div class="nm">Awaiting</div><div class="tag">TEMPLATE</div>`;}
+      else b.innerHTML=`<div class="code">${lv}</div><div class="nm">${this.esc(this.DATA.levels[lv].title.replace(/\(.*/,'').trim())}</div><div class="rpb"><i style="width:${lp.avg}%"></i></div><div class="rpct">${lp.avg}%</div>`;
+      b.addEventListener('click',()=>this.setLevel(lv));
+      rail.appendChild(b);});
+  }
+
+  metricTotals(){
+    const seen={},uniq=[];this.DATA.levels[this.curLevel].zones.forEach(z=>{if(!this.zoneVisible(z))return;const k=this.zid(z);if(!seen[k]){seen[k]=1;uniq.push(z);}});
+    const t={columns:0,pilecap:0,mainbeam:0,steelbeam:0,liftstairAll:0,area:0};
+    uniq.forEach(z=>{const c=z.counts;t.columns+=c.columns||0;t.pilecap+=c.pilecap||0;t.mainbeam+=c.mainbeam||0;t.steelbeam+=c.steelbeam||0;t.liftstairAll+=this.lsAll(c);t.area+=z.area||0;});
+    return t;
+  }
+
+  buildMetrics(){
+    const mc=this.root.querySelector('#metrics');mc.innerHTML='';
+    const mkLbl=t=>{const s=document.createElement('span');s.className='mlbl';s.textContent=t;return s;};
+    mc.appendChild(mkLbl('Colour:'));
+    const modes=[['area','Area',(this.CAT.NB).c],['progress','Progress',this.cssvar('--wip')],['quantity','Quantity heat',this.cssvar('--heat1')]];
+    const seg=document.createElement('div');seg.className='modeseg';
+    modes.forEach(([k,lab,dot])=>{const btn=document.createElement('button');btn.className=k===this.colorMode?'on':'';btn.innerHTML=`<span class="dt" style="background:${dot}"></span>${lab}`;btn.addEventListener('click',()=>{this.colorMode=k;this.buildMetrics();this.render();});seg.appendChild(btn);});
+    mc.appendChild(seg);
+    const dv1=document.createElement('span');dv1.className='divv';mc.appendChild(dv1);
+    mc.appendChild(mkLbl(this.colorMode==='quantity'?'Heat / rank by:':'Rank by:'));
+    const tt=this.metricTotals();
+    this.METRICS.forEach(m=>{
+      const tot=m.k==='area'?this.fmt(tt.area):tt[m.k];
+      const c=document.createElement('div');c.className='mchip'+(m.k===this.curMetric?' on':'');
+      c.innerHTML=`${m.label} <span class="v">${tot}</span>`;
+      c.addEventListener('click',()=>{this.curMetric=m.k;this.render();this.buildMetrics();});mc.appendChild(c);});
+    const dv2=document.createElement('span');dv2.className='divv';mc.appendChild(dv2);
+    mc.appendChild(mkLbl('Overlays:'));
+    const mkToggle=(on,inner,fn)=>{const c=document.createElement('div');c.className='tchip '+(on?'on':'off');c.innerHTML=inner;c.addEventListener('click',fn);mc.appendChild(c);};
+    mkToggle(this.showSeq,`<span style="width:14px;height:14px;border-radius:50%;background:var(--dim);color:#fff;font-size:8px;line-height:14px;text-align:center;font-weight:800">#</span>Pour sequence`,()=>{this.showSeq=!this.showSeq;this.buildMetrics();this.render();});
+    mkToggle(this.showCrit,`<span style="width:9px;height:9px;border-radius:50%;background:var(--crit)"></span>Critical path`,()=>{this.showCrit=!this.showCrit;this.buildMetrics();this.render();});
+    mkToggle(this.showAreaBounds,`<span style="width:16px;border-top:3px solid var(--dim);display:inline-block"></span>Area boundaries`,()=>{this.showAreaBounds=!this.showAreaBounds;this.buildMetrics();this.render();});
+    Object.keys(this.OVL).forEach(k=>{const o=this.OVL[k];mkToggle(this.showOvl[k],`<span class="dash" style="color:${o.c}"></span>${o.label}`,()=>{this.showOvl[k]=!this.showOvl[k];this.buildMetrics();this.render();});});
+    if(this.DATA.beamlines && this.DATA.beamlines[this.curLevel])
+      mkToggle(this.showBeams,`<span style="width:16px;border-top:2px solid var(--beam);display:inline-block"></span>Main beams`,()=>{this.showBeams=!this.showBeams;this.buildMetrics();this.render();});
+  }
+
+  bindGlobal(){
+    const svg=this.svg;
+    svg.addEventListener('wheel',ev=>{ev.preventDefault();const r=svg.getBoundingClientRect();
+      const mxr=(ev.clientX-r.left)/r.width,myr=(ev.clientY-r.top)/r.height,f=ev.deltaY<0?0.85:1/0.85;
+      this.vb={x:this.vb.x+(this.vb.w-this.vb.w*f)*mxr,y:this.vb.y+(this.vb.h-this.vb.h*f)*myr,w:this.vb.w*f,h:this.vb.h*f};
+      svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);},{passive:false});
+    let dragging=false,last=null;
+    svg.addEventListener('mousedown',ev=>{dragging=true;last=[ev.clientX,ev.clientY];svg.classList.add('drag');});
+    window.addEventListener('mouseup',()=>{dragging=false;svg.classList.remove('drag');});
+    window.addEventListener('mousemove',ev=>{if(!dragging)return;const r=svg.getBoundingClientRect();
+      this.vb.x-=(ev.clientX-last[0])/r.width*this.vb.w;this.vb.y-=(ev.clientY-last[1])/r.height*this.vb.h;last=[ev.clientX,ev.clientY];
+      svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);});
+    svg.addEventListener('dblclick',()=>{this.vb={...this.base};svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);});
+    this.root.querySelector('#themeseg').addEventListener('click',e=>{if(e.target.dataset.t){this.root.closest('html')?.setAttribute('data-theme',e.target.dataset.t);document.documentElement.setAttribute('data-theme',e.target.dataset.t);this.root.querySelectorAll('#themeseg button').forEach(b=>b.classList.toggle('on',b===e.target));this.buildMetrics();this.buildTimeline();this.render();}});
+    this.root.querySelector('#openTable').addEventListener('click',()=>this.openTable());
+    this.root.querySelector('#exportXls').addEventListener('click',()=>this.exportExcel());
+    this.root.querySelector('#saveLock').addEventListener('click',()=>this.saveLock());
+    const lf=this.root.querySelector('#lockFile');
+    this.root.querySelector('#loadLock').addEventListener('click',()=>lf.click());
+    lf.addEventListener('change',e=>{const f=e.target.files[0];if(f)this.loadLock(f);lf.value='';});
+    this.root.querySelector('#mExport').addEventListener('click',()=>this.exportExcel());
+    this.root.querySelector('#mClose').addEventListener('click',()=>this.root.querySelector('#modal').classList.remove('open'));
+    this.root.querySelector('#openSched').addEventListener('click',()=>this.openSched());
+    this.root.querySelector('#schedClose').addEventListener('click',()=>this.root.querySelector('#schedpage').classList.remove('open'));
+    this.root.querySelector('#modal').addEventListener('click',e=>{if(e.target.id==='modal')e.target.classList.remove('open');});
+    this.refreshUpdBadge();
+  }
+
+  /* ---------- register table + Excel export ---------- */
+  registerRows(){
+    const rows=[];
+    this.DATA.order.forEach(lv=>{
+      const seen={},uniq=[];
+      this.DATA.levels[lv].zones.forEach(z=>{const k=z.mk||('_'+z.lid);if(!seen[k]){seen[k]=1;uniq.push(z);}});
+      uniq.sort((a,b)=>(a._base?a._base.seq:0)-(b._base?b._base.seq:0));
+      uniq.forEach(z=>{const c=z.counts,p=z._p||{},b=z._base||{},u=this.latestUpdate(z.mk);
+        const _zn=this.zpMatchOf(z); const _zpct=_zn?this.zoneOverallPct(_zn):null;
+        rows.push({lv,zone:z.label,cat:(this.CAT[z.cat]||this.CAT.NB).label,grp:(z.grp&&z.grp!=='Ungrouped')?z.grp:z.fam,
+          area:z.area||0,columns:c.columns||0,pilecap:c.pilecap||0,mainbeam:c.mainbeam||0,steelbeam:c.steelbeam||0,liftstair:this.lsAll(c),
+          seq:b.seq||'',planStart:this.ml(Math.round(b.start||0)),planEnd:this.ml(Math.round(b.end||0)),
+          derivedPct:b.pct!=null?b.pct:'',actualPct:_zpct!=null?_zpct:(u?u.pct:''),status:_zpct!=null?(_zpct>=99?'Complete':_zpct>0?'In progress':'Not started'):(this.STATUS[p.status]?this.STATUS[p.status].label:''),
+          crit:z.crit?'Yes':'',udate:u?u.date:'',crew:u&&u.crew?u.crew:'',note:u&&u.note?u.note:'',n_updates:(this.updates[z.mk]||[]).length});
+      });
+    });
+    return rows;
+  }
+
+  openHow(){
+    const dc=this.cssvar('--done'),wc=this.cssvar('--wip'),tc=this.cssvar('--todo'),cr=this.cssvar('--crit'),ln=this.cssvar('--line'),tx=this.cssvar('--txt'),dm=this.cssvar('--dim');
+    const mn=['Jan','Feb','Mar','Apr','May','Jun','Jul'];
+    let ticks='';for(let i=0;i<7;i++){const x=48+i*98;ticks+=`<line x1="${x}" y1="34" x2="${x}" y2="140" stroke="${ln}" stroke-width="1"/><text x="${x}" y="158" fill="${dm}" font-size="11" text-anchor="middle">${mn[i]}</text>`;}
+    const svg=`<svg viewBox="0 0 700 172" style="width:100%;height:auto;background:var(--panel2);border:1px solid ${ln};border-radius:10px">
+      ${ticks}
+      <text x="48" y="24" fill="${dm}" font-size="11">← Timeline (months, left → right) →</text>
+      <text x="12" y="96" fill="${tx}" font-size="12" font-weight="700">L1</text>
+      <rect x="78" y="80" width="104" height="24" rx="4" fill="${dc}"/>
+      <rect x="250" y="80" width="156" height="24" rx="4" fill="${wc}"/>
+      <rect x="470" y="80" width="150" height="24" rx="4" fill="${tc}"/>
+      <line x1="368" y1="34" x2="368" y2="140" stroke="${cr}" stroke-width="2"/>
+      <text x="374" y="46" fill="${cr}" font-size="11" font-weight="800">Today</text>
+      <text x="250" y="72" fill="${tx}" font-size="11" text-anchor="middle" font-weight="700">1 Plan start</text>
+      <text x="406" y="72" fill="${tx}" font-size="11" text-anchor="middle" font-weight="700">2 Plan end</text>
+      <text x="328" y="97" fill="#1b1e26" font-size="10.5" text-anchor="middle" font-weight="800">4 Colour = status</text>
+      <line x1="250" y1="116" x2="406" y2="116" stroke="${tx}" stroke-width="1"/>
+      <text x="328" y="130" fill="${tx}" font-size="11" text-anchor="middle" font-weight="700">3 Length = duration</text>
+    </svg>`;
+    const chip=(c,t)=>`<span class="pill2" style="background:${c}">${t}</span>`;
+    this.root.querySelector('#howbody').innerHTML=`
+      <div class="lead">This schedule is a <b>timeline of zones by month</b>. Each row is a zone; each month cell shows that month's work packages, coloured by trade and filled by % complete.</div>
+      ${svg}
+      <div class="hsec">How to read each cell</div>
+      <ul>
+        <li><span class="num">1</span><span>A coloured bar in a month = that trade is scheduled that month.</span></li>
+        <li><span class="num">2</span><span>Solid fill = % complete for that trade.</span></li>
+        <li><span class="num">3</span><span>A red-edged bar = due or behind (past month, nothing reported).</span></li>
+        <li><span class="num">4</span><span>Click any cell to enter completed quantities.</span></li>
+      </ul>
+      <div class="hsec">Filters</div>
+      <div class="note">The current month is highlighted. Use the Area chips (New / Existing / Marine), the zone search and Critical-only to narrow the view.</div>
+      <div class="hsec">Tips</div>
+      <div class="note">Click a zone name to show it on the map. Entered quantities are saved into this file.</div>`;
+    this.root.querySelector('#howmodal').classList.add('open');
+  }
+
+  openTable(){
+    const rows=this.registerRows();
+    const cols=[['Level','lv'],['Zone','zone'],['Category','cat'],['Pour group','grp'],['Critical','crit'],
+      ['Area m²','area','num'],['Columns','columns','num'],['Pile caps','pilecap','num'],['Main beams','mainbeam','num'],['Steel beams','steelbeam','num'],['Lift/Stair','liftstair','num'],
+      ['Seq','seq','num'],['Plan start','planStart'],['Plan end','planEnd'],['Derived %','derivedPct','num'],['Actual %','actualPct','num'],['Status','status'],['Updated','udate'],['Crew','crew'],['Note','note'],['Updates','n_updates','num']];
+    const dc=this.cssvar('--done'),wc=this.cssvar('--wip'),tc=this.cssvar('--todo');
+    const dotFor=s=>s==='Complete'?dc:s==='In progress'?wc:tc;
+    let html=`<table class="reg"><thead><tr>${cols.map(c=>`<th class="${c[2]==='num'?'num':''}">${c[0]}</th>`).join('')}</tr></thead><tbody>`;
+    rows.forEach(r=>{const manual=r.actualPct!=='';
+      html+=`<tr class="${manual?'mrk':''}">${cols.map(c=>{let v=r[c[1]];
+        if(c[1]==='area')v=this.fmt(v);
+        if(c[1]==='status'&&v)v=`<span class="dot" style="background:${dotFor(v)}"></span>${v}`;
+        return `<td class="${c[2]==='num'?'num':''}">${v===''||v==null?'<span style="color:var(--faint)">—</span>':v}</td>`;}).join('')}</tr>`;});
+    html+='</tbody></table>';
+    if(!rows.length)html='<div class="empty" style="padding:24px">No zones.</div>';
+    const box=this.root.querySelector('#mbody');
+    box.innerHTML=`<div style="padding:8px 18px;font-size:11px;color:var(--dim)"><b style="color:var(--txt)">${rows.length}</b> zones · <b style="color:var(--accent)">${rows.filter(r=>r.actualPct!=='').length}</b> with site-entered actuals (blue bar). Saving an update in a zone panel refreshes this register and the exported Excel.</div>`+html;
+    this.root.querySelector('#modal').classList.add('open');
+  }
+
+  exportExcel(){
+    const rows=this.registerRows();
+    const heads=['Level','Zone','Category','PourGroup','Critical','Area_m2','Columns','PileCaps','MainBeams','SteelBeams','Lift_Stair','Seq','PlanStart','PlanEnd','DerivedPct','ActualPct','Status','UpdateDate','Crew','Note','UpdateCount'];
+    const keys=['lv','zone','cat','grp','crit','area','columns','pilecap','mainbeam','steelbeam','liftstair','seq','planStart','planEnd','derivedPct','actualPct','status','udate','crew','note','n_updates'];
+    const esc=v=>('<td>'+String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</td>');
+    let t='<table border="1"><tr>'+heads.map(h=>`<th style="background:#dfe6f2;font-weight:bold">${h}</th>`).join('')+'</tr>';
+    rows.forEach(r=>{t+='<tr>'+keys.map(k=>esc(r[k])).join('')+'</tr>';});
+    t+='</table>';
+    // Element-level detail (every marked element)
+    const lmap={},zmap={};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{if(z.mk){zmap[z.mk]=z.label;lmap[z.mk]=lmap[z.mk]||lv;}}));
+    const stLbl={wip:'In progress',done:'Complete'};
+    const eRows=Object.keys(this.elem).map(k=>{const[lv,mk,type,id]=k.split('||');return{lv,zone:zmap[mk]||mk,type,id,status:stLbl[this.elem[k]]||this.elem[k]};})
+      .sort((a,b)=>a.lv.localeCompare(b.lv)||a.zone.localeCompare(b.zone)||a.type.localeCompare(b.type));
+    let et='';
+    if(eRows.length){
+      const eh=['Level','Zone','ElementType','ElementID','Status'];
+      et='<br><table border="1"><tr><td colspan="5" style="font-weight:bold;background:#e6efe0">Element Detail (marked '+eRows.length+')</td></tr><tr>'+eh.map(h=>`<th style="background:#dfe6f2;font-weight:bold">${h}</th>`).join('')+'</tr>';
+      eRows.forEach(r=>{et+='<tr>'+[r.lv,r.zone,r.type,r.id,r.status].map(esc).join('')+'</tr>';});
+      et+='</table>';
+    }
+    t+=et;
+    const stamp=new Date().toISOString().slice(0,10);
+    const meta=`<tr><td colspan="${heads.length}">RWS P1 CJ · Zone Progress Register · exported ${stamp} · project ${this.projPct}%</td></tr>`;
+    const doc=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Zone Register</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>${meta}</table>${t}</body></html>`;
+    const blob=new Blob(['\ufeff'+doc],{type:'application/vnd.ms-excel'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');
+    a.href=url;a.download=`RWS_P1_CJ_Zone_Register_${stamp}.xls`;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},400);
+  }
+
+  /* ---------- lock file: persist all markers to a portable file & reload ---------- */
+  snapshot(){return {v:2,project:'RWS P1 CJ',savedAt:new Date().toISOString(),elem:this.elem,updates:this.updates,zpOv:this._zpOv};}
+  saveLock(){
+    if(this._locking)return; this._locking=true; setTimeout(()=>{this._locking=false;},900);
+    const S='<'+'script', ES='<'+'/script>';
+    const tag=S+' id="locked-data" type="application/json">'+JSON.stringify(this.snapshot())+ES;
+    let html='<!doctype html>\n'+document.documentElement.outerHTML;
+    html=html.replace(new RegExp(S+' id="locked-data"[^>]*>[\\s\\S]*?'+ES),'');
+    html=/<\/body>/i.test(html)? html.replace(/<\/body>/i, tag+'\n</body>') : html+tag;
+    const stamp=new Date().toISOString().slice(0,10);
+    const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');
+    a.href=url;a.download=`RWS_P1_CJ_Tracker_${stamp}.html`;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},500);
+  }
+  buildLabelMap(){this.labelMap={};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{this.labelMap[lv+'||'+z.label]=(z.mk||('_'+z.lid));}));}
+  loadLock(file){
+    const r=new FileReader();
+    r.onload=()=>{try{
+      let txt=String(r.result);let elemN=0,updN=0;
+      const m=txt.match(/<script id="locked-data"[^>]*>([\s\S]*?)<\/script>/i);
+      if(m||(txt.trim()[0]==='{')){
+        const data=JSON.parse(m?m[1]:txt);
+        if(data.elem){this.elem={...this.elem,...data.elem};elemN=Object.keys(data.elem).length;}
+        if(data.updates){Object.keys(data.updates).forEach(k=>{this.updates[k]=data.updates[k];});updN=Object.keys(data.updates).length;}
+      } else {
+        // Excel/CSV/HTML-table archive: restore element marks from the Element Detail table
+        this.buildLabelMap();
+        const codeOf=s=>{s=(s||'').trim();return /complete|done/i.test(s)?'done':/progress|wip/i.test(s)?'wip':'todo';};
+        let rowsHtml=[];
+        const doc=new DOMParser().parseFromString(txt,'text/html');
+        const trs=[...doc.querySelectorAll('tr')];
+        if(trs.length){
+          let cols=null;
+          trs.forEach(tr=>{const cells=[...tr.children].map(td=>td.textContent.trim());
+            if(cells.some(c=>/elementid/i.test(c))){cols={lv:cells.findIndex(c=>/^level$/i.test(c)),zone:cells.findIndex(c=>/^zone$/i.test(c)),type:cells.findIndex(c=>/elementtype/i.test(c)),id:cells.findIndex(c=>/elementid/i.test(c)),st:cells.findIndex(c=>/^status$/i.test(c))};return;}
+            if(cols&&cells.length>=5&&cells[cols.id]){const idp=this.labelMap[cells[cols.lv]+'||'+cells[cols.zone]];if(!idp)return;const st=codeOf(cells[cols.st]);const key=cells[cols.lv]+'||'+idp+'||'+cells[cols.type]+'||'+cells[cols.id];if(st==='todo')delete this.elem[key];else{this.elem[key]=st;}elemN++;}});
+        } else {
+          // CSV fallback
+          txt.split(/\r?\n/).forEach(line=>{const c=line.split(',').map(x=>x.replace(/^"|"$/g,'').trim());if(c.length>=5&&/elementid/i.test(line)===false&&c[3]){const idp=this.labelMap[c[0]+'||'+c[1]];if(!idp)return;const st=codeOf(c[4]);const key=c[0]+'||'+idp+'||'+c[2]+'||'+c[3];if(st!=='todo'){this.elem[key]=st;elemN++;}}});
+        }
+        if(!elemN){alert('No recognisable element detail found in the file (needs an Element Detail table).');return;}
+      }
+      this.saveElem();this.saveUpdatesStore();this.applyUpdates();
+      this.buildRail();this.buildTimeline();this.render();this.refreshUpdBadge();
+      if(this.selKey){const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);}
+      alert('Loaded: '+this.doneCount()+' elements done, '+this.updateCount()+' zone entries. You can keep updating.');
+    }catch(err){alert('Could not parse file: '+err.message);}};
+    r.readAsText(file);
+  }
+}
+</script>
+</body>
+</html>
