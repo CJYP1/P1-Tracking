@@ -326,6 +326,101 @@ table.reg .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margi
 <script src="zone-data.global.js"></script>
 <script src="zp-data.global.js"></script>
 <script src="floor-templates.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ---- Supabase cloud sync: accounts, per-record sync, offline queue ---- */
+const SUPABASE_URL = 'https://rxarahrcsylkkqbcatxw.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_f_DTCZskL9aCdMdn0KTHsg_AsCdQ1tB';
+const rwsSb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Hidden admin entry: open this file with #zradmin92 in the URL. Change this
+// string to your own private one before you hand the file to anyone else —
+// treat it like a second password. Nobody sees an admin option without it
+// AND a logged-in admin account.
+const RWS_ADMIN_HASH = '#zradmin92';
+function rwsIsAdminEntryRequested(){ return window.location.hash === RWS_ADMIN_HASH; }
+const RWS_SESSION_KEY = 'rws_session';
+function rwsGetSession(){ try{ return JSON.parse(localStorage.getItem(RWS_SESSION_KEY)||'null'); }catch(e){ return null; } }
+function rwsSetSession(s){ try{ localStorage.setItem(RWS_SESSION_KEY, JSON.stringify(s)); }catch(e){} }
+function rwsClearSession(){ try{ localStorage.removeItem(RWS_SESSION_KEY); }catch(e){} }
+async function rwsCall(fn, args){
+  try{
+    const { data, error } = await rwsSb.rpc(fn, args);
+    if (error) {
+      const msg = (error.message || '').toLowerCase();
+      const rejected = msg.includes('not permitted') || msg.includes('admin only') ||
+        msg.includes('bad ') || msg.includes('invalid username') || msg.includes('invalid or expired');
+      return { ok:false, error, rejected, offline:false };
+    }
+    return { ok:true, data };
+  }catch(networkErr){ return { ok:false, error:networkErr, offline:true }; }
+}
+async function rwsLogin(username, password){
+  const r = await rwsCall('rws_login', { p_username:username, p_password:password });
+  if (!r.ok) throw new Error(r.error && r.error.message ? r.error.message : 'login failed');
+  rwsSetSession(r.data); return r.data;
+}
+async function rwsLogout(){ const s=rwsGetSession(); if(s) await rwsCall('rws_logout',{p_token:s.token}); rwsClearSession(); }
+async function rwsRestoreSession(){
+  const s = rwsGetSession(); if (!s) return null;
+  const r = await rwsCall('rws_check_session', { p_token: s.token });
+  if (!r.ok || !r.data) return s; // offline / transient — keep the cached session so the app still works
+  const merged = { ...s, ...r.data }; rwsSetSession(merged); return merged;
+}
+const RWS_QUEUE_KEY = 'rws_offline_queue';
+function rwsQueueList(){ try{ return JSON.parse(localStorage.getItem(RWS_QUEUE_KEY)||'[]'); }catch(e){ return []; } }
+function rwsQueueSave(q){ try{ localStorage.setItem(RWS_QUEUE_KEY, JSON.stringify(q)); }catch(e){} }
+function rwsQueuePush(fn, args){ const q=rwsQueueList(); q.push({id:Date.now()+'_'+Math.random().toString(36).slice(2),fn,args,ts:Date.now()}); rwsQueueSave(q); }
+function rwsQueueSize(){ return rwsQueueList().length; }
+let _rwsFlushing = false;
+async function rwsQueueFlush(){
+  if (_rwsFlushing) return; _rwsFlushing = true;
+  try{
+    let q = rwsQueueList();
+    while (q.length) {
+      const item = q[0];
+      const r = await rwsCall(item.fn, item.args);
+      if (r.ok) { q.shift(); rwsQueueSave(q); }
+      else if (r.offline) { break; }
+      else { console.warn('[rws] dropping queued edit, server rejected it:', item, r.error); q.shift(); rwsQueueSave(q); }
+    }
+  } finally { _rwsFlushing = false; }
+  if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
+}
+window.addEventListener('online', rwsQueueFlush);
+setInterval(rwsQueueFlush, 20000);
+async function rwsGetState(token){
+  const r = await rwsCall('rws_get_state', { p_token: token });
+  if (!r.ok) throw new Error(r.error && r.error.message ? r.error.message : 'failed to load state');
+  return r.data;
+}
+async function rwsSyncElementStatus(elementKey, status){
+  const s = rwsGetSession(); if (!s) return { ok:false };
+  const args = { p_token:s.token, p_element_key:elementKey, p_status:status };
+  const r = await rwsCall('rws_update_element', args);
+  if (!r.ok && r.offline) rwsQueuePush('rws_update_element', args);
+  if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
+  return r;
+}
+async function rwsSyncSlabQty(qtyKey, level, zoneMk, qty){
+  const s = rwsGetSession(); if (!s) return { ok:false };
+  const args = { p_token:s.token, p_qty_key:qtyKey, p_level:level, p_zone_mk:zoneMk, p_qty:qty };
+  const r = await rwsCall('rws_update_slab_qty', args);
+  if (!r.ok && r.offline) rwsQueuePush('rws_update_slab_qty', args);
+  if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
+  return r;
+}
+async function rwsAddZoneUpdate(a){
+  const s = rwsGetSession(); if (!s) return { ok:false };
+  const args = { p_token:s.token, p_zone_mk:a.zoneMk, p_level:a.level, p_zone_label:a.zoneLabel, p_pct:a.pct, p_status:a.status, p_date:a.date, p_note:a.note, p_crew:a.crew };
+  const r = await rwsCall('rws_add_zone_update', args);
+  if (!r.ok && r.offline) rwsQueuePush('rws_add_zone_update', args);
+  if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
+  return r;
+}
+async function rwsAdminActivityLog(limit){ const s=rwsGetSession(); if(!s) throw new Error('not logged in'); const r=await rwsCall('rws_admin_activity_log',{p_token:s.token,p_limit:limit||300}); if(!r.ok) throw new Error(r.error&&r.error.message||'failed'); return r.data; }
+async function rwsAdminListUsers(){ const s=rwsGetSession(); if(!s) throw new Error('not logged in'); const r=await rwsCall('rws_admin_list_users',{p_token:s.token}); if(!r.ok) throw new Error(r.error&&r.error.message||'failed'); return r.data; }
+async function rwsAdminUpsertUser(u){ const s=rwsGetSession(); if(!s) throw new Error('not logged in'); const r=await rwsCall('rws_admin_upsert_user',{p_token:s.token,p_username:u.username,p_password:u.password||null,p_display_name:u.displayName||'',p_role:u.role,p_allowed_scopes:u.allowedScopes||[],p_active:u.active!==false}); if(!r.ok) throw new Error(r.error&&r.error.message||'failed'); return r.data; }
+</script>
 </helmet>
 <div id="app" ref="{{ rootRef }}">
   <header>
@@ -333,6 +428,10 @@ table.reg .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margi
     <div><h1>RWS P1 · CJ — Zone Resource &amp; Progress Map (P1 Planning)</h1><div class="sub">Quantities &amp; site progress per zone</div></div>
     <div class="spacer"></div>
     <span id="autosave" style="font-size:10px;color:var(--faint);font-weight:600">Autosave on</span>
+    <span id="rwsQueueBadge" style="font-size:10px;color:var(--crit);font-weight:700;display:none"></span>
+    <span id="rwsUserInfo" style="font-size:11px;color:var(--dim);font-weight:600"></span>
+    <button class="hbtn" id="rwsLogoutBtn" style="display:none">Log out</button>
+    <button class="hbtn" id="rwsAdminBtn" style="display:none">🔐 Admin</button>
     <button class="hbtn primary" id="openSched">📅 Construction Schedule</button>
     <button class="hbtn primary" id="saveLock" title="Save the whole page — all progress embedded — as one HTML file to forward or archive">💾 Save</button>
     <button class="hbtn" id="loadLock" title="Open a previously saved file to continue from its data">📂 Open</button>
@@ -375,6 +474,30 @@ table.reg .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margi
     <div id="schedMonths"></div>
     <div id="schedlegend"></div>
     <div id="schedbody"></div>
+  </div>
+  <div id="rwsAuthGate" style="position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;z-index:200;padding:20px">
+    <div style="width:min(340px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.35)">
+      <div style="font-size:15px;font-weight:800;margin-bottom:4px">Sign in</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:16px">Enter the username and password you were given to update zone progress.</div>
+      <label style="font-size:10px;font-weight:700;color:var(--dim);display:block;margin-bottom:4px">Username</label>
+      <input id="rwsLoginUser" type="text" autocomplete="username" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--txt);font-family:inherit;margin-bottom:10px">
+      <label style="font-size:10px;font-weight:700;color:var(--dim);display:block;margin-bottom:4px">Password</label>
+      <input id="rwsLoginPass" type="password" autocomplete="current-password" style="width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--txt);font-family:inherit;margin-bottom:12px">
+      <div id="rwsLoginErr" style="font-size:11px;color:var(--crit);margin-bottom:10px;display:none"></div>
+      <button class="hbtn primary" id="rwsLoginBtn" style="width:100%;justify-content:center">Sign in</button>
+    </div>
+  </div>
+  <div id="rwsAdminModal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:150;padding:26px">
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(900px,96vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.4)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)">
+        <div style="font-size:14px;font-weight:700">Admin dashboard</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="seg" id="rwsAdminTabs"><button data-tab="users" class="on">Accounts</button><button data-tab="log">Activity log</button></div>
+          <button class="hbtn" id="rwsAdminClose">Close</button>
+        </div>
+      </div>
+      <div style="overflow:auto;padding:14px 18px" id="rwsAdminBody"></div>
+    </div>
   </div>
 </div>
 
@@ -427,6 +550,7 @@ class Component extends DCLogic {
     this.buildRail(); this.buildMetrics(); this.buildTimeline();
     this.root.querySelector('#foot').innerHTML = 'Zones coloured by construction area / derived progress / quantity heat. Geometry & quantities from RWS P1 CJ source; progress derived from activity counts + bottom-up schedule model (demo).';
     this.render();
+    this.rwsBoot();
   }
 
   /* ---------- helpers ---------- */
@@ -449,8 +573,8 @@ class Component extends DCLogic {
     let done=0,wip=0,todo=0,ws=0,wa=0;uniq.forEach(z=>{const p=z._p||{pct:0,status:'todo'};ws+=p.pct*(z.area||1);wa+=(z.area||1);if(p.status==='done')done++;else if(p.status==='wip')wip++;else todo++;});
     return {avg:Math.round(ws/Math.max(1,wa)),done,wip,todo,count:uniq.length};}
 
-  applyCritOv(){const ov=this._critOv||{};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{z.crit=!!ov[lv+'|'+this.zid(z)];}));this._critPlanSet=null;}
-  setCrit(lv,z,on){const k=lv+'|'+this.zid(z);if(on)this._critOv[k]=true;else delete this._critOv[k];try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}this.applyCritOv();this._critPlanSet=null;}
+  applyCritOv(){const ov=this._critOv||{};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{z.crit=!!ov[lv+'|'+this.zid(z)];}));}
+  setCrit(lv,z,on){const k=lv+'|'+this.zid(z);if(on)this._critOv[k]=true;else delete this._critOv[k];try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}this.applyCritOv();}
   deriveProgress(){
     this.applyCritOv();
     this.DATA.order.forEach(lv=>{
@@ -519,11 +643,14 @@ class Component extends DCLogic {
   saveUpdatesStore(){try{localStorage.setItem('rws_zone_updates',JSON.stringify(this.updates));}catch(e){}}
   latestUpdate(mk){const a=mk&&this.updates[mk];return a&&a.length?a[a.length-1]:null;}
   updateCount(){return Object.values(this.updates).reduce((n,a)=>n+a.length,0);}
-  addUpdate(mk,e){if(!mk)return;(this.updates[mk]=this.updates[mk]||[]).push({...e,ts:Date.now()});this.saveUpdatesStore();this.applyUpdates();
+  addUpdate(mk,e){if(!mk)return;
+    if(!this.rwsIsAdmin()){this.rwsDeny('Only admin accounts can add a zone-level site update.');return;}
+    (this.updates[mk]=this.updates[mk]||[]).push({...e,ts:Date.now()});this.saveUpdatesStore();this.applyUpdates();
     this.buildRail();this.buildTimeline();this.render();
     const z=this.DATA.levels[this.curLevel].zones.find(x=>x.mk===mk);if(z){this.selectZone(z);this.paintSel();this.paintTimelineSel();}
     this.refreshUpdBadge();if(this.root.querySelector('#modal').classList.contains('open'))this.openTable();
-    if(this.ZP&&this.root.querySelector('#schedpage')&&this.root.querySelector('#schedpage').classList.contains('open'))this.buildSchedule();}
+    if(this.ZP&&this.root.querySelector('#schedpage')&&this.root.querySelector('#schedpage').classList.contains('open'))this.buildSchedule();
+    rwsAddZoneUpdate({zoneMk:mk,level:e.level,zoneLabel:e.zone,pct:e.pct,status:e.status,date:e.date,note:e.note,crew:e.crew});}
   refreshUpdBadge(){const c=this.root.querySelector('#updCnt');if(c)c.textContent=this.updateCount();const e=this.root.querySelector('#elemCnt');if(e)e.textContent=this.doneCount();
     const a=this.root.querySelector('#autosave');if(a){if(this.doneCount()+this.updateCount()>0){const t=new Date();a.textContent='✓ Autosaved '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');a.style.color='var(--done)';}else{a.textContent='Autosave on';a.style.color='var(--faint)';}}}
 
@@ -534,6 +661,150 @@ class Component extends DCLogic {
     if(emb){try{const d=JSON.parse(emb.textContent||'{}');if(d.elem)this.elem={...d.elem,...this.elem};if(d.updates)this.updates={...d.updates,...this.updates};if(d.zpOv){this._embZpOv=d.zpOv;if(this._zpOv){this._zpOv={...d.zpOv,...this._zpOv};if(this.zpApplyOv)this.zpApplyOv();}}if(d.crit){this._critOv={...d.crit,...(this._critOv||{})};}}catch(e){}}
   }
   saveElem(){try{localStorage.setItem('rws_elem_status',JSON.stringify(this.elem));}catch(e){}}
+
+  /* ---------- cloud sync (Supabase accounts + per-record sync) ---------- */
+  rwsScopeOk(lv,zoneMk){
+    const u=this._rwsUser; if(!u)return false; if(u.role==='admin')return true;
+    return (u.allowed_scopes||[]).some(e=>e.level===lv && (e.zone==null||e.zone===zoneMk));
+  }
+  rwsCanEditElement(key){
+    const u=this._rwsUser; if(!u)return false; if(u.role==='admin')return true;
+    const parts=key.split('||'); if(parts.length!==4)return false;
+    const lv=parts[0],zmk=parts[1],etype=parts[2];
+    return etype==='col' && this.rwsScopeOk(lv,zmk);
+  }
+  rwsIsAdmin(){return !!this._rwsUser && this._rwsUser.role==='admin';}
+  rwsDeny(msg){alert(msg||'You are not allowed to change that.');}
+  rwsOnQueueChange(){
+    const n=rwsQueueSize(); const b=this.root&&this.root.querySelector('#rwsQueueBadge'); if(!b)return;
+    if(n>0){b.style.display='';b.textContent='⏳ '+n+' pending sync';} else {b.style.display='none';}
+  }
+  rwsRenderUserBar(){
+    const info=this.root.querySelector('#rwsUserInfo'), lo=this.root.querySelector('#rwsLogoutBtn'), ab=this.root.querySelector('#rwsAdminBtn');
+    const u=this._rwsUser;
+    if(!u){info.textContent='';lo.style.display='none';ab.style.display='none';return;}
+    info.textContent='👤 '+(u.display_name||u.username)+(u.role==='admin'?' (admin)':'');
+    lo.style.display='';
+    ab.style.display=(this._adminEntry && u.role==='admin')?'':'none';
+  }
+  async rwsBoot(){
+    window.__rwsApp=this;
+    this._adminEntry=rwsIsAdminEntryRequested();
+    this.rwsBindAuthUI();
+    const cached=rwsGetSession();
+    if(cached){
+      this._rwsUser=cached; this.rwsRenderUserBar(); this.rwsOnQueueChange();
+      this.rwsAfterLogin();
+      rwsRestoreSession().then(fresh=>{if(fresh){this._rwsUser=fresh;this.rwsRenderUserBar();}});
+    } else {
+      this.root.querySelector('#rwsAuthGate').style.display='flex';
+    }
+  }
+  rwsBindAuthUI(){
+    const gate=this.root.querySelector('#rwsAuthGate');
+    const doLogin=async()=>{
+      const u=this.root.querySelector('#rwsLoginUser').value.trim();
+      const p=this.root.querySelector('#rwsLoginPass').value;
+      const err=this.root.querySelector('#rwsLoginErr');
+      err.style.display='none';
+      if(!u||!p)return;
+      try{
+        const session=await rwsLogin(u,p);
+        this._rwsUser=session; gate.style.display='none';
+        this.root.querySelector('#rwsLoginPass').value='';
+        this.rwsRenderUserBar(); this.rwsOnQueueChange();
+        this.rwsAfterLogin();
+      }catch(e){ err.textContent=e.message||'Login failed'; err.style.display=''; }
+    };
+    this.root.querySelector('#rwsLoginBtn').addEventListener('click',doLogin);
+    this.root.querySelector('#rwsLoginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+    this.root.querySelector('#rwsLogoutBtn').addEventListener('click',async()=>{
+      await rwsLogout(); this._rwsUser=null; this.rwsRenderUserBar();
+      this.root.querySelector('#rwsAuthGate').style.display='flex';
+    });
+    this.root.querySelector('#rwsAdminBtn').addEventListener('click',()=>this.rwsOpenAdmin());
+    this.root.querySelector('#rwsAdminClose').addEventListener('click',()=>{this.root.querySelector('#rwsAdminModal').style.display='none';});
+    this.root.querySelector('#rwsAdminTabs').addEventListener('click',e=>{
+      const b=e.target.closest('button[data-tab]'); if(!b)return;
+      this.root.querySelectorAll('#rwsAdminTabs button').forEach(x=>x.classList.toggle('on',x===b));
+      this._rwsAdminTab=b.dataset.tab; this.rwsRenderAdmin();
+    });
+  }
+  async rwsAfterLogin(){
+    try{
+      const s=rwsGetSession(); if(!s)return;
+      const state=await rwsGetState(s.token);
+      if(state.elements) this.elem={...this.elem,...state.elements};
+      if(state.slab_qty){ this._zpOv={...this._zpOv,...state.slab_qty}; if(this.zpApplyOv)this.zpApplyOv(); }
+      if(state.zone_updates && state.zone_updates.length){
+        state.zone_updates.forEach(row=>{
+          const mk=row.zone_mk; if(!mk)return;
+          const arr=this.updates[mk]=this.updates[mk]||[];
+          const ts=row.created_at?new Date(row.created_at).getTime():Date.now();
+          if(!arr.some(e=>e.ts===ts && e.pct===row.pct)) arr.push({pct:row.pct,status:row.status,date:row.update_date,note:row.note,crew:row.crew,level:row.level,zone:row.zone_label,ts});
+        });
+        Object.keys(this.updates).forEach(mk=>this.updates[mk].sort((a,b)=>(a.ts||0)-(b.ts||0)));
+      }
+      this.saveElem(); this.saveUpdatesStore();
+      try{localStorage.setItem('rws_zp_ov',JSON.stringify(this._zpOv));}catch(e){}
+      this.applyUpdates(); this.buildRail(); this.buildTimeline(); this.render(); this.refreshUpdBadge();
+      if(this.selKey){const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);}
+    }catch(e){ console.warn('[rws] cloud state pull skipped (offline?)',e); }
+    rwsQueueFlush();
+  }
+  async rwsOpenAdmin(){
+    if(!this.rwsIsAdmin())return;
+    this._rwsAdminTab=this._rwsAdminTab||'users';
+    this.root.querySelector('#rwsAdminModal').style.display='flex';
+    await this.rwsRenderAdmin();
+  }
+  async rwsRenderAdmin(){
+    const body=this.root.querySelector('#rwsAdminBody');
+    body.innerHTML='<div class="empty">Loading…</div>';
+    if(this._rwsAdminTab==='log'){
+      try{
+        const rows=await rwsAdminActivityLog(300);
+        body.innerHTML='<table class="reg"><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Old</th><th>New</th></tr></thead><tbody>'+
+          rows.map(r=>`<tr><td>${this.esc(new Date(r.created_at).toLocaleString())}</td><td>${this.esc(r.username||'')}</td><td>${this.esc(r.action)}</td><td>${this.esc(r.target_key||'')}</td><td>${this.esc(JSON.stringify(r.old_value??''))}</td><td>${this.esc(JSON.stringify(r.new_value??''))}</td></tr>`).join('')+
+          '</tbody></table>';
+      }catch(e){ body.innerHTML='<div class="empty">Could not load activity log: '+this.esc(e.message)+'</div>'; }
+      return;
+    }
+    try{
+      const users=await rwsAdminListUsers();
+      body.innerHTML=`<div style="margin-bottom:14px;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel2)">
+        <div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Add / update account</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <input id="rwsNuUser" placeholder="username" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)">
+          <input id="rwsNuPass" placeholder="password (blank = keep existing)" type="text" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)">
+          <input id="rwsNuName" placeholder="display name" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)">
+          <select id="rwsNuRole" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)"><option value="user">user</option><option value="admin">admin</option></select>
+          <input id="rwsNuScopes" placeholder="scopes e.g. L5 or L5:A3, L3" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt);grid-column:1/3">
+        </div>
+        <button class="hbtn primary" id="rwsNuSave">Save account</button>
+        <div style="font-size:9.5px;color:var(--faint);margin-top:6px">Scopes: comma-separated. "L5" grants the whole level; "L5:A3" grants just zone A3 on level L5.</div>
+      </div>
+      <table class="reg"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Scopes</th><th>Active</th></tr></thead><tbody>
+      ${users.map(u=>`<tr><td>${this.esc(u.username)}</td><td>${this.esc(u.display_name||'')}</td><td>${this.esc(u.role)}</td><td>${this.esc((u.allowed_scopes||[]).map(s=>s.zone?s.level+':'+s.zone:s.level).join(', '))}</td><td>${u.active?'yes':'no'}</td></tr>`).join('')}
+      </tbody></table>`;
+      const parseScopes=raw=>(raw||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>{const parts=s.split(':').map(x=>x&&x.trim());return parts[1]?{level:parts[0],zone:parts[1]}:{level:parts[0]};});
+      body.querySelector('#rwsNuSave').addEventListener('click',async()=>{
+        const username=body.querySelector('#rwsNuUser').value.trim();
+        if(!username){alert('username required');return;}
+        try{
+          await rwsAdminUpsertUser({
+            username, password:body.querySelector('#rwsNuPass').value,
+            displayName:body.querySelector('#rwsNuName').value.trim(),
+            role:body.querySelector('#rwsNuRole').value,
+            allowedScopes:parseScopes(body.querySelector('#rwsNuScopes').value),
+            active:true
+          });
+          this.rwsRenderAdmin();
+        }catch(e){ alert('Could not save: '+e.message); }
+      });
+    }catch(e){ body.innerHTML='<div class="empty">Could not load accounts: '+this.esc(e.message)+'</div>'; }
+  }
+
   elemStatus(k){return this.elem[k]||'todo';}
   doneCount(){return Object.values(this.elem).filter(v=>v==='done').length;}
   elemMarked(){return Object.keys(this.elem).length;}
@@ -549,9 +820,26 @@ class Component extends DCLogic {
     return out;
   }
   zoneElemStats(lv,z){const items=this.zoneElems(lv,z);let done=0,wip=0;items.forEach(it=>{const s=this.elemStatus(it.key);if(s==='done')done++;else if(s==='wip')wip++;});return{total:items.length,done,wip,todo:items.length-done-wip};}
-  cycleElem(key){const o=['todo','wip','done'];const nx=o[(o.indexOf(this.elemStatus(key))+1)%3];if(nx==='todo')delete this.elem[key];else this.elem[key]=nx;this.commitElem();}
-  setElem(key,st){if(st==='todo')delete this.elem[key];else this.elem[key]=st;this.commitElem();}
-  setZoneElems(lv,z,st){this.zoneElems(lv,z).forEach(it=>{if(st==='todo')delete this.elem[it.key];else this.elem[it.key]=st;});this.commitElem();}
+  cycleElem(key){
+    if(!this.rwsCanEditElement(key)){this.rwsDeny('You can only update column status inside your assigned zones.');return;}
+    const o=['todo','wip','done'];const nx=o[(o.indexOf(this.elemStatus(key))+1)%3];if(nx==='todo')delete this.elem[key];else this.elem[key]=nx;this.commitElem();
+    rwsSyncElementStatus(key,nx);
+  }
+  setElem(key,st){
+    if(!this.rwsCanEditElement(key)){this.rwsDeny('You can only update column status inside your assigned zones.');return;}
+    if(st==='todo')delete this.elem[key];else this.elem[key]=st;this.commitElem();
+    rwsSyncElementStatus(key,st);
+  }
+  setZoneElems(lv,z,st){
+    const isAdmin=this.rwsIsAdmin(), zmk=z.mk||z.lid;
+    if(!isAdmin && !this.rwsScopeOk(lv,zmk)){this.rwsDeny('Outside your assigned zones.');return;}
+    this.zoneElems(lv,z).forEach(it=>{
+      if(!isAdmin && it.type!=='col')return;
+      if(st==='todo')delete this.elem[it.key];else this.elem[it.key]=st;
+      rwsSyncElementStatus(it.key,st);
+    });
+    this.commitElem();
+  }
   commitElem(){this.saveElem();this.applyUpdates();this.buildRail();this.buildTimeline();this.render();
     const z=this.selKey&&this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z){this.selectZone(z);this.paintSel();this.paintTimelineSel();}
     this.refreshUpdBadge();if(this.root.querySelector('#modal').classList.contains('open'))this.openTable();}
@@ -883,6 +1171,7 @@ class Component extends DCLogic {
     if(!name)return `<div class="sec"><div class="t">Schedule <span style="color:var(--faint);font-weight:600;text-transform:none">No linked schedule record</span></div></div>`;
     const pz=this.ZP.plan[name]?name:this.zpResolvePlan(name);const zd=pz?this.ZP.plan[pz]:null;if(!zd)return '';
     const cur=this.ZP.current;const short=m=>m.replace(' 20',"'");
+    const canEdit=this.rwsIsAdmin()||this.rwsScopeOk(this.curLevel,z.mk||z.lid);
     let blocks='';
     this.ZP.months.forEach(m=>{const items=zd[m];if(!items||!items.length)return;
       const wp=items.filter(x=>x.pct!=null);let apct=null;if(wp.length)apct=Math.round(wp.reduce((a,b)=>a+(b.pct||0),0)/wp.length);
@@ -896,7 +1185,7 @@ class Component extends DCLogic {
           <span style="width:7px;height:7px;border-radius:2px;background:${wt.color};flex:0 0 auto"></span>
           <span style="flex:1;font-size:10px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${this.esc(it.w)}">${this.esc(it.w)}</span>
           <span style="width:44px;height:5px;border-radius:3px;background:var(--panel);overflow:hidden;flex:0 0 auto"><i style="display:block;height:100%;width:${Math.min(pct||0,100)}%;background:${bc}"></i></span>
-          <input class="zp-done-in" data-z="${this.esc(pz)}" data-m="${this.esc(m)}" data-i="${idx}" value="${it.d==null?'':(Math.round(it.d*100)/100)}" placeholder="—" title="Enter completed quantity" style="width:50px;text-align:right;font-size:10px;flex:0 0 auto;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:5px;padding:2px 4px;background:var(--panel);color:var(--txt)">
+          <input class="zp-done-in" data-z="${this.esc(pz)}" data-m="${this.esc(m)}" data-i="${idx}" value="${it.d==null?'':(Math.round(it.d*100)/100)}" placeholder="—" title="${canEdit?'Enter completed quantity':'Outside your assigned zones'}" ${canEdit?'':'disabled'} style="width:50px;text-align:right;font-size:10px;flex:0 0 auto;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:5px;padding:2px 4px;background:var(--panel);color:var(--txt)${canEdit?'':';opacity:.5'}">
           <span style="font-size:9px;color:var(--faint);width:20px;text-align:right;flex:0 0 auto">${it.u||''}</span>
           <span style="font-size:9.5px;font-weight:700;width:30px;text-align:right;flex:0 0 auto;color:${pct==null?'var(--faint)':bc}">${pctText}</span>
         </div>`;}).join('');
@@ -905,11 +1194,10 @@ class Component extends DCLogic {
         ${rowsH}</div>`;
     });
     if(!blocks)return '';
-    return `<div class="sec"><div class="t">Schedule progress <span style="color:var(--faint);font-weight:600;text-transform:none">Record ${this.esc(name)} · enter completed quantity</span></div>${blocks}<button class="zpsave" id="zpSaveBtn" style="display:${this._zpDirty?'flex':'none'}">💾 Save keyed updates</button></div>`;
+    return `<div class="sec"><div class="t">Schedule progress <span style="color:var(--faint);font-weight:600;text-transform:none">Record ${this.esc(name)} · enter completed quantity</span></div>${blocks}${canEdit?`<button class="zpsave" id="zpSaveBtn" style="display:${this._zpDirty?'flex':'none'}">💾 Save keyed updates</button>`:''}</div>`;
   }
 
-  zpIsCrit(name){ if(!this.ZP)return false; const set=this._critPlanSet||(this._critPlanSet=this.buildCritPlanSet()); if(set.has(name))return true; const p=this.zpResolvePlan(name); return p?set.has(p):false; }
-  buildCritPlanSet(){ const s=new Set(); if(!this.ZP)return s; this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{ if(!z.crit)return; const n=z.label; s.add(n); const pz=this.ZP.plan[n]?n:this.zpResolvePlan(n); if(pz)s.add(pz); })); return s; }
+  zpIsCrit(name){ if(!this.ZP)return false; if(this.ZP.critical.indexOf(name)>=0)return true; const p=this.zpResolvePlan(name); return p?this.ZP.critical.indexOf(p)>=0:false; }
   zpAgg(name){ const pz=this.ZP.plan[name]?name:this.zpResolvePlan(name); const zd=pz?this.ZP.plan[pz]:null; if(!zd)return {pct:null}; const cur=this.ZP.months.indexOf(this.ZP.current); const rep=[]; for(const m in zd){ const idx=this.ZP.months.indexOf(m); if(idx>cur)continue; zd[m].forEach(it=>{ if(it.pct!=null)rep.push(it.pct); }); } if(!rep.length)return {pct:null}; return {pct:Math.round(rep.reduce((a,b)=>a+b,0)/rep.length)}; }
   jumpToZone(name){ const r=this._zpRev&&this._zpRev[name]; this.root.querySelector('#schedpage').classList.remove('open'); this._schEdit=null; if(r){ if(r.lv!==this.curLevel){this.curLevel=r.lv;this.syncRail();this.buildMetrics();} this.selKey=r.mk; this.render(); const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===r.mk); if(z){this.selectZone(z);this.paintSel();} } }
   schedDrawer(){ if(!this._schEdit)return ''; const z=this._schEdit.z,m=this._schEdit.m; const zd=this.ZP.plan[z]; const items=zd&&zd[m]; if(!items)return ''; const short=s=>s.replace(' 20',"'");
@@ -1006,11 +1294,24 @@ class Component extends DCLogic {
     const sb=this.root.querySelector('#sidebody');
     sb.querySelectorAll('.elchip').forEach(el=>el.addEventListener('click',()=>this.cycleElem(el.dataset.key)));
     sb.querySelectorAll('[data-bulk]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();
-      const type=el.dataset.bulk;const items=({col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores})[type]||[];
-      items.forEach(x=>{this.elem[this.ekey(this.curLevel,z,type,typeof x==='string'?x:x.id)]='done';});this.commitElem();}));
+      const type=el.dataset.bulk;
+      if(!this.rwsIsAdmin() && type!=='col'){this.rwsDeny('You can only update column status.');return;}
+      if(!this.rwsIsAdmin() && !this.rwsScopeOk(this.curLevel,z.mk||z.lid)){this.rwsDeny('Outside your assigned zones.');return;}
+      const items=({col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores})[type]||[];
+      items.forEach(x=>{const key=this.ekey(this.curLevel,z,type,typeof x==='string'?x:x.id);this.elem[key]='done';rwsSyncElementStatus(key,'done');});this.commitElem();}));
     sb.querySelectorAll('[data-bulk-all]').forEach(el=>el.addEventListener('click',()=>this.setZoneElems(this.curLevel,z,el.dataset.bulkAll)));
     sb.querySelectorAll('.zp-done-in').forEach(el=>{el.addEventListener('focus',()=>{const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});el.addEventListener('input',()=>{el.dataset.dirty='1';this._zpDirty=true;const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});});
-    const _zsb=sb.querySelector('#zpSaveBtn');if(_zsb)_zsb.addEventListener('click',()=>{sb.querySelectorAll('.zp-done-in').forEach(el=>{if(el.dataset.dirty==='1')this.zpSetDone(el.dataset.z,el.dataset.m,+el.dataset.i,el.value);});_zsb.innerHTML='✓ Saved';_zsb.style.background='#218a5c';this._zpDirty=false;setTimeout(()=>this.selectZone(z),650);});
+    const _zsb=sb.querySelector('#zpSaveBtn');if(_zsb)_zsb.addEventListener('click',()=>{
+      const lv=this.curLevel,zmk=z.mk||z.lid;
+      sb.querySelectorAll('.zp-done-in').forEach(el=>{
+        if(el.dataset.dirty==='1'){
+          this.zpSetDone(el.dataset.z,el.dataset.m,+el.dataset.i,el.value);
+          const qtyKey=el.dataset.z+'||'+el.dataset.m+'||'+el.dataset.i;
+          const raw=String(el.value||'').replace(/,/g,'').trim();
+          rwsSyncSlabQty(qtyKey,lv,zmk,raw===''?null:parseFloat(raw));
+        }
+      });
+      _zsb.innerHTML='✓ Saved';_zsb.style.background='#218a5c';this._zpDirty=false;setTimeout(()=>this.selectZone(z),650);});
 
   }
 
