@@ -449,8 +449,8 @@ class Component extends DCLogic {
     let done=0,wip=0,todo=0,ws=0,wa=0;uniq.forEach(z=>{const p=z._p||{pct:0,status:'todo'};ws+=p.pct*(z.area||1);wa+=(z.area||1);if(p.status==='done')done++;else if(p.status==='wip')wip++;else todo++;});
     return {avg:Math.round(ws/Math.max(1,wa)),done,wip,todo,count:uniq.length};}
 
-  applyCritOv(){const ov=this._critOv||{};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{z.crit=!!ov[lv+'|'+this.zid(z)];}));}
-  setCrit(lv,z,on){const k=lv+'|'+this.zid(z);if(on)this._critOv[k]=true;else delete this._critOv[k];try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}this.applyCritOv();}
+  applyCritOv(){const ov=this._critOv||{};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{z.crit=!!ov[lv+'|'+this.zid(z)];}));this._critPlanSet=null;}
+  setCrit(lv,z,on){const k=lv+'|'+this.zid(z);if(on)this._critOv[k]=true;else delete this._critOv[k];try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}this.applyCritOv();this._critPlanSet=null;}
   deriveProgress(){
     this.applyCritOv();
     this.DATA.order.forEach(lv=>{
@@ -908,7 +908,8 @@ class Component extends DCLogic {
     return `<div class="sec"><div class="t">Schedule progress <span style="color:var(--faint);font-weight:600;text-transform:none">Record ${this.esc(name)} · enter completed quantity</span></div>${blocks}<button class="zpsave" id="zpSaveBtn" style="display:${this._zpDirty?'flex':'none'}">💾 Save keyed updates</button></div>`;
   }
 
-  zpIsCrit(name){ if(!this.ZP)return false; if(this.ZP.critical.indexOf(name)>=0)return true; const p=this.zpResolvePlan(name); return p?this.ZP.critical.indexOf(p)>=0:false; }
+  zpIsCrit(name){ if(!this.ZP)return false; const set=this._critPlanSet||(this._critPlanSet=this.buildCritPlanSet()); if(set.has(name))return true; const p=this.zpResolvePlan(name); return p?set.has(p):false; }
+  buildCritPlanSet(){ const s=new Set(); if(!this.ZP)return s; this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{ if(!z.crit)return; const n=z.label; s.add(n); const pz=this.ZP.plan[n]?n:this.zpResolvePlan(n); if(pz)s.add(pz); })); return s; }
   zpAgg(name){ const pz=this.ZP.plan[name]?name:this.zpResolvePlan(name); const zd=pz?this.ZP.plan[pz]:null; if(!zd)return {pct:null}; const cur=this.ZP.months.indexOf(this.ZP.current); const rep=[]; for(const m in zd){ const idx=this.ZP.months.indexOf(m); if(idx>cur)continue; zd[m].forEach(it=>{ if(it.pct!=null)rep.push(it.pct); }); } if(!rep.length)return {pct:null}; return {pct:Math.round(rep.reduce((a,b)=>a+b,0)/rep.length)}; }
   jumpToZone(name){ const r=this._zpRev&&this._zpRev[name]; this.root.querySelector('#schedpage').classList.remove('open'); this._schEdit=null; if(r){ if(r.lv!==this.curLevel){this.curLevel=r.lv;this.syncRail();this.buildMetrics();} this.selKey=r.mk; this.render(); const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===r.mk); if(z){this.selectZone(z);this.paintSel();} } }
   schedDrawer(){ if(!this._schEdit)return ''; const z=this._schEdit.z,m=this._schEdit.m; const zd=this.ZP.plan[z]; const items=zd&&zd[m]; if(!items)return ''; const short=s=>s.replace(' 20',"'");
