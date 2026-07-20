@@ -8,9 +8,12 @@
 <body>
 <x-dc>
 <helmet data-dc-atomics>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif}
+*{font-family:'Poppins',-apple-system,BlinkMacSystemFont,sans-serif !important}
+.zpsave{display:flex;width:100%;margin-top:8px;align-items:center;justify-content:center;gap:7px;background:var(--accent);color:#fff;border:0;border-radius:9px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.zpsave:hover{filter:brightness(1.06)}
 html[data-theme="dark"]{--beam:#7fd39a;--bg:#0f1115;--panel:#181b22;--panel2:#1f232c;--line:#2a2f3a;--txt:#e8eaed;--dim:#9aa0ac;--faint:#6b7280;--accent:#4f9cff;--stage:#0c0e12;--chip:#232733;--crit:#f0609c;--shadow:rgba(0,0,0,.5);--todo:#6b7482;--wip:#f5b23c;--done:#43d18a;--heat0:#20304a;--heat1:#66aaff}
 :root,[data-theme="light"]{--bg:#f2f4f7;--panel:#ffffff;--panel2:#eef0f3;--line:#dde0e6;--txt:#1b1e26;--dim:#5b6271;--faint:#969cab;--accent:#2563eb;--stage:#e9edf2;--chip:#eef0f3;--crit:#c23a72;--shadow:rgba(0,0,0,.14);--beam:#2f6d3a;--todo:#94a3b8;--wip:#e59517;--done:#1faa5a;--heat0:#dce7f5;--heat1:#1d4ed8}
 html,body{height:100%}
@@ -72,6 +75,7 @@ header .sub{font-size:11px;color:var(--dim)}
 .zname.crit{fill:var(--crit)}
 .zarea{fill:var(--faint);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--stage);stroke-width:300px}
 .zpct{font-weight:800;text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--stage);stroke-width:420px}
+.zseq{font-weight:700;text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--stage);stroke-width:360px}
 .critdot{fill:var(--crit);pointer-events:none}
 .seqbadge circle{stroke:var(--stage);stroke-width:240px}
 .seqbadge text{fill:#fff;font-weight:800;text-anchor:middle;pointer-events:none}
@@ -401,16 +405,18 @@ class Component extends DCLogic {
     this.bands = {B2:[6,13],B1:[10,18],B1M:[15,22],L1:[20,28],L2:[24,35]};
     this.bias  = {B2:0.93,B1:0.80,B1M:0.63,L1:0.42,L2:0.20};
     this.curLevel = this.DATA.order[0];
-    this.colorMode = 'progress';
+    this.colorMode = 'area';
     this.curMetric = 'columns';
     this.selKey = null;
     this.filterCat = 'all';
     this.BCOL = {EB:'#c2410c',NB:'#be0f56',MA:'#1747b8'};
-    this.BDASH = {EB:'0',NB:'2600 1100',MA:'220 900'};
+    this.BDASH = {EB:'0',NB:'0',MA:'0'};
     this.BCAP = {EB:'butt',NB:'butt',MA:'round'};
+    this.AREA_OUTLINES = {"B2":{"NB":[[[81488,148249],[96063,157396],[97666,158163],[97970,159159],[110257,180018],[110882,180548],[111146,181643],[127872,210092],[128602,210115],[152777,198673],[153381,198085],[187435,182203],[187996,181679],[189064,181461],[218368,167453],[218850,167009],[219851,166855],[242571,155995],[243123,155448],[245198,154826],[258618,148178],[279948,138238],[280433,137793],[281431,137641],[299139,129215],[299802,128545],[301056,128330],[314774,121755],[321935,89122],[324935,76678],[324941,75071],[279545,57170],[278662,57180],[273127,59876],[272457,60561],[271216,60760],[259220,66595],[258115,66329],[255485,63471],[254627,63471],[246199,67837],[225009,77921],[224364,78564],[221510,79527],[190781,94533],[190182,95119],[154550,112148],[120037,128903],[119464,129409],[118693,129503],[81514,147520],[81488,148249]]],"EB":[[[38239,98127],[38398,99009],[53561,118747],[54302,118730],[74323,104397],[74904,104461],[75459,104883],[85784,119177],[86642,119463],[93497,114387],[94196,114287],[94914,114684],[95254,115480],[102046,124724],[101957,125406],[101507,125928],[94806,129347],[94824,129945],[98754,135313],[98812,136427],[98259,136999],[80056,146102],[80485,147245],[153350,112031],[153927,111541],[154691,111433],[177124,100574],[177604,100131],[178464,99976],[210348,84392],[210923,83903],[211688,83793],[255341,62466],[255055,61179],[252160,57712],[226987,35116],[226105,35275],[204355,51648],[203568,51813],[202853,51443],[196073,42585],[195425,42128],[195193,41273],[191982,36902],[191826,36109],[192299,35323],[202786,27997],[203903,28182],[205363,29814],[206386,29495],[207045,29644],[208657,31819],[209515,31962],[215672,27380],[215672,26665],[213309,23155],[213388,22375],[213954,21652],[213954,21080],[209945,15783],[207941,16784],[207512,17929],[209914,21371],[209951,22480],[205323,26008],[204743,26013],[204144,25662],[196596,15781],[195885,15800],[187259,22142],[186144,22097],[184167,20079],[183452,20079],[181415,22008],[180445,22227],[176471,25030],[175687,25246],[174946,24913],[170992,20270],[170705,18932],[165569,12225],[164835,12202],[153687,20346],[153019,21493],[151921,21670],[134500,34379],[133856,35479],[132731,35704],[119009,45713],[118723,46571],[126739,56156],[126700,56834],[126386,57309],[122732,59604],[122186,60412],[120987,60623],[112120,66916],[93540,79350],[93082,79995],[92227,80227],[90413,81253],[89346,80903],[79643,68649],[78909,68627],[59886,82213],[59337,83035],[58404,83251],[38239,98127]]]},"B1":{"NB":[[[82347,148249],[97751,158425],[108967,177582],[109670,178164],[110287,179926],[128057,210107],[130923,209100],[158364,195951],[158984,195364],[161574,194491],[187436,182203],[188074,181611],[190363,180884],[218799,167452],[219294,167002],[220137,166855],[243039,155756],[244916,155254],[255602,150125],[256191,149564],[257948,149096],[274648,141103],[275260,140512],[298996,129644],[299606,129062],[302209,128182],[315203,121755],[324937,76241],[324798,75214],[323431,75169],[322622,74342],[279545,57170],[278661,57181],[267686,62597],[267072,63190],[259184,66750],[258184,66538],[256201,63900],[255056,63471],[201808,89378],[201236,89994],[181760,99259],[154837,112434],[154364,112873],[153353,113032],[129202,124750],[128611,125328],[125882,126340],[125232,126927],[123708,127354],[82373,147520],[82347,148249]]],"EB":[[[92085,110730],[92228,111587],[94585,114285],[94822,115047],[101976,124497],[101992,125299],[101499,125932],[94805,129376],[94821,129941],[100677,137794],[101965,137507],[125227,125797],[129056,124322],[153495,112317],[153972,111876],[154834,111719],[176264,101290],[176857,100707],[202328,88545],[202906,88055],[203669,87947],[254888,63052],[255341,61465],[253480,58888],[252479,58602],[221879,73900],[220944,73959],[220374,73536],[203357,50296],[195482,49293],[187195,55401],[186071,55508],[184740,53876],[184036,53420],[183721,52420],[179441,46572],[171566,45570],[169952,46718],[169389,46785],[168767,46519],[165567,41869],[164566,41101],[154110,26831],[153378,26810],[127214,46109],[121730,49436],[121747,50031],[126387,55780],[126481,56923],[126018,57456],[118415,62196],[112851,66335],[112850,67050],[116768,72321],[116941,72979],[116789,73527],[103828,83233],[103828,83948],[108079,89658],[108183,90354],[107878,90988],[107046,91429],[106157,91194],[102108,85668],[101393,85526],[92801,96838],[92658,97696],[99040,106425],[99270,107193],[98964,107935],[98194,108389],[97520,108310],[96809,107723],[96094,107723],[92085,110730]]]},"B1M":{"NB":[[[82347,148249],[97751,158425],[110257,179731],[110853,180294],[111292,181649],[128057,210108],[130359,209382],[158364,196094],[158985,195507],[161573,194634],[202329,175329],[202817,174883],[203674,174729],[258181,148978],[258784,148391],[290403,133654],[290900,133204],[291885,133058],[315060,122041],[324937,76241],[324798,75214],[316951,72359],[316207,72281],[315462,71478],[279545,57170],[278661,57180],[259182,66681],[258177,66498],[255772,63471],[255057,63471],[232027,74770],[231439,75330],[229680,75799],[136649,121170],[136061,121730],[134302,122200],[126194,126183],[125628,126796],[101991,137927],[101395,138510],[82373,147521],[82347,148249]]]},"L1":{"MA":[[[164263,224149],[184884,219575],[187890,219577],[193673,221043],[196115,222663],[207349,237446],[208422,238022],[208673,239212],[215388,249212],[220257,253221],[223264,253650],[228991,250644],[230003,248760],[233513,238673],[236185,235661],[239877,234771],[246087,235765],[259254,239162],[264953,241733],[267211,245270],[267657,251329],[268519,256229],[270953,258950],[274103,259379],[276394,258663],[286841,251041],[288956,250277],[292661,250221],[295393,251017],[306752,259097],[316920,269408],[326447,282776],[328381,290313],[330558,291172],[349860,290742],[347139,172023],[330384,128918],[329813,128918],[328183,131387],[324228,134566],[280574,154396],[280043,154898],[213122,185186],[212445,185851],[207918,187500],[165408,207253],[164263,224149]]],"NB":[[[74041,169444],[88717,175735],[89206,176120],[98084,191045],[98623,191515],[98831,192529],[119852,227993],[120582,228016],[136170,220357],[174547,202395],[175161,201714],[176743,201370],[224097,179625],[224630,179121],[286106,151413],[286721,150756],[287734,150672],[323940,134071],[327949,130777],[330097,127484],[330669,125337],[318841,123019],[318187,122534],[317993,121744],[327949,74497],[327477,73955],[327349,73197],[307927,65485],[306869,65375],[306298,64891],[279259,54162],[278375,54173],[271837,57442],[271254,57953],[270495,58042],[260239,63097],[259145,62972],[258063,61753],[255943,62458],[255681,63131],[255229,63501],[229154,76431],[209399,85655],[208789,86385],[207629,86539],[191350,94760],[129344,124894],[128862,125337],[128030,125481],[127462,126050],[106242,136268],[105521,136375],[101420,138355],[100796,139034],[99790,139097],[82373,147377],[81704,148189],[80627,148251],[78623,149253],[78007,149897],[77191,149970],[74041,169444]]],"EB":[[[91512,111444],[93517,114021],[94290,114508],[94681,115767],[101699,125209],[101708,126010],[101211,126638],[94950,129776],[95253,130945],[100534,137937],[106567,135495],[128718,124634],[129294,124145],[130059,124035],[155643,111458],[156120,111017],[156982,110860],[183712,97710],[184190,97268],[185052,97112],[208917,85251],[209418,84768],[211114,84367],[254885,63053],[255055,61465],[250616,55595],[249901,55594],[243194,58883],[242507,58995],[241789,58625],[240448,56883],[232853,56606],[232334,56409],[231684,55736],[230998,55738],[229805,56434],[222215,56169],[220648,55230],[219826,54019],[209127,53326],[208574,53078],[208083,52444],[206225,52725],[193252,50375],[192590,49854],[168155,39851],[167248,39709],[154237,28814],[152784,29401],[126049,49273],[125604,49872],[124708,50170],[121013,52730],[102843,82201],[102237,84326],[100803,85259],[91656,97268],[91942,98269],[96952,104659],[97207,105409],[96863,106241],[91512,110730],[91512,111444]]]},"L2":{"MA":[[[176579,191784],[211016,201360],[211693,201818],[262423,215680],[263105,216139],[295012,224579],[296730,224436],[297875,223291],[298207,221819],[299451,221285],[301574,218549],[302171,218204],[306015,218385],[306648,218696],[307026,219545],[306613,224866],[309877,225151],[310633,219737],[311146,219003],[311911,218813],[317941,219367],[318568,219702],[318909,220429],[318500,225868],[321934,226154],[322541,220752],[323246,219894],[329332,220241],[329877,220493],[330242,220999],[333391,221285],[335539,194364],[332744,194020],[332203,193564],[332014,192882],[332242,192212],[333203,191325],[335682,191355],[336828,176750],[335359,176580],[334680,175891],[333455,175771],[332791,175295],[332603,174387],[333059,173502],[333786,173213],[335968,173310],[335969,172739],[323176,155586],[322936,153836],[321415,153240],[317352,147535],[316212,146959],[316010,146423],[316062,145387],[289286,143304],[288481,142904],[288137,142093],[279431,141378],[278970,142045],[278234,142319],[269092,141664],[267662,158114],[267135,158566],[266562,158665],[251621,157560],[250760,168822],[250101,169926],[249397,170090],[225727,168301],[225130,168425],[224380,168154],[214816,167441],[214314,172835],[213795,173610],[176746,191058],[176579,191784]]],"NB":[[[121443,129346],[137326,162115],[138927,162277],[139585,162781],[144070,171735],[145675,172299],[160352,183546],[160722,184262],[160683,185484],[161684,187344],[164491,186656],[168272,189350],[175432,191211],[188438,184924],[188989,184377],[191065,183755],[213668,172881],[214142,167744],[214462,167130],[214955,166826],[250043,169587],[250995,158044],[251506,157157],[252285,156947],[267228,158130],[268517,141663],[213345,137272],[212379,136651],[210226,136525],[209623,136249],[205792,131496],[204893,130978],[204174,129479],[204501,128059],[203515,128289],[202771,127956],[198407,122616],[200349,95836],[196627,95550],[195615,95875],[195059,95710],[194621,95264],[190183,94977],[178323,100834],[177723,101420],[154980,112434],[154513,112870],[153640,113032],[121469,128617],[121443,129346]]],"EB":[[[106120,97268],[107122,99843],[111688,97947],[112491,98064],[112986,98558],[113121,99244],[112413,106443],[112038,107152],[111275,107579],[111275,108294],[120856,128030],[121585,128056],[128577,124632],[129196,123904],[129918,123748],[153779,112461],[154358,111970],[155121,111862],[176694,101147],[177334,100460],[178323,100405],[190124,94509],[200492,95261],[202926,64043],[200492,60034],[183911,54600],[183246,54553],[182420,53720],[164281,46629],[162829,45140],[155383,44424],[153930,48049],[151087,49723],[150653,50204],[148484,50879],[132471,58744],[133182,60901],[133089,61697],[131468,64329],[131256,65157],[130591,65644],[124274,75606],[107122,83949],[108009,86388],[108839,86525],[113747,84192],[114745,84496],[115128,85467],[113592,93456],[106120,97268]]]}};
     this.ASHORT = {EB:'Existing',NB:'New',MA:'Marine'};
     this.showOvl = {podium:true,transfer:false,podcis:false};
     this.showBeams = false; this.showSeq = true; this.showCrit = true; this.showAreaBounds = true;
+    try{this._critOv=JSON.parse(localStorage.getItem('rws_crit_ov')||'{}');}catch(e){this._critOv={};}
     this.loadUpdates();
     this.loadElem();
     this.deriveProgress();
@@ -443,7 +449,10 @@ class Component extends DCLogic {
     let done=0,wip=0,todo=0,ws=0,wa=0;uniq.forEach(z=>{const p=z._p||{pct:0,status:'todo'};ws+=p.pct*(z.area||1);wa+=(z.area||1);if(p.status==='done')done++;else if(p.status==='wip')wip++;else todo++;});
     return {avg:Math.round(ws/Math.max(1,wa)),done,wip,todo,count:uniq.length};}
 
+  applyCritOv(){const ov=this._critOv||{};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{z.crit=!!ov[lv+'|'+this.zid(z)];}));}
+  setCrit(lv,z,on){const k=lv+'|'+this.zid(z);if(on)this._critOv[k]=true;else delete this._critOv[k];try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}this.applyCritOv();}
   deriveProgress(){
+    this.applyCritOv();
     this.DATA.order.forEach(lv=>{
       const seen={}, uniq=[];
       this.DATA.levels[lv].zones.forEach(z=>{const k=z.mk||('_'+z.lid);if(!seen[k]){seen[k]=1;uniq.push(z);}});
@@ -522,7 +531,7 @@ class Component extends DCLogic {
   loadElem(){
     try{this.elem=JSON.parse(localStorage.getItem('rws_elem_status')||'{}');}catch(e){this.elem={};}
     const emb=document.getElementById('locked-data');
-    if(emb){try{const d=JSON.parse(emb.textContent||'{}');if(d.elem)this.elem={...d.elem,...this.elem};if(d.updates)this.updates={...d.updates,...this.updates};if(d.zpOv){this._embZpOv=d.zpOv;if(this._zpOv){this._zpOv={...d.zpOv,...this._zpOv};if(this.zpApplyOv)this.zpApplyOv();}}}catch(e){}}
+    if(emb){try{const d=JSON.parse(emb.textContent||'{}');if(d.elem)this.elem={...d.elem,...this.elem};if(d.updates)this.updates={...d.updates,...this.updates};if(d.zpOv){this._embZpOv=d.zpOv;if(this._zpOv){this._zpOv={...d.zpOv,...this._zpOv};if(this.zpApplyOv)this.zpApplyOv();}}if(d.crit){this._critOv={...d.crit,...(this._critOv||{})};}}catch(e){}}
   }
   saveElem(){try{localStorage.setItem('rws_elem_status',JSON.stringify(this.elem));}catch(e){}}
   elemStatus(k){return this.elem[k]||'todo';}
@@ -598,34 +607,32 @@ class Component extends DCLogic {
         s+=`<polyline class="beamln" points="${p}"/>`;
       });
     }
-    if(this.showAreaBounds){
-      this._areaGrid=this._areaGrid||{};
-      if(!this._areaGrid[this.curLevel])this._areaGrid[this.curLevel]=this.buildAreaGrid(this.curLevel);
-      this._areaGrid[this.curLevel].segs.forEach(g=>{
-        if(this.filterCat!=='all' && g.a!==this.filterCat && g.b!==this.filterCat)return;
-        const solo=g.a&&g.b?null:(g.a||g.b);
-        const bc=solo?(this.BCOL[solo]||this.cssvar('--txt')):this.cssvar('--txt');
-        const dash=solo?(this.BDASH[solo]||'0'):'0';
-        const cap=solo?(this.BCAP[solo]||'butt'):'butt';
-        s+=`<line class="areabound" x1="${g.p[0][0].toFixed(0)}" y1="${g.p[0][1].toFixed(0)}" x2="${g.p[1][0].toFixed(0)}" y2="${g.p[1][1].toFixed(0)}" stroke="${bc}" stroke-width="900" stroke-dasharray="${dash}" stroke-linecap="${cap}"/>`;});
+    if(this.showAreaBounds && this.AREA_OUTLINES && this.AREA_OUTLINES[this.curLevel]){
+      const _AO=this.AREA_OUTLINES[this.curLevel];
+      Object.keys(_AO).forEach(cat=>{
+        if(this.filterCat!=='all' && cat!==this.filterCat)return;
+        const bc=this.BCOL[cat]||this.cssvar('--txt');
+        _AO[cat].forEach(ring=>{
+          const pts=ring.map(p=>p[0].toFixed(0)+','+(H-p[1]).toFixed(0)).join(' ');
+          s+=`<polyline class="areabound" points="${pts}" stroke="${bc}" stroke-width="900" stroke-linecap="round"/>`;});
+      });
     }
     L.zones.forEach((z,i)=>{
       if(!this.zoneVisible(z))return;
       let cx,cy;if(z.lx!=null){cx=z.lx;cy=H-z.ly;}else{const c=this.centroid(z.ring,H);cx=c[0];cy=c[1];}
       const isCrit=z.crit&&this.showCrit;
-      s+=`<text class="zname${isCrit?' crit':''}" style="font-size:3500px" x="${cx.toFixed(0)}" y="${(cy-500).toFixed(0)}">${this.esc(z.label)}</text>`;
+      s+=`<text class="zname${isCrit?' crit':''}" style="font-size:3500px" x="${cx.toFixed(0)}" y="${(cy-1600).toFixed(0)}">${this.esc(z.label)}</text>`;
       if(this.colorMode==='progress' && z._p){
         const d=this.zoneDisplayPct(z);const col=this.progColor(d.pct);
-        s+=`<text class="zpct" style="font-size:2600px;fill:${col}" x="${cx.toFixed(0)}" y="${(cy+2500).toFixed(0)}">${d.pct}%</text>`;
+        s+=`<text class="zpct" style="font-size:2600px;fill:${col}" x="${cx.toFixed(0)}" y="${(cy+1100).toFixed(0)}">${d.pct}%</text>`;
       } else if(this.colorMode==='quantity'){
-        s+=`<text class="zarea" style="font-size:2200px" x="${cx.toFixed(0)}" y="${(cy+2500).toFixed(0)}">${this.fmt(this.mval(z,this.curMetric))}</text>`;
+        s+=`<text class="zarea" style="font-size:2200px" x="${cx.toFixed(0)}" y="${(cy+1100).toFixed(0)}">${this.fmt(this.mval(z,this.curMetric))}</text>`;
       } else {
-        s+=`<text class="zarea" style="font-size:2000px" x="${cx.toFixed(0)}" y="${(cy+2500).toFixed(0)}">${this.fmt(z.area)} m²</text>`;
+        s+=`<text class="zarea" style="font-size:2000px" x="${cx.toFixed(0)}" y="${(cy+1100).toFixed(0)}">${this.fmt(z.area)} m²</text>`;
       }
       if(this.showSeq && z._p){
-        const bx=cx-3800, by=cy-2600;
         const bc=z._p.status==='done'?this.cssvar('--done'):z._p.status==='wip'?this.cssvar('--wip'):this.cssvar('--todo');
-        s+=`<g class="seqbadge"><circle cx="${bx.toFixed(0)}" cy="${by.toFixed(0)}" r="1650" fill="${bc}"/><text x="${bx.toFixed(0)}" y="${(by+820).toFixed(0)}" style="font-size:2300px">${z._p.seq}</text></g>`;
+        s+=`<text class="zseq" style="font-size:1750px;fill:${bc}" x="${cx.toFixed(0)}" y="${(cy+3600).toFixed(0)}">${this.ordinal(z._p.seq)} pour</text>`;
       }
     });
     this.svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);
@@ -638,6 +645,7 @@ class Component extends DCLogic {
     this.paintSel();this.drawLegend();this.buildKPIs();this.buildProgRoll();this.buildAreaBreak();this.buildList();
   }
 
+  ordinal(n){n=parseInt(n,10);if(isNaN(n))return n;const v=n%100,x=['th','st','nd','rd'];return n+(x[(v-20)%10]||x[v]||x[0]);}
   paintSel(){const L=this.DATA.levels[this.curLevel],H=L.h;
     const old=this.svg.querySelector('#selovl');if(old)old.remove();
     this.svg.querySelectorAll('.zone').forEach(el=>el.classList.remove('sel'));
@@ -694,7 +702,7 @@ class Component extends DCLogic {
     if(this.showCrit)s+=`<div class="lr"><span style="width:13px;color:var(--crit);font-weight:800;text-align:center">Ab</span>Red zone name = critical path</div>`;
     if(this.showSeq)s+=`<div class="lr"><span class="sw" style="border-radius:50%;background:var(--dim);color:#fff;font-size:8px;text-align:center;line-height:13px;font-weight:800">#</span>Pour sequence</div>`;
     if(this.showAreaBounds){s+=`<div style="font-weight:700;color:var(--txt);margin:5px 0 2px">Area boundaries</div>`;
-      const ld={EB:'solid',NB:'dashed',MA:'dotted'};
+      const ld={EB:'solid',NB:'solid',MA:'solid'};
       Object.keys(this.BCOL).forEach(k=>{const cc=this.CAT[k];s+=`<div class="lr"><span style="width:18px;border-top:3px ${ld[k]||'solid'} ${this.BCOL[k]}"></span>${cc.label}</div>`;});
       s+=`<div class="lr"><span style="width:18px;border-top:3px solid var(--txt)"></span>Solid line = boundary between adjacent areas</div>`;}
     lg.innerHTML=s;
@@ -781,6 +789,26 @@ class Component extends DCLogic {
     return {segs};
   }
 
+  smoothBounds(segs){
+    const fc=this.filterCat, K=p=>Math.round(p[0])+','+Math.round(p[1]), groups={};
+    segs.forEach(g=>{ if(fc!=='all' && g.a!==fc && g.b!==fc)return;
+      const solo=g.a&&g.b?null:(g.a||g.b); const key=solo?('o:'+solo):'seam';
+      (groups[key]=groups[key]||{solo,list:[]}).list.push([g.p[0],g.p[1]]); });
+    const out=[];
+    for(const key in groups){ const solo=groups[key].solo, list=groups[key].list, used=new Array(list.length).fill(false), adj={};
+      list.forEach((sg,i)=>{[K(sg[0]),K(sg[1])].forEach(k=>{(adj[k]=adj[k]||[]).push(i);});});
+      for(let i=0;i<list.length;i++){ if(used[i])continue; used[i]=true; let poly=[list[i][0],list[i][1]]; let go=true;
+        while(go){go=false;const e=poly[poly.length-1];const c=(adj[K(e)]||[]).find(j=>!used[j]);if(c!=null){const sg=list[c];poly.push(K(sg[0])===K(e)?sg[1]:sg[0]);used[c]=true;go=true;}}
+        go=true; while(go){go=false;const st=poly[0];const c=(adj[K(st)]||[]).find(j=>!used[j]);if(c!=null){const sg=list[c];poly.unshift(K(sg[0])===K(st)?sg[1]:sg[0]);used[c]=true;go=true;}}
+        out.push({solo,pts:this.chaikin(poly,3)}); } }
+    return out;
+  }
+  chaikin(pts,iter){ let p=pts;
+    for(let k=0;k<iter;k++){ if(p.length<3)break; const np=[p[0]];
+      for(let i=0;i<p.length-1;i++){const a=p[i],b=p[i+1];np.push([a[0]*0.75+b[0]*0.25,a[1]*0.75+b[1]*0.25]);np.push([a[0]*0.25+b[0]*0.75,a[1]*0.25+b[1]*0.75]);}
+      np.push(p[p.length-1]); p=np; }
+    return p;
+  }
   buildList(){
     const L=this.DATA.levels[this.curLevel],seen={},arr=[];
     L.zones.forEach(z=>{if(!this.zoneVisible(z))return;const k=this.zid(z);if(!seen[k]){seen[k]=1;arr.push(z);}});
@@ -868,7 +896,7 @@ class Component extends DCLogic {
           <span style="width:7px;height:7px;border-radius:2px;background:${wt.color};flex:0 0 auto"></span>
           <span style="flex:1;font-size:10px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${this.esc(it.w)}">${this.esc(it.w)}</span>
           <span style="width:44px;height:5px;border-radius:3px;background:var(--panel);overflow:hidden;flex:0 0 auto"><i style="display:block;height:100%;width:${Math.min(pct||0,100)}%;background:${bc}"></i></span>
-          <span style="width:44px;text-align:right;font-size:10px;color:var(--dim);flex:0 0 auto;font-variant-numeric:tabular-nums">${it.d==null?'—':(Math.round(it.d*100)/100).toLocaleString('en-US')}</span>
+          <input class="zp-done-in" data-z="${this.esc(pz)}" data-m="${this.esc(m)}" data-i="${idx}" value="${it.d==null?'':(Math.round(it.d*100)/100)}" placeholder="—" title="Enter completed quantity" style="width:50px;text-align:right;font-size:10px;flex:0 0 auto;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:5px;padding:2px 4px;background:var(--panel);color:var(--txt)">
           <span style="font-size:9px;color:var(--faint);width:20px;text-align:right;flex:0 0 auto">${it.u||''}</span>
           <span style="font-size:9.5px;font-weight:700;width:30px;text-align:right;flex:0 0 auto;color:${pct==null?'var(--faint)':bc}">${pctText}</span>
         </div>`;}).join('');
@@ -877,7 +905,7 @@ class Component extends DCLogic {
         ${rowsH}</div>`;
     });
     if(!blocks)return '';
-    return `<div class="sec"><div class="t">Schedule progress <span style="color:var(--faint);font-weight:600;text-transform:none">Record ${this.esc(name)} · view only — edit on Construction Schedule</span></div>${blocks}</div>`;
+    return `<div class="sec"><div class="t">Schedule progress <span style="color:var(--faint);font-weight:600;text-transform:none">Record ${this.esc(name)} · enter completed quantity</span></div>${blocks}<button class="zpsave" id="zpSaveBtn" style="display:${this._zpDirty?'flex':'none'}">💾 Save keyed updates</button></div>`;
   }
 
   zpIsCrit(name){ if(!this.ZP)return false; if(this.ZP.critical.indexOf(name)>=0)return true; const p=this.zpResolvePlan(name); return p?this.ZP.critical.indexOf(p)>=0:false; }
@@ -909,7 +937,7 @@ class Component extends DCLogic {
         <button data-bulk-all="done">All done</button>
         <button data-bulk-all="wip">All WIP</button>
         <button data-bulk-all="todo">Clear</button>
-      </div>`:'<div class="g" style="color:var(--faint)">No element ID list in the source for this zone — use the zone-level entry below.</div>';
+      </div>`:'<div class="g" style="color:var(--faint)">No element ID list in the source for this zone — update progress via the Schedule progress section above.</div>';
     const hist=(this.updates[z.mk]||[]);
     const todayISO=new Date().toISOString().slice(0,10);
     const last=hist.length?hist[hist.length-1]:null;
@@ -932,6 +960,7 @@ class Component extends DCLogic {
      `<span class="back" id="back">‹ back to list</span>
       <div class="detail"><h3>${this.esc(z.label)} ${z.crit?'<span class="badge" style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--crit);color:#fff">CRITICAL</span>':''}</h3>
       <div class="g"><span class="cat" style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:9.5px;font-weight:700;color:#fff;background:${ct.c}">${ct.label}</span> · ${z.grp&&z.grp!=='Ungrouped'?'Pour group: '+this.esc(z.grp):'Family: '+this.esc(z.fam)} · ${this.curLevel}</div>
+      <label style="display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:${z.crit?'var(--crit)':'var(--dim)'};margin:2px 0 8px;cursor:pointer;user-select:none"><input type="checkbox" id="critChk" ${z.crit?'checked':''} style="width:15px;height:15px;accent-color:var(--crit);cursor:pointer">Critical zone <span style="font-weight:500;color:var(--faint)">· auto-saved</span></label>
       ${subHtml}
       <div class="progblock">
         <div class="top"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--dim)">Site progress ${p.manual?'<span class="mkbadge">Site entry</span>':'<span style="color:var(--faint);font-weight:600;text-transform:none">Derived</span>'}</div><div class="pc" style="color:${this.progColor(p.pct)}">${p.pct}%</div></div>
@@ -961,9 +990,9 @@ class Component extends DCLogic {
       <div class="sec">${secHead('Lifts',z.lifts.length,'lift',z.lifts)}${liftHtml}</div>
       <div class="sec">${secHead('Staircases',z.stairs.length,'stair',z.stairs)}${stairHtml}</div>
       ${coreSec}
-      ${formHtml}
       </div>`;
     this.root.querySelector('#back').addEventListener('click',()=>{this.selKey=null;this.paintSel();this.paintTimelineSel();this.buildList();});
+    const ck=this.root.querySelector('#critChk');if(ck)ck.addEventListener('change',()=>{this.setCrit(this.curLevel,z,ck.checked);this.render();this.selectZone(z);this.paintSel();});
     const sv=this.root.querySelector('#in_save');
     if(sv)sv.addEventListener('click',()=>{
       const pct=this.clamp(Math.round(+this.root.querySelector('#in_pct').value||0),0,100);
@@ -979,6 +1008,8 @@ class Component extends DCLogic {
       const type=el.dataset.bulk;const items=({col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores})[type]||[];
       items.forEach(x=>{this.elem[this.ekey(this.curLevel,z,type,typeof x==='string'?x:x.id)]='done';});this.commitElem();}));
     sb.querySelectorAll('[data-bulk-all]').forEach(el=>el.addEventListener('click',()=>this.setZoneElems(this.curLevel,z,el.dataset.bulkAll)));
+    sb.querySelectorAll('.zp-done-in').forEach(el=>{el.addEventListener('focus',()=>{const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});el.addEventListener('input',()=>{el.dataset.dirty='1';this._zpDirty=true;const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});});
+    const _zsb=sb.querySelector('#zpSaveBtn');if(_zsb)_zsb.addEventListener('click',()=>{sb.querySelectorAll('.zp-done-in').forEach(el=>{if(el.dataset.dirty==='1')this.zpSetDone(el.dataset.z,el.dataset.m,+el.dataset.i,el.value);});_zsb.innerHTML='✓ Saved';_zsb.style.background='#218a5c';this._zpDirty=false;setTimeout(()=>this.selectZone(z),650);});
 
   }
 
@@ -1274,7 +1305,7 @@ class Component extends DCLogic {
   }
 
   /* ---------- lock file: persist all markers to a portable file & reload ---------- */
-  snapshot(){return {v:2,project:'RWS P1 CJ',savedAt:new Date().toISOString(),elem:this.elem,updates:this.updates,zpOv:this._zpOv};}
+  snapshot(){return {v:2,project:'RWS P1 CJ',savedAt:new Date().toISOString(),elem:this.elem,updates:this.updates,zpOv:this._zpOv,crit:this._critOv};}
   saveLock(){
     if(this._locking)return; this._locking=true; setTimeout(()=>{this._locking=false;},900);
     const S='<'+'script', ES='<'+'/script>';
