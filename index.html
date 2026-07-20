@@ -664,8 +664,9 @@ class Component extends DCLogic {
 
   /* ---------- cloud sync (Supabase accounts + per-record sync) ---------- */
   rwsScopeOk(lv,zoneMk){
-    const u=this._rwsUser; if(!u)return false; if(u.role==='admin')return true;
-    return (u.allowed_scopes||[]).some(e=>e.level===lv && (e.zone==null||e.zone===zoneMk));
+    // no per-zone restriction — any logged-in account may edit any zone;
+    // the only remaining restriction is by element type (see rwsCanEditElement)
+    return !!this._rwsUser;
   }
   rwsCanEditElement(key){
     const u=this._rwsUser; if(!u)return false; if(u.role==='admin')return true;
@@ -764,8 +765,8 @@ class Component extends DCLogic {
     if(this._rwsAdminTab==='log'){
       try{
         const rows=await rwsAdminActivityLog(300);
-        body.innerHTML='<table class="reg"><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Target</th><th>Old</th><th>New</th></tr></thead><tbody>'+
-          rows.map(r=>`<tr><td>${this.esc(new Date(r.created_at).toLocaleString())}</td><td>${this.esc(r.username||'')}</td><td>${this.esc(r.action)}</td><td>${this.esc(r.target_key||'')}</td><td>${this.esc(JSON.stringify(r.old_value??''))}</td><td>${this.esc(JSON.stringify(r.new_value??''))}</td></tr>`).join('')+
+        body.innerHTML='<table class="reg"><thead><tr><th>When</th><th>Who</th><th>Type</th><th>Target</th><th>Old</th><th>New</th></tr></thead><tbody>'+
+          rows.map(r=>`<tr><td>${this.esc(new Date(r.created_at).toLocaleString())}</td><td>${this.esc(r.username||'')}</td><td>${this.esc(this.rwsActionLabel(r))}</td><td>${this.esc(r.target_key||'')}</td><td>${this.esc(JSON.stringify(r.old_value??''))}</td><td>${this.esc(JSON.stringify(r.new_value??''))}</td></tr>`).join('')+
           '</tbody></table>';
       }catch(e){ body.innerHTML='<div class="empty">Could not load activity log: '+this.esc(e.message)+'</div>'; }
       return;
@@ -779,15 +780,13 @@ class Component extends DCLogic {
           <input id="rwsNuPass" placeholder="password (blank = keep existing)" type="text" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)">
           <input id="rwsNuName" placeholder="display name" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)">
           <select id="rwsNuRole" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)"><option value="user">user</option><option value="admin">admin</option></select>
-          <input id="rwsNuScopes" placeholder="scopes e.g. L5 or L5:A3, L3" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt);grid-column:1/3">
         </div>
         <button class="hbtn primary" id="rwsNuSave">Save account</button>
-        <div style="font-size:9.5px;color:var(--faint);margin-top:6px">Scopes: comma-separated. "L5" grants the whole level; "L5:A3" grants just zone A3 on level L5.</div>
+        <div style="font-size:9.5px;color:var(--faint);margin-top:6px">No zone restriction — any "user" account can edit column status and slab quantities anywhere on the map. Only "admin" accounts can add zone-level site updates and manage accounts.</div>
       </div>
-      <table class="reg"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Scopes</th><th>Active</th></tr></thead><tbody>
-      ${users.map(u=>`<tr><td>${this.esc(u.username)}</td><td>${this.esc(u.display_name||'')}</td><td>${this.esc(u.role)}</td><td>${this.esc((u.allowed_scopes||[]).map(s=>s.zone?s.level+':'+s.zone:s.level).join(', '))}</td><td>${u.active?'yes':'no'}</td></tr>`).join('')}
+      <table class="reg"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Active</th></tr></thead><tbody>
+      ${users.map(u=>`<tr><td>${this.esc(u.username)}</td><td>${this.esc(u.display_name||'')}</td><td>${this.esc(u.role)}</td><td>${u.active?'yes':'no'}</td></tr>`).join('')}
       </tbody></table>`;
-      const parseScopes=raw=>(raw||'').split(',').map(s=>s.trim()).filter(Boolean).map(s=>{const parts=s.split(':').map(x=>x&&x.trim());return parts[1]?{level:parts[0],zone:parts[1]}:{level:parts[0]};});
       body.querySelector('#rwsNuSave').addEventListener('click',async()=>{
         const username=body.querySelector('#rwsNuUser').value.trim();
         if(!username){alert('username required');return;}
@@ -796,13 +795,24 @@ class Component extends DCLogic {
             username, password:body.querySelector('#rwsNuPass').value,
             displayName:body.querySelector('#rwsNuName').value.trim(),
             role:body.querySelector('#rwsNuRole').value,
-            allowedScopes:parseScopes(body.querySelector('#rwsNuScopes').value),
+            allowedScopes:[],
             active:true
           });
           this.rwsRenderAdmin();
         }catch(e){ alert('Could not save: '+e.message); }
       });
     }catch(e){ body.innerHTML='<div class="empty">Could not load accounts: '+this.esc(e.message)+'</div>'; }
+  }
+  rwsActionLabel(r){
+    if(r.action==='slab_qty') return 'Slab qty';
+    if(r.action==='element_status'){
+      const parts=(r.target_key||'').split('||'); const t=parts[2];
+      const map={col:'Column',pile:'Pile cap',beam:'Beam',lift:'Lift',stair:'Stair',core:'Core wall'};
+      return map[t]||('Element'+(t?' ('+t+')':''));
+    }
+    if(r.action==='zone_update') return 'Zone update';
+    if(r.action==='login') return 'Login';
+    return r.action||'';
   }
 
   elemStatus(k){return this.elem[k]||'todo';}
