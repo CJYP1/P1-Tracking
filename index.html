@@ -417,6 +417,22 @@ async function rwsAddZoneUpdate(a){
   if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
   return r;
 }
+async function rwsSyncQty(qtyKey, level, zoneMk, field, value){
+  const s = rwsGetSession(); if (!s) return { ok:false };
+  const args = { p_token:s.token, p_qty_key:qtyKey, p_level:level, p_zone_mk:zoneMk, p_field:field, p_value:value };
+  const r = await rwsCall('rws_update_qty', args);
+  if (!r.ok && r.offline) rwsQueuePush('rws_update_qty', args);
+  if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
+  return r;
+}
+async function rwsSyncPlanQty(planKey, level, zoneMk, value){
+  const s = rwsGetSession(); if (!s) return { ok:false };
+  const args = { p_token:s.token, p_plan_key:planKey, p_level:level, p_zone_mk:zoneMk, p_value:value };
+  const r = await rwsCall('rws_update_plan_qty', args);
+  if (!r.ok && r.offline) rwsQueuePush('rws_update_plan_qty', args);
+  if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
+  return r;
+}
 async function rwsAdminActivityLog(limit){ const s=rwsGetSession(); if(!s) throw new Error('not logged in'); const r=await rwsCall('rws_admin_activity_log',{p_token:s.token,p_limit:limit||300}); if(!r.ok) throw new Error(r.error&&r.error.message||'failed'); return r.data; }
 async function rwsAdminListUsers(){ const s=rwsGetSession(); if(!s) throw new Error('not logged in'); const r=await rwsCall('rws_admin_list_users',{p_token:s.token}); if(!r.ok) throw new Error(r.error&&r.error.message||'failed'); return r.data; }
 async function rwsAdminUpsertUser(u){ const s=rwsGetSession(); if(!s) throw new Error('not logged in'); const r=await rwsCall('rws_admin_upsert_user',{p_token:s.token,p_username:u.username,p_password:u.password||null,p_display_name:u.displayName||'',p_role:u.role,p_allowed_scopes:u.allowedScopes||[],p_active:u.active!==false}); if(!r.ok) throw new Error(r.error&&r.error.message||'failed'); return r.data; }
@@ -540,6 +556,7 @@ class Component extends DCLogic {
     this.showOvl = {podium:true,transfer:false,podcis:false};
     this.showBeams = false; this.showSeq = true; this.showCrit = true; this.showAreaBounds = true;
     try{this._critOv=JSON.parse(localStorage.getItem('rws_crit_ov')||'{}');}catch(e){this._critOv={};}
+    try{this._qtyOv=JSON.parse(localStorage.getItem('rws_qty_ov')||'{}');}catch(e){this._qtyOv={};}
     this.loadUpdates();
     this.loadElem();
     this.deriveProgress();
@@ -575,8 +592,41 @@ class Component extends DCLogic {
 
   applyCritOv(){const ov=this._critOv||{};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{z.crit=!!ov[lv+'|'+this.zid(z)];}));}
   setCrit(lv,z,on){const k=lv+'|'+this.zid(z);if(on)this._critOv[k]=true;else delete this._critOv[k];try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}this.applyCritOv();}
+  /* ---------- zone quantity overrides (admin-editable totals: area/columns/pilecap/mainbeam/steelbeam/lift-stair) ---------- */
+  applyQtyOv(){
+    // snapshot the original baked-in values once, so clearing an override
+    // (setting it back to blank) correctly restores the source-data number
+    if(!this._qtyBase){
+      this._qtyBase={};
+      this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{
+        this._qtyBase[lv+'||'+this.zid(z)]={area:z.area,counts:{...(z.counts||{})}};
+      }));
+    }
+    const ov=this._qtyOv||{};
+    this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{
+      const zk=lv+'||'+this.zid(z), base=this._qtyBase[zk]||{counts:{}};
+      z.counts=z.counts||{};
+      ['columns','pilecap','mainbeam','steelbeam','liftcw','stair','liftstair'].forEach(f=>{
+        const k=zk+'||'+f; z.counts[f]=(k in ov)?ov[k]:base.counts[f];
+      });
+      const ak=zk+'||area'; z.area=(ak in ov)?ov[ak]:base.area;
+    }));
+  }
+  setQtyOv(lv,zoneMk,field,raw){
+    if(!this.rwsIsAdmin()){this.rwsDeny('Only admin accounts can edit quantities.');return;}
+    const s=String(raw==null?'':raw).replace(/,/g,'').trim();
+    const v=s===''?null:parseFloat(s); if(v!=null&&(isNaN(v)||v<0))return;
+    const key=lv+'||'+zoneMk+'||'+field;
+    if(v==null)delete this._qtyOv[key]; else this._qtyOv[key]=v;
+    try{localStorage.setItem('rws_qty_ov',JSON.stringify(this._qtyOv));}catch(e){}
+    this.applyQtyOv();
+    this.buildRail();this.buildMetrics();this.buildTimeline();this.render();
+    const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);
+    rwsSyncQty(key,lv,zoneMk,field,v);
+  }
   deriveProgress(){
     this.applyCritOv();
+    this.applyQtyOv();
     this.DATA.order.forEach(lv=>{
       const seen={}, uniq=[];
       this.DATA.levels[lv].zones.forEach(z=>{const k=z.mk||('_'+z.lid);if(!seen[k]){seen[k]=1;uniq.push(z);}});
@@ -737,6 +787,8 @@ class Component extends DCLogic {
       const state=await rwsGetState(s.token);
       if(state.elements) this.elem={...this.elem,...state.elements};
       if(state.slab_qty){ this._zpOv={...this._zpOv,...state.slab_qty}; if(this.zpApplyOv)this.zpApplyOv(); }
+      if(state.qty_ov){ this._qtyOv={...this._qtyOv,...state.qty_ov}; try{localStorage.setItem('rws_qty_ov',JSON.stringify(this._qtyOv));}catch(e){} this.applyQtyOv(); }
+      if(state.plan_qty_ov){ this._zpPlanOv={...this._zpPlanOv,...state.plan_qty_ov}; try{localStorage.setItem('rws_zp_plan_ov',JSON.stringify(this._zpPlanOv));}catch(e){} if(this.zpApplyOv)this.zpApplyOv(); }
       if(state.zone_updates && state.zone_updates.length){
         state.zone_updates.forEach(row=>{
           const mk=row.zone_mk; if(!mk)return;
@@ -1161,8 +1213,9 @@ class Component extends DCLogic {
     Object.keys(Z.plan).forEach(k=>keyVars(k).forEach(v=>{const n=N(v);if(!planIdx[n])planIdx[n]=k;}));
     const excelPour={},qtyByNorm={};for(const k in Z.qty){const n=N(k);excelPour[n]=Z.qty[k].pour;qtyByNorm[n]=k;}
     this._zpIdx={planIdx,excelPour,qtyByNorm};this._zpMatch={};
-    this._zpOrig={};for(const z in Z.plan){this._zpOrig[z]={};for(const m in Z.plan[z]){this._zpOrig[z][m]=Z.plan[z][m].map(r=>({d:r.d,pct:r.pct}));}}
+    this._zpOrig={};for(const z in Z.plan){this._zpOrig[z]={};for(const m in Z.plan[z]){this._zpOrig[z][m]=Z.plan[z][m].map(r=>({d:r.d,pct:r.pct,p:r.p}));}}
     try{this._zpOv=JSON.parse(localStorage.getItem('rws_zp_ov')||'{}');}catch(e){this._zpOv={};}
+    try{this._zpPlanOv=JSON.parse(localStorage.getItem('rws_zp_plan_ov')||'{}');}catch(e){this._zpPlanOv={};}
     if(this._embZpOv)this._zpOv={...this._embZpOv,...this._zpOv};
     this._zpRev={};this._zpRevAll={};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{const nm=this.zpMatchOf(z);if(!nm)return;if(!this._zpRev[nm])this._zpRev[nm]={lv,mk:this.zid(z)};(this._zpRevAll[nm]=this._zpRevAll[nm]||[]).push({lv,mk:this.zid(z)});}));
     this._schFilter=this._schFilter||'all';this._schEdit=null;
@@ -1173,8 +1226,20 @@ class Component extends DCLogic {
   zpResolvePlan(z){if(!z)return null;const ix=this._zpIdx,N=s=>this.zpNorm(s);for(const v of this.zpCellVars(z)){const n=N(v);if(ix.planIdx[n])return ix.planIdx[n];}for(const v of this.zpCellVars(z)){const pour=ix.excelPour[N(v)];if(pour){for(const tok of [pour,...pour.split(/[+,]/)].map(t=>t.trim())){for(const tv of [tok,tok.replace(/-\d+$/,''),tok.replace(/\s*\([^)]*\)/g,'')]){const n=N(tv);if(ix.planIdx[n])return ix.planIdx[n];}}}}return null;}
   zpResolveGeo(z){for(const c of [z.label,z.fam,z.grp].filter(Boolean)){const r=this.zpResolvePlan(c);if(r)return r;}return null;}
   zpMatchOf(z){const k=z.mk||('_'+z.lid);if(k in this._zpMatch)return this._zpMatch[k];const r=this.zpResolveGeo(z);this._zpMatch[k]=r;return r;}
-  zpApplyOv(){const P=this.ZP.plan;if(!this._zpOrig)return;for(const z in P){for(const m in P[z]){P[z][m].forEach((r,i)=>{const o=this._zpOrig[z]&&this._zpOrig[z][m]&&this._zpOrig[z][m][i];if(o){r.d=o.d;r.pct=o.pct;}});}}for(const k in (this._zpOv||{})){const p=k.split('||');const rec=P[p[0]]&&P[p[0]][p[1]]&&P[p[0]][p[1]][+p[2]];if(rec){const v=this._zpOv[k];rec.d=v;rec.pct=(v!=null&&rec.p>0)?Math.round(v/rec.p*100):(v!=null?0:null);}}}
+  zpApplyOv(){
+    const P=this.ZP.plan;if(!this._zpOrig)return;
+    for(const z in P){for(const m in P[z]){P[z][m].forEach((r,i)=>{const o=this._zpOrig[z]&&this._zpOrig[z][m]&&this._zpOrig[z][m][i];if(o){r.d=o.d;r.pct=o.pct;r.p=o.p;}});}}
+    for(const k in (this._zpPlanOv||{})){const p=k.split('||');const rec=P[p[0]]&&P[p[0]][p[1]]&&P[p[0]][p[1]][+p[2]];if(rec){rec.p=this._zpPlanOv[k];}}
+    for(const k in (this._zpOv||{})){const p=k.split('||');const rec=P[p[0]]&&P[p[0]][p[1]]&&P[p[0]][p[1]][+p[2]];if(rec){const v=this._zpOv[k];rec.d=v;rec.pct=(v!=null&&rec.p>0)?Math.round(v/rec.p*100):(v!=null?0:null);}}
+  }
   zpSetDone(z,m,idx,raw){const s=String(raw==null?'':raw).replace(/,/g,'').trim();let v=s===''?null:parseFloat(s);if(v!=null&&(isNaN(v)||v<0))return;const key=z+'||'+m+'||'+idx;if(v==null)delete this._zpOv[key];else this._zpOv[key]=v;try{localStorage.setItem('rws_zp_ov',JSON.stringify(this._zpOv));}catch(e){}this.zpApplyOv();}
+  zpSetPlan(z,m,idx,raw){
+    if(!this.rwsIsAdmin()){this.rwsDeny('Only admin accounts can edit planned quantities.');return;}
+    const s=String(raw==null?'':raw).replace(/,/g,'').trim();let v=s===''?null:parseFloat(s);if(v!=null&&(isNaN(v)||v<0))return;
+    const key=z+'||'+m+'||'+idx;if(v==null)delete this._zpPlanOv[key];else this._zpPlanOv[key]=v;
+    try{localStorage.setItem('rws_zp_plan_ov',JSON.stringify(this._zpPlanOv));}catch(e){}
+    this.zpApplyOv();
+  }
   zpSection(z){
     if(!this.ZP)return '';
     const name=this.zpMatchOf(z);
@@ -1195,6 +1260,7 @@ class Component extends DCLogic {
           <span style="width:7px;height:7px;border-radius:2px;background:${wt.color};flex:0 0 auto"></span>
           <span style="flex:1;font-size:10px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${this.esc(it.w)}">${this.esc(it.w)}</span>
           <span style="width:44px;height:5px;border-radius:3px;background:var(--panel);overflow:hidden;flex:0 0 auto"><i style="display:block;height:100%;width:${Math.min(pct||0,100)}%;background:${bc}"></i></span>
+          ${this.rwsIsAdmin()?`<input class="zp-plan-in" data-z="${this.esc(pz)}" data-m="${this.esc(m)}" data-i="${idx}" value="${it.p==null?'':it.p}" placeholder="plan" title="Edit planned quantity (admin)" style="width:42px;text-align:right;font-size:10px;flex:0 0 auto;font-variant-numeric:tabular-nums;border:1px dashed var(--accent);border-radius:5px;padding:2px 4px;background:var(--panel);color:var(--accent)">`:''}
           <input class="zp-done-in" data-z="${this.esc(pz)}" data-m="${this.esc(m)}" data-i="${idx}" value="${it.d==null?'':(Math.round(it.d*100)/100)}" placeholder="—" title="${canEdit?'Enter completed quantity':'Outside your assigned zones'}" ${canEdit?'':'disabled'} style="width:50px;text-align:right;font-size:10px;flex:0 0 auto;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:5px;padding:2px 4px;background:var(--panel);color:var(--txt)${canEdit?'':';opacity:.5'}">
           <span style="font-size:9px;color:var(--faint);width:20px;text-align:right;flex:0 0 auto">${it.u||''}</span>
           <span style="font-size:9.5px;font-weight:700;width:30px;text-align:right;flex:0 0 auto;color:${pct==null?'var(--faint)':bc}">${pctText}</span>
@@ -1215,6 +1281,10 @@ class Component extends DCLogic {
       return `<div class="zsd-row"><span class="zsd-sw" style="background:${wt.color}"></span><span class="zsd-w" title="${this.esc(it.w)}">${this.esc(it.w)}</span><span class="zsd-plan">plan ${it.p!=null?this.fmt(it.p):'—'} ${this.esc(it.u||'')}</span><input class="zsd-in zp-done" data-z="${this.esc(z)}" data-m="${this.esc(m)}" data-i="${idx}" value="${it.d==null?'':it.d}" placeholder="done"><span class="zsd-pct" style="color:${pct==null?'var(--faint)':bc}">${pct==null?'—':pct+'%'}</span></div>`; }).join('');
     return `<div class="zsd"><div class="zsd-hd"><div><b class="mono" style="font-family:'Consolas',monospace">${this.esc(z)}</b> <span style="color:var(--dim);font-size:11px">${short(m)}</span></div><button class="hbtn" id="zsdClose">Close ✕</button></div><div class="zsd-note">Enter the completed quantity for each work package — the % updates automatically and is saved into this file.</div>${rows}</div>`; }
 
+  statCell(lv,zmk,field,label,value){
+    if(!this.rwsIsAdmin()) return `<div class="stat"><div class="n">${value}</div><div class="l">${label}</div></div>`;
+    return `<div class="stat"><input class="qty-ov-in" data-lv="${this.esc(lv)}" data-zmk="${this.esc(zmk)}" data-field="${field}" value="${value}" title="Edit ${label} (admin)" style="width:100%;background:transparent;border:1px dashed var(--accent);border-radius:5px;font-size:15px;font-weight:700;color:var(--accent);padding:1px 3px;font-family:inherit"><div class="l">${label}</div></div>`;
+  }
   selectZone(z){
     const c=z.counts,ct=this.CAT[z.cat]||this.CAT.NB,p=z._p||{pct:0,status:'todo',seq:'-',start:0,end:0};
     const st=this.STATUS[p.status];
@@ -1274,13 +1344,14 @@ class Component extends DCLogic {
         </div>
       </div>
       <div class="statgrid">
-        <div class="stat"><div class="n">${this.fmt(z.area)}</div><div class="l">Area m²</div></div>
-        <div class="stat"><div class="n">${c.columns||0}</div><div class="l">Columns</div></div>
-        <div class="stat"><div class="n">${c.pilecap||0}</div><div class="l">Pile Caps</div></div>
-        <div class="stat"><div class="n">${c.mainbeam||0}</div><div class="l">Main Beams</div></div>
-        <div class="stat"><div class="n">${c.steelbeam||0}</div><div class="l">Steel Beams</div></div>
+        ${this.statCell(lv,z.mk||z.lid,'area','Area m²',z.area||0)}
+        ${this.statCell(lv,z.mk||z.lid,'columns','Columns',c.columns||0)}
+        ${this.statCell(lv,z.mk||z.lid,'pilecap','Pile Caps',c.pilecap||0)}
+        ${this.statCell(lv,z.mk||z.lid,'mainbeam','Main Beams',c.mainbeam||0)}
+        ${this.statCell(lv,z.mk||z.lid,'steelbeam','Steel Beams',c.steelbeam||0)}
         <div class="stat"><div class="n">${z.lifts.length}/${z.stairs.length}</div><div class="l">Lift / Stair</div></div>
       </div>
+      ${this.rwsIsAdmin()?'<div style="font-size:9.5px;color:var(--faint);margin:-6px 0 9px">Dashed boxes above are editable (admin) — press Enter or click away to save. Lift/Stair count isn\'t editable here.</div>':''}
       ${this.zpSection(z)}
       ${eltool}
       <div class="sec">${secHead('Columns',z.cols.length,'col',z.cols)}${colHtml}</div>
@@ -1310,9 +1381,23 @@ class Component extends DCLogic {
       const items=({col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores})[type]||[];
       items.forEach(x=>{const key=this.ekey(this.curLevel,z,type,typeof x==='string'?x:x.id);this.elem[key]='done';rwsSyncElementStatus(key,'done');});this.commitElem();}));
     sb.querySelectorAll('[data-bulk-all]').forEach(el=>el.addEventListener('click',()=>this.setZoneElems(this.curLevel,z,el.dataset.bulkAll)));
+    sb.querySelectorAll('.qty-ov-in').forEach(el=>{
+      const commit=()=>this.setQtyOv(el.dataset.lv,el.dataset.zmk,el.dataset.field,el.value);
+      el.addEventListener('change',commit);
+      el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});
+    });
     sb.querySelectorAll('.zp-done-in').forEach(el=>{el.addEventListener('focus',()=>{const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});el.addEventListener('input',()=>{el.dataset.dirty='1';this._zpDirty=true;const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});});
+    sb.querySelectorAll('.zp-plan-in').forEach(el=>{el.addEventListener('focus',()=>{const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});el.addEventListener('input',()=>{el.dataset.dirty='1';this._zpDirty=true;const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});});
     const _zsb=sb.querySelector('#zpSaveBtn');if(_zsb)_zsb.addEventListener('click',()=>{
       const lv=this.curLevel,zmk=z.mk||z.lid;
+      sb.querySelectorAll('.zp-plan-in').forEach(el=>{
+        if(el.dataset.dirty==='1'){
+          this.zpSetPlan(el.dataset.z,el.dataset.m,+el.dataset.i,el.value);
+          const planKey=el.dataset.z+'||'+el.dataset.m+'||'+el.dataset.i;
+          const raw=String(el.value||'').replace(/,/g,'').trim();
+          rwsSyncPlanQty(planKey,lv,zmk,raw===''?null:parseFloat(raw));
+        }
+      });
       sb.querySelectorAll('.zp-done-in').forEach(el=>{
         if(el.dataset.dirty==='1'){
           this.zpSetDone(el.dataset.z,el.dataset.m,+el.dataset.i,el.value);
