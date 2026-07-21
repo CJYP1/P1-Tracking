@@ -557,7 +557,7 @@ async function rwsAdminUpsertUser(u){ const s=rwsGetSession(); if(!s) throw new 
     <button class="hbtn" id="rwsAdminBtn" style="display:none">🔐 Admin</button>
     <button class="hbtn primary" id="openSched">📅 Construction Schedule</button>
     <button class="hbtn primary" id="saveLock" style="display:none" title="Save the whole page — all progress embedded — as one HTML file to forward or archive">💾 Save</button>
-    <button class="hbtn" id="loadLock" style="display:none" title="Open a previously saved file to continue from its data">📂 Open</button>
+    <button class="hbtn" id="loadLock" style="display:none" title="Import data (P6 plan / saved backup) — merges into the map and syncs to the cloud">📥 Import</button>
     <button class="hbtn" id="exportXls" style="display:none" title="Export the progress table to Excel">⬇ Excel</button>
     <button class="hbtn" id="exportJson" style="display:none" title="Export ALL data (plan vs actual, who changed what, accounts) as one JSON for tracking">⬇ Full JSON</button>
     <button class="hbtn" id="openTable" style="display:none" title="Full progress table of every zone (review / print)">▤ Table <span class="cnt" id="elemCnt">0</span></button>
@@ -711,7 +711,7 @@ class Component extends DCLogic {
     return {avg:Math.round(ws/Math.max(1,wa)),done,wip,todo,count:uniq.length};}
 
   applyCritOv(){const ov=this._critOv||{};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{z.crit=!!ov[lv+'|'+this.zid(z)];}));this._critPlanSet=null;}
-  setCrit(lv,z,on){const k=lv+'|'+this.zid(z);if(on)this._critOv[k]=true;else delete this._critOv[k];try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}this.applyCritOv();this._critPlanSet=null;}
+  setCrit(lv,z,on){const k=lv+'|'+this.zid(z);if(on)this._critOv[k]=true;else delete this._critOv[k];try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}this.applyCritOv();this._critPlanSet=null;if(typeof rwsSyncKV==='function')rwsSyncKV('crit',k,(on?true:null),null,null);}
   /* ---------- zone quantity overrides (admin-editable totals: area/columns/pilecap/mainbeam/steelbeam/lift-stair) ---------- */
   applyQtyOv(){
     // snapshot the original baked-in values once, so clearing an override
@@ -969,6 +969,7 @@ class Component extends DCLogic {
       if(state.act_plan)   this._actPlan={...this._actPlan,...state.act_plan};
       if(state.act_done_m) this._actDoneM={...this._actDoneM,...state.act_done_m};
       if(state.act_hidden) this._actHidden={...this._actHidden,...state.act_hidden};
+      if(state.crit){ this._critOv={...(this._critOv||{}),...state.crit}; try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){} if(this.applyCritOv)this.applyCritOv(); this._critPlanSet=null; }
       if(state.elem_date){ this._elemDate={...(this._elemDate||{}),...state.elem_date}; this.saveElemDate(); }
       if(state.act_def){ this._actDefs=Object.keys(state.act_def).map(id=>({id,label:(state.act_def[id]&&state.act_def[id].label)||id,unit:(state.act_def[id]&&state.act_def[id].unit)||''})); }
       if(Array.isArray(state.custom_cats)){const seen={};this._catAdd=[];state.custom_cats.forEach(c=>{if(c&&c.code&&!seen[c.code]){seen[c.code]=1;this._catAdd.push({code:c.code,label:c.label});}});}
@@ -1563,7 +1564,7 @@ class Component extends DCLogic {
       {id:'ls',label:'Lift / Stairs',unit:'nos',total:this.lsAll(c)},
       {id:'exc',label:'Excavation',unit:'m³',total:this.excTotal(lv,z)},
       {id:'demo',label:'Demolition',unit:'m³',total:this.actTotal(lv,zmk,'demo',null)},
-      {id:'slab',label:'Cast Slab',unit:'m²',total:z.area||0,info:'% includes all works required to complete slab casting, including formwork, rebar, etc.'},
+      {id:'slab',label:'Cast Slab',unit:'m²',total:z.area||0,info:'Enter the completed area under \u201cDone\u201d based on the work stage: 40% for formwork, 50% for rebar, and 10% for slab casting.'},
     ];
     (this._actDefs||[]).forEach(d=>acts.push({id:d.id,label:d.label,unit:d.unit||'',custom:true,total:this.actTotal(lv,zmk,d.id,null)}));
     const rows=acts.map(a=>{
@@ -2092,7 +2093,7 @@ class Component extends DCLogic {
   loadLock(file){
     const r=new FileReader();
     r.onload=()=>{try{
-      let txt=String(r.result);let elemN=0,updN=0;
+      let txt=String(r.result);let elemN=0,updN=0,planN=0,actN=0,critN=0;
       const m=txt.match(/<script id="locked-data"[^>]*>([\s\S]*?)<\/script>/i);
       if(m||(txt.trim()[0]==='{')){
         let data=JSON.parse(m?m[1]:txt);
@@ -2103,15 +2104,20 @@ class Component extends DCLogic {
         if(data.zpOv){this._zpOv={...(this._zpOv||{}),...data.zpOv};}
         if(data.qtyOv){this._qtyOv={...(this._qtyOv||{}),...data.qtyOv};}
         if(data.zpPlanOv){this._zpPlanOv={...(this._zpPlanOv||{}),...data.zpPlanOv};}
-        if(data.crit){this._critOv={...(this._critOv||{}),...data.crit};}
+        if(data.crit){this._critOv={...(this._critOv||{}),...data.crit};critN=Object.keys(data.crit).length;}
         if(data.actTotal){this._actTotal={...(this._actTotal||{}),...data.actTotal};}
-        if(data.actPlan){this._actPlan={...(this._actPlan||{}),...data.actPlan};}
-        if(data.actDoneM){this._actDoneM={...(this._actDoneM||{}),...data.actDoneM};}
+        if(data.actPlan){this._actPlan={...(this._actPlan||{}),...data.actPlan};planN=Object.keys(data.actPlan).length;}
+        if(data.actDoneM){this._actDoneM={...(this._actDoneM||{}),...data.actDoneM};actN=Object.keys(data.actDoneM).length;}
         if(data.actHidden){this._actHidden={...(this._actHidden||{}),...data.actHidden};}
         if(Array.isArray(data.actDefs)){this._actDefs=this._actDefs||[];data.actDefs.forEach(d=>{if(d&&d.id&&!this._actDefs.some(x=>x.id===d.id))this._actDefs.push(d);});}
         if(Array.isArray(data.catAdd)){this._catAdd=this._catAdd||[];data.catAdd.forEach(c=>{if(c&&c.code&&!this._catAdd.some(x=>x.code===c.code))this._catAdd.push({code:c.code,label:c.label});});}
         if(data.elemAdd&&typeof data.elemAdd==='object'){this._elemAdd=this._elemAdd||{};Object.keys(data.elemAdd).forEach(k=>{const cur=this._elemAdd[k]||(this._elemAdd[k]=[]);(data.elemAdd[k]||[]).forEach(id=>{if(cur.indexOf(id)<0)cur.push(id);});});}
         if(data.catAdd||data.elemAdd){this.saveCustom&&this.saveCustom();}
+        try{if(typeof rwsGetSession==='function'&&rwsGetSession()){
+          const pv=(store,obj,parse)=>{Object.keys(obj||{}).forEach(k=>{let lv=null,mk=null;if(parse){const pp=k.split('||');lv=pp[0];mk=pp[1];}rwsSyncKV(store,k,obj[k],lv,mk);});};
+          pv('act_plan',data.actPlan,true);pv('act_total',data.actTotal,true);pv('act_done_m',data.actDoneM,true);pv('act_hidden',data.actHidden,true);pv('elem_date',data.elemDate,true);pv('crit',data.crit,false);
+          if(data.elem&&typeof rwsSyncElementStatus==='function')Object.keys(data.elem).forEach(k=>rwsSyncElementStatus(k,data.elem[k]));
+        }}catch(e){console.warn('import cloud-sync skipped',e);}
       } else {
         // Excel/CSV/HTML-table archive: restore element marks from the Element Detail table
         this.buildLabelMap();
@@ -2133,7 +2139,7 @@ class Component extends DCLogic {
       this.saveElem();this.saveUpdatesStore();if(this.saveAct)this.saveAct();if(this.saveElemDate)this.saveElemDate();try{localStorage.setItem('rws_zp_ov',JSON.stringify(this._zpOv||{}));localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv||{}));localStorage.setItem('rws_qty_ov',JSON.stringify(this._qtyOv||{}));}catch(e){}if(this.zpApplyOv)this.zpApplyOv();if(this.applyQtyOv)this.applyQtyOv();if(this.applyCritOv)this.applyCritOv();this.applyUpdates();
       this.buildRail();this.buildTimeline();this.render();this.refreshUpdBadge();
       if(this.selKey){const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);}
-      alert('Loaded: '+this.doneCount()+' elements done, '+this.updateCount()+' zone entries. You can keep updating.');
+      alert('Imported ✓\n• Plan (monthly) entries: '+planN+'\n• Actual-done entries: '+actN+'\n• Critical marks: '+critN+'\n• Element statuses now done: '+this.doneCount()+'\nData saved locally and synced to the cloud. Open a zone and switch months to see the Plan values.');
     }catch(err){alert('Could not parse file: '+err.message);}};
     r.readAsText(file);
   }
