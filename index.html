@@ -441,7 +441,7 @@ async function rwsAdminUpsertUser(u){ const s=rwsGetSession(); if(!s) throw new 
 <div id="app" ref="{{ rootRef }}">
   <header>
     <div class="mark"></div>
-    <div><h1>RWS P1 · CJ — Zone Resource &amp; Progress Map (P1 Planning)</h1><div class="sub">Quantities &amp; site progress per zone</div></div>
+    <div><h1>RWS P1 · CJ — Zone Resource &amp; Progress Map (P1 Planning) <span style="font-size:10px;font-weight:700;color:var(--crit);white-space:nowrap">⚠ Refresh (F5) before use to load the latest data</span></h1><div class="sub">Quantities &amp; site progress per zone</div></div>
     <div class="spacer"></div>
     <span id="autosave" style="font-size:10px;color:var(--faint);font-weight:600">Autosave on</span>
     <span id="rwsQueueBadge" style="font-size:10px;color:var(--crit);font-weight:700;display:none"></span>
@@ -727,8 +727,10 @@ class Component extends DCLogic {
   rwsIsAdmin(){return !!this._rwsUser && this._rwsUser.role==='admin';}
   rwsDeny(msg){alert(msg||'You are not allowed to change that.');}
   rwsOnQueueChange(){
-    const n=rwsQueueSize(); const b=this.root&&this.root.querySelector('#rwsQueueBadge'); if(!b)return;
-    if(n>0){b.style.display='';b.textContent='⏳ '+n+' pending sync';} else {b.style.display='none';}
+    const n=rwsQueueSize(); const b=this.root&&this.root.querySelector('#rwsQueueBadge'); if(!b||!this._rwsUser)return;
+    b.style.display='';
+    if(n>0){b.textContent='⏳ '+n+' pending sync';b.style.color='var(--crit)';}
+    else {b.textContent='☁ Synced';b.style.color='var(--done)';}
   }
   rwsRenderUserBar(){
     const info=this.root.querySelector('#rwsUserInfo'), lo=this.root.querySelector('#rwsLogoutBtn'), ab=this.root.querySelector('#rwsAdminBtn');
@@ -980,7 +982,7 @@ class Component extends DCLogic {
       } else {
         s+=`<text class="zarea" style="font-size:2000px" x="${cx.toFixed(0)}" y="${(cy+1100).toFixed(0)}">${this.fmt(z.area)} m²</text>`;
       }
-      if(this.showSeq && z._p){
+      if(this.showSeq && this.rwsIsAdmin() && z._p){
         const bc=z._p.status==='done'?this.cssvar('--done'):z._p.status==='wip'?this.cssvar('--wip'):this.cssvar('--todo');
         s+=`<text class="zseq" style="font-size:1750px;fill:${bc}" x="${cx.toFixed(0)}" y="${(cy+3600).toFixed(0)}">${this.ordinal(z._p.seq)} pour</text>`;
       }
@@ -1018,7 +1020,7 @@ class Component extends DCLogic {
      <div class="tpb"><i style="width:${p.pct}%;background:${this.progColor(p.pct)}"></i></div>
      <div class="row"><span>Progress</span><b>${p.pct}% · ${st?st.label:''}</b></div>
      ${catRow}
-     <div class="row"><span>Pour seq</span><b>#${p.seq}</b></div>
+     ${this.rwsIsAdmin()?`<div class="row"><span>Pour seq</span><b>#${p.seq}</b></div>`:''}
      <div class="row"><span>Plan</span><b>${this.ml(Math.round(p.start))} → ${this.ml(Math.round(p.end))}</b></div>
      <div class="row" style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"><span>Columns / Piles</span><b>${c.columns||0} / ${c.pilecap||0}</b></div>
      <div class="row"><span>Beams (M/S)</span><b>${c.mainbeam||0} / ${c.steelbeam||0}</b></div>
@@ -1050,7 +1052,7 @@ class Component extends DCLogic {
     Object.keys(this.OVL).forEach(k=>{if(this.showOvl[k]){const o=this.OVL[k];s+=`<div class="lr"><span class="dash" style="border-color:${o.c}"></span>${o.label}</div>`;}});
     if(this.showBeams && this.DATA.beamlines && this.DATA.beamlines[this.curLevel]) s+=`<div class="lr"><span style="width:18px;border-top:2px solid var(--beam)"></span>Main-beam lines (approx.)</div>`;
     if(this.showCrit)s+=`<div class="lr"><span style="width:13px;color:var(--crit);font-weight:800;text-align:center">Ab</span>Red zone name = critical path</div>`;
-    if(this.showSeq)s+=`<div class="lr"><span class="sw" style="border-radius:50%;background:var(--dim);color:#fff;font-size:8px;text-align:center;line-height:13px;font-weight:800">#</span>Pour sequence</div>`;
+    if(this.showSeq && this.rwsIsAdmin())s+=`<div class="lr"><span class="sw" style="border-radius:50%;background:var(--dim);color:#fff;font-size:8px;text-align:center;line-height:13px;font-weight:800">#</span>Pour sequence</div>`;
     if(this.showAreaBounds){s+=`<div style="font-weight:700;color:var(--txt);margin:5px 0 2px">Area boundaries</div>`;
       const ld={EB:'solid',NB:'solid',MA:'solid'};
       Object.keys(this.BCOL).forEach(k=>{const cc=this.CAT[k];s+=`<div class="lr"><span style="width:18px;border-top:3px ${ld[k]||'solid'} ${this.BCOL[k]}"></span>${cc.label}</div>`;});
@@ -1336,7 +1338,7 @@ class Component extends DCLogic {
         <div class="pbar"><i style="width:${p.pct}%;background:${this.progColor(p.pct)}"></i></div>
         <div class="prows">
           <div class="pr"><span>Status</span><b style="color:var(${st.v})">${st.label}</b></div>
-          <div class="pr"><span>Pour seq</span><b>#${p.seq}</b></div>
+          ${this.rwsIsAdmin()?`<div class="pr"><span>Pour seq</span><b>#${p.seq}</b></div>`:''}
           <div class="pr"><span>Plan start</span><b>${this.ml(Math.round(p.start))}</b></div>
           <div class="pr"><span>Plan end</span><b>${this.ml(Math.round(p.end))}</b></div>
           <div class="pr"><span>Activities</span><b>${z.n_acts||0}</b></div>
@@ -1559,7 +1561,7 @@ class Component extends DCLogic {
     const dv2=document.createElement('span');dv2.className='divv';mc.appendChild(dv2);
     mc.appendChild(mkLbl('Overlays:'));
     const mkToggle=(on,inner,fn)=>{const c=document.createElement('div');c.className='tchip '+(on?'on':'off');c.innerHTML=inner;c.addEventListener('click',fn);mc.appendChild(c);};
-    mkToggle(this.showSeq,`<span style="width:14px;height:14px;border-radius:50%;background:var(--dim);color:#fff;font-size:8px;line-height:14px;text-align:center;font-weight:800">#</span>Pour sequence`,()=>{this.showSeq=!this.showSeq;this.buildMetrics();this.render();});
+    if(this.rwsIsAdmin())mkToggle(this.showSeq,`<span style="width:14px;height:14px;border-radius:50%;background:var(--dim);color:#fff;font-size:8px;line-height:14px;text-align:center;font-weight:800">#</span>Pour sequence`,()=>{this.showSeq=!this.showSeq;this.buildMetrics();this.render();});
     mkToggle(this.showCrit,`<span style="width:9px;height:9px;border-radius:50%;background:var(--crit)"></span>Critical path`,()=>{this.showCrit=!this.showCrit;this.buildMetrics();this.render();});
     mkToggle(this.showAreaBounds,`<span style="width:16px;border-top:3px solid var(--dim);display:inline-block"></span>Area boundaries`,()=>{this.showAreaBounds=!this.showAreaBounds;this.buildMetrics();this.render();});
     Object.keys(this.OVL).forEach(k=>{const o=this.OVL[k];mkToggle(this.showOvl[k],`<span class="dash" style="color:${o.c}"></span>${o.label}`,()=>{this.showOvl[k]=!this.showOvl[k];this.buildMetrics();this.render();});});
