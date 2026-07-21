@@ -645,7 +645,7 @@ class Component extends DCLogic {
 
   initSideResize(){const side=this.root.querySelector('#side'),h=this.root.querySelector('#sideResize');if(!side||!h||h._b)return;h._b=1;const clamp=v=>Math.max(300,Math.min(v,(window.innerWidth||1200)-340));let w=0;try{w=parseInt(localStorage.getItem('rws_side_w')||'0',10);}catch(e){}if(w)side.style.width=clamp(w)+'px';let sx=0,sw=0,drag=false;h.addEventListener('mousedown',e=>{drag=true;sx=e.clientX;sw=side.getBoundingClientRect().width;h.classList.add('drag');document.body.style.userSelect='none';e.preventDefault();});window.addEventListener('mousemove',e=>{if(!drag)return;side.style.width=clamp(sw+(sx-e.clientX))+'px';});window.addEventListener('mouseup',()=>{if(!drag)return;drag=false;h.classList.remove('drag');document.body.style.userSelect='';try{localStorage.setItem('rws_side_w',String(Math.round(side.getBoundingClientRect().width)));}catch(e){}});h.addEventListener('dblclick',()=>{side.style.width='';try{localStorage.removeItem('rws_side_w');}catch(e){}});}
   init(){
-    this.ACT_MONTHS=["Before Apr'26","Apr'26","May'26","Jun'26","Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26"];
+    this.ACT_MONTHS=["Before Apr'26","Apr'26","May'26","Jun'26","Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26","Jan'27","Feb'27","Mar'27","Apr'27","May'27"];
     this.METRICS = [
       {k:'columns',label:'Columns'},{k:'pilecap',label:'Pile Caps'},{k:'mainbeam',label:'Main Beams'},
       {k:'steelbeam',label:'Steel Beams'},{k:'liftstairAll',label:'Lift / Stair'},{k:'area',label:'Area m²'}];
