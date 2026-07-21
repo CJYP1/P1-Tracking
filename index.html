@@ -330,7 +330,7 @@ svg.collabels .collbl{display:block}
 .statgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:11px}
 .stat{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 9px}
 .stat .n{font-size:15px;font-weight:700}.stat .l{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.3px}
-.stat .statcalc{font-size:8.5px;color:var(--dim);font-weight:600;margin-top:2px}
+.stat .statcalc{font-size:9px;color:var(--dim);font-weight:600;margin-top:2px}
 .stat.statcust{border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);cursor:pointer}
 .stat.statcust:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent)}
 .sec{margin-bottom:10px}
@@ -556,11 +556,11 @@ async function rwsAdminUpsertUser(u){ const s=rwsGetSession(); if(!s) throw new 
     <button class="hbtn" id="rwsLogoutBtn" style="display:none">Log out</button>
     <button class="hbtn" id="rwsAdminBtn" style="display:none">🔐 Admin</button>
     <button class="hbtn primary" id="openSched">📅 Construction Schedule</button>
-    <button class="hbtn primary" id="saveLock" title="Save the whole page — all progress embedded — as one HTML file to forward or archive">💾 Save</button>
-    <button class="hbtn" id="loadLock" title="Open a previously saved file to continue from its data">📂 Open</button>
-    <button class="hbtn" id="exportXls" title="Export the progress table to Excel">⬇ Excel</button>
+    <button class="hbtn primary" id="saveLock" style="display:none" title="Save the whole page — all progress embedded — as one HTML file to forward or archive">💾 Save</button>
+    <button class="hbtn" id="loadLock" style="display:none" title="Open a previously saved file to continue from its data">📂 Open</button>
+    <button class="hbtn" id="exportXls" style="display:none" title="Export the progress table to Excel">⬇ Excel</button>
     <button class="hbtn" id="exportJson" style="display:none" title="Export ALL data (plan vs actual, who changed what, accounts) as one JSON for tracking">⬇ Full JSON</button>
-    <button class="hbtn" id="openTable" title="Full progress table of every zone (review / print)">▤ Table <span class="cnt" id="elemCnt">0</span></button>
+    <button class="hbtn" id="openTable" style="display:none" title="Full progress table of every zone (review / print)">▤ Table <span class="cnt" id="elemCnt">0</span></button>
     <input id="lockFile" type="file" accept=".json,.html,.xls,.csv" style="display:none">
     <div class="seg" id="themeseg"><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
   </header>
@@ -741,7 +741,7 @@ class Component extends DCLogic {
   excAuto(lv,z){if((z.cat||'NB')!=='NB')return null;const d=this.excDepth(lv);return d==null?null:Math.round((z.area||0)*d);}
   excTotal(lv,z){const ov=this.actTotal(lv,z.mk||z.lid,'exc',null);return ov!=null?ov:this.excAuto(lv,z);}
   actPlan(lv,zmk,a,m){const v=(this._actPlan||{})[lv+'||'+zmk+'||'+a+'||'+m];return v==null?null:v;}
-  actDoneMonth(lv,zmk,a,m){if(a==='col'&&lv==='B2')return this.colDoneInMonth(lv,zmk,m);const v=(this._actDoneM||{})[lv+'||'+zmk+'||'+a+'||'+m];return v==null?null:v;}
+  actDoneMonth(lv,zmk,a,m){const ea=this._elemAct(a);if(ea&&this._zoneHasElems(lv,zmk,ea.types))return this.elemDoneInMonth(lv,zmk,ea.types,m);const v=(this._actDoneM||{})[lv+'||'+zmk+'||'+a+'||'+m];return v==null?null:v;}
   actCumDone(lv,zmk,a){let s=0;this.ACT_MONTHS.forEach(m=>{const v=(this._actDoneM||{})[lv+'||'+zmk+'||'+a+'||'+m];if(v!=null)s+=v;});return s;}
   actCarry(lv,zmk,aid,mi){const M=this.ACT_MONTHS;let cpPrev=0,cdPrev=0;for(let i=0;i<mi;i++){cpPrev+=this.actPlan(lv,zmk,aid,M[i])||0;cdPrev+=this.actDoneMonth(lv,zmk,aid,M[i])||0;}const plan=this.actPlan(lv,zmk,aid,M[mi])||0;const done=this.actDoneMonth(lv,zmk,aid,M[mi])||0;const carryIn=Math.max(0,cpPrev-cdPrev);const required=plan+carryIn;const balance=(cpPrev+plan)-(cdPrev+done);const cleared=Math.min(done,carryIn);const current=Math.max(0,done-cleared);return {carryIn,plan,done,required,balance,cleared,current,hasData:(cpPrev+cdPrev+plan+done)>0};}
   actHidden(lv,zmk,a){return !!(this._actHidden||{})[lv+'||'+zmk+'||'+a];}
@@ -762,7 +762,7 @@ class Component extends DCLogic {
   delCustomCat(code){if(!this.rwsIsAdmin())return;if(!confirm('Delete this category and its items everywhere?'))return;this._catAdd=this.customCats().filter(c=>c.code!==code);Object.keys(this._elemAdd||{}).forEach(k=>{if(k.split('||')[2]===code)delete this._elemAdd[k];});this.saveCustom();rwsDelCat(code);this._actRerender(this._selZone());}
   addCustomItem(lv,zmk,type,id){if(!this.rwsIsAdmin()){this.rwsDeny('Not allowed.');return;}id=(id||'').trim();if(!id||id.indexOf('||')>=0)return;const k=lv+'||'+zmk+'||'+type;const arr=this._elemAdd[k]||(this._elemAdd[k]=[]);if(arr.indexOf(id)>=0){alert('That ID already exists here.');return;}arr.push(id);this.saveCustom();rwsAddItem(lv+'||'+zmk+'||'+type+'||'+id,lv,zmk,type,id);this._actRerender(this._selZone());}
   delCustomItem(lv,zmk,type,id){if(!this.rwsIsAdmin())return;const k=lv+'||'+zmk+'||'+type;this._elemAdd[k]=(this._elemAdd[k]||[]).filter(x=>x!==id);if(!this._elemAdd[k].length)delete this._elemAdd[k];const ek=lv+'||'+zmk+'||'+type+'||'+id;delete this.elem[ek];this.saveElem();this.saveCustom();rwsDelItem(ek);this._actRerender(this._selZone());}
-  _custSecHtml(lv,z,admin){const zmk=z.mk||z.lid;let out=(this.customCats()||[]).map(ct=>{const code=ct.code;const hidden=this.actHidden(lv,zmk,code);if(!admin&&hidden)return '';const ids=this.customItemsFor(lv,zmk,code);const nd=ids.filter(id=>this.elemStatus(lv+'||'+zmk+'||'+code+'||'+id)==='done').length;const rows=ids.length?ids.map(id=>{const key=lv+'||'+zmk+'||'+code+'||'+id;return `<div class="idrow"><span class="id">${this.esc(id)}</span><span class="meta"></span>${this.elChip(key)}${admin?`<span class="allbtn cdel" data-del="${this.esc(code+'||'+id)}" style="color:var(--crit);cursor:pointer;margin-left:6px" title="Delete item">✕</span>`:''}</div>`;}).join(''):'<div class="empty">no items yet</div>';const vis=admin?`<input type="checkbox" class="catvis" data-a="${code}" ${hidden?'':'checked'} title="Show this category to site users" style="margin-right:6px">`:'';const add=admin?` · <span class="allbtn cadd" data-cat="${code}" style="color:var(--accent);cursor:pointer">+ add</span>`:'';const del=admin?` · <span class="allbtn cdelcat" data-cat="${code}" style="color:var(--crit);cursor:pointer">delete</span>`:'';return `<details class="sec ${(admin&&hidden)?'act-off':''}" data-sec="${code}"><summary class="t">${vis}${this.esc(ct.label)}${(admin&&hidden)?' <span class="hiddentag">hidden from users</span>':''} <span>${nd}/${ids.length} done${add}${del}</span></summary>${rows}</details>`;}).join('');if(admin)out+=`<div class="sec"><span class="allbtn cnewcat" style="color:var(--accent);cursor:pointer;font-weight:700">+ New status category</span></div>`;return out;}
+  _custSecHtml(lv,z,admin){const zmk=z.mk||z.lid;let out=(this.customCats()||[]).map(ct=>{const code=ct.code;const hidden=this.actHidden(lv,zmk,code);if(!admin&&hidden)return '';const ids=this.customItemsFor(lv,zmk,code);const nd=ids.filter(id=>this.elemStatus(lv+'||'+zmk+'||'+code+'||'+id)==='done').length;const rows=ids.length?ids.map(id=>{const key=lv+'||'+zmk+'||'+code+'||'+id;return `<div class="idrow"><span class="id">${this.esc(id)}</span><span class="meta"></span>${this.elChip(key)}${this.elDateCtl(key)}${admin?`<span class="allbtn cdel" data-del="${this.esc(code+'||'+id)}" style="color:var(--crit);cursor:pointer;margin-left:6px" title="Delete item">✕</span>`:''}</div>`;}).join(''):'<div class="empty">no items yet</div>';const vis=admin?`<input type="checkbox" class="catvis" data-a="${code}" ${hidden?'':'checked'} title="Show this category to site users" style="margin-right:6px">`:'';const add=admin?` · <span class="allbtn cadd" data-cat="${code}" style="color:var(--accent);cursor:pointer">+ add</span>`:'';const del=admin?` · <span class="allbtn cdelcat" data-cat="${code}" style="color:var(--crit);cursor:pointer">delete</span>`:'';return `<details class="sec ${(admin&&hidden)?'act-off':''}" data-sec="${code}"><summary class="t">${vis}${this.esc(ct.label)}${(admin&&hidden)?' <span class="hiddentag">hidden from users</span>':''} <span>${nd}/${ids.length} done${add}${del}</span></summary>${rows}</details>`;}).join('');if(admin)out+=`<div class="sec"><span class="allbtn cnewcat" style="color:var(--accent);cursor:pointer;font-weight:700">+ New status category</span></div>`;return out;}
   setQtyOv(lv,zoneMk,field,raw){
     if(!this.rwsIsAdmin()){this.rwsDeny('Only admin accounts can edit quantities.');return;}
     const s=String(raw==null?'':raw).replace(/,/g,'').trim();
@@ -871,6 +871,11 @@ class Component extends DCLogic {
   dateToActMonth(iso){const M=this.ACT_MONTHS;if(!iso)return M[M.length-1];const y=+iso.slice(0,4),mo=+iso.slice(5,7);const val=y*12+mo;const aprVal=2026*12+4;if(val<aprVal)return "Before Apr'26";const nm=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];if(y===2026&&mo>=4&&mo<=12)return nm[mo]+"'26";return M[M.length-1];}
   /* Columns completed in a given month bucket for a zone (drives the Columns activity) */
   colDoneInMonth(lv,zmk,m){const z=(this.DATA.levels[lv]?this.DATA.levels[lv].zones:[]).find(x=>(x.mk||x.lid)===zmk);if(!z||!z.cols)return null;let n=0;z.cols.forEach(x=>{const k=this.ekey(lv,z,'col',x.id);if(this.elemStatus(k)==='done'){const d=this.elemDate(k)||this.todayISOStr();if(this.dateToActMonth(d)===m)n++;}});return n>0?n:null;}
+  /* Activities whose monthly Done is derived from an element checklist (in sync with the list below) */
+  _elemAct(id){return {col:{types:['col'],sec:'col',label:'columns'},pile:{types:['pile'],sec:'pile',label:'pile caps'},mbeam:{types:['beam'],sec:'beam',label:'main beams'}}[id]||null;}
+  _zoneElemList(z,tp){return ({col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores})[tp]||[];}
+  _zoneHasElems(lv,zmk,types){const z=(this.DATA.levels[lv]?this.DATA.levels[lv].zones:[]).find(x=>(x.mk||x.lid)===zmk);if(!z)return false;return types.some(tp=>this._zoneElemList(z,tp).length>0);}
+  elemDoneInMonth(lv,zmk,types,m){const z=(this.DATA.levels[lv]?this.DATA.levels[lv].zones:[]).find(x=>(x.mk||x.lid)===zmk);if(!z)return null;let n=0;types.forEach(tp=>{this._zoneElemList(z,tp).forEach(x=>{const id=(typeof x==='string')?x:x.id;const k=this.ekey(lv,z,tp,id);if(this.elemStatus(k)==='done'){const d=this.elemDate(k)||this.todayISOStr();if(this.dateToActMonth(d)===m)n++;}});});return n>0?n:null;}
 
   /* ---------- cloud sync (Supabase accounts + per-record sync) ---------- */
   zoneCat(lv,zoneMk){
@@ -899,14 +904,15 @@ class Component extends DCLogic {
   }
   rwsRenderUserBar(){
     const info=this.root.querySelector('#rwsUserInfo'), lo=this.root.querySelector('#rwsLogoutBtn'), ab=this.root.querySelector('#rwsAdminBtn'), jb=this.root.querySelector('#exportJson');
+    const adminOnly=['#saveLock','#loadLock','#exportXls','#openTable','#exportJson'].map(s=>this.root.querySelector(s)).filter(Boolean);
     const u=this._rwsUser;
-    if(!u){info.textContent='';lo.style.display='none';ab.style.display='none';if(jb)jb.style.display='none';return;}
+    if(!u){info.textContent='';lo.style.display='none';ab.style.display='none';adminOnly.forEach(b=>b.style.display='none');return;}
     let areaTxt='';
     if(u.role!=='admin'){const AL={EB:'Existing Basement',NB:'New Basement',MA:'Marine'};const a=Array.isArray(u.allowed_scopes)?u.allowed_scopes:[];areaTxt=a.length?' · '+a.map(c=>AL[c]||c).join(', '):' · read-only';}
     info.textContent='👤 '+(u.display_name||u.username)+(u.role==='admin'?' (admin)':areaTxt);
     lo.style.display='';
     ab.style.display=(u.role==='admin')?'':'none';
-    if(jb)jb.style.display=(u.role==='admin')?'':'none';
+    adminOnly.forEach(b=>b.style.display=(u.role==='admin')?'':'none');
   }
   async rwsBoot(){
     window.__rwsApp=this;
@@ -1105,7 +1111,7 @@ class Component extends DCLogic {
     return out;
   }
   zoneElemStats(lv,z){const items=this.zoneElems(lv,z);let done=0,wip=0;items.forEach(it=>{const s=this.elemStatus(it.key);if(s==='done')done++;else if(s==='wip')wip++;});return{total:items.length,done,wip,todo:items.length-done-wip};}
-  _syncElemDate(key,st){if(!key.includes('||col||'))return;if(st==='done'){if(!this.elemDate(key))this.setElemDate(key,this.todayISOStr());}else{this.setElemDate(key,'');}}
+  _syncElemDate(key,st){if(st==='done'){if(!this.elemDate(key))this.setElemDate(key,this.todayISOStr());}else{this.setElemDate(key,'');}}
   cycleElem(key){
     if(!this.rwsCanEditElement(key)){this.rwsDeny('You can only update status inside your assigned zones.');return;}
     const o=['todo','wip','done'];const nx=o[(o.indexOf(this.elemStatus(key))+1)%3];if(nx==='todo')delete this.elem[key];else this.elem[key]=nx;this._syncElemDate(key,nx);this.commitElem();
@@ -1492,7 +1498,7 @@ class Component extends DCLogic {
   elDateCtl(key){const done=this.elemStatus(key)==='done';const d=this.elemDate(key);const bucket=done?this.dateToActMonth(d||this.todayISOStr()):'';return `<input type="date" class="eldate" data-key="${this.esc(key)}" value="${d}" title="Completion date → counts in ${bucket}" ${done?'':'style="display:none"'}><span class="elbkt" ${done?'':'style="display:none"'}>${bucket}</span>`;}
   elRows(lv,z,type,items,metaFn,empty,critFn){if(!items||!items.length)return `<div class="empty">${empty}</div>`;
     return items.map(x=>{const id=(typeof x==='string')?x:x.id;const key=this.ekey(lv,z,type,id);const crit=critFn&&critFn(x);
-      const dc=(type==='col'&&lv==='B2')?this.elDateCtl(key):'';
+      const dc=this.elDateCtl(key);
       const idHtml=(type==='col')?`<span class="id collink" data-colid="${this.esc(id)}" title="Show this column on the plan">${this.esc(id)}</span>`:`<span class="id">${this.esc(id)}</span>`;
       return `<div class="idrow ${crit?'crit':''}">${idHtml}<span class="meta">${metaFn?metaFn(x):''}</span>${this.elChip(key)}${dc}</div>`;}).join('');}
 
@@ -1573,7 +1579,8 @@ class Component extends DCLogic {
       const bc=pct==null?'var(--faint)':(pct>=100?'#35c08e':(pct>0?this.cssvar('--wip'):'var(--faint)'));
       const chk=admin?`<input type="checkbox" class="act-vis" data-a="${a.id}" ${hidden?'':'checked'} title="Show this activity in this zone">`:'';
       const planCell=admin?`<input class="act-plan" data-a="${a.id}" value="${plan==null?'':plan}" placeholder="—" title="Planned in ${sm} (admin)">`:`${plan==null?'—':this.fmt(plan)}`;
-      const doneCell=(a.id==='col'&&lv==='B2')?`<span class="act-derived" title="Auto-counted from columns marked Complete in the Columns list below (by completion date)">${dm==null?0:this.fmt(dm)}<span class="lnk" data-jump="col" title="Jump to the Columns list to mark each column complete and set its date">✎ Edit Completed Columns</span></span>`:(canEdit?`<input class="act-donem" data-a="${a.id}" value="${dm==null?'':dm}" placeholder="—" title="Done in ${sm}"${canEdit?'':' disabled'}>`:`${dm==null?'—':this.fmt(dm)}`);
+      const _ea=this._elemAct(a.id); const _derived=_ea&&this._zoneHasElems(lv,zmk,_ea.types);
+      const doneCell=_derived?`<span class="act-derived" title="Auto-counted from the ${_ea.label} list below (by completion date) — stays in sync with the checklist">${dm==null?0:this.fmt(dm)}<span class="lnk" data-jump="${_ea.sec}" title="Jump to the ${_ea.label} list to mark each one complete">✎ Update ${_ea.label}</span></span>`:(canEdit?`<input class="act-donem" data-a="${a.id}" value="${dm==null?'':dm}" placeholder="—" title="Done in ${sm}"${canEdit?'':' disabled'}>`:`${dm==null?'—':this.fmt(dm)}`);
       const mn=doneMonths.length?`<div class="actmn">Done/Plan: ${doneMonths.map(x=>`<span class="${x.mm===sm?'on':''}">${this.esc(x.mm)} <b>${this.fmt(x.v||0)}${x.p!=null?'/'+this.fmt(x.p):''}</b></span>`).join('')}</div>`:'';
       return `<div class="actrow ${hidden?'act-off':''}">${chk}<span class="actlbl">${a.label}${(admin&&hidden)?' <span class="hiddentag">hidden from users</span>':''}${(a.custom&&admin)?' <span class="lnk actdel" data-a="'+a.id+'" style="color:var(--crit);cursor:pointer" title="Delete custom activity">✕</span>':''}</span><span class="actbar"><i style="width:${Math.min(pct||0,100)}%;background:${bc}"></i></span><span class="actpct" style="color:${bc}">${pct==null?'—':pct+'%'}</span></div>`+
         (a.info?`<div class="actinfotext">&#9432; ${this.esc(a.info)}</div>`:``)+
@@ -1648,18 +1655,16 @@ class Component extends DCLogic {
      `<div class="zsticky"><span class="back" id="back"><span class="bkarrow">‹</span> Back</span><span class="zst-info"><b>${this.esc(z.label)}</b><span class="zst-sep">·</span>editing <span class="zst-m">${this.esc(this._actMonth)}</span></span></div>
       <div class="detail"><h3>${this.esc(z.label)} ${z.crit?'<span class="badge" style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--crit);color:#fff">CRITICAL</span>':''}</h3>
       <div class="g"><span class="cat" style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:9.5px;font-weight:700;color:#fff;background:${ct.c}">${ct.label}</span> · ${z.grp&&z.grp!=='Ungrouped'?'Pour group: '+this.esc(z.grp):'Family: '+this.esc(z.fam)} · ${this.curLevel}</div>
-      <label style="display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:${z.crit?'var(--crit)':'var(--dim)'};margin:2px 0 8px;cursor:pointer;user-select:none"><input type="checkbox" id="critChk" ${z.crit?'checked':''} style="width:15px;height:15px;accent-color:var(--crit);cursor:pointer">Critical zone <span style="font-weight:500;color:var(--faint)">· auto-saved</span></label>
+      ${this.rwsIsAdmin()?`<label style="display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:${z.crit?'var(--crit)':'var(--dim)'};margin:2px 0 8px;cursor:pointer;user-select:none"><input type="checkbox" id="critChk" ${z.crit?'checked':''} style="width:15px;height:15px;accent-color:var(--crit);cursor:pointer">Critical zone <span style="font-weight:500;color:var(--faint)">· auto-saved</span></label>`:(z.crit?'<div style="font-size:11.5px;font-weight:700;color:var(--crit);margin:2px 0 8px">◆ Critical zone</div>':'')}
       ${subHtml}
       <div class="progblock">
         <div class="top"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--dim)">Site progress ${p.manual?'':'<span style="color:var(--faint);font-weight:600;text-transform:none">Derived</span>'}</div><div class="pc" style="color:${this.progColor(p.pct)}">${p.pct}%</div></div>
         <div class="pbar"><i style="width:${p.pct}%;background:${this.progColor(p.pct)}"></i></div>
         <div class="prows">
           <div class="pr"><span>Status</span><b style="color:var(${st.v})">${st.label}</b></div>
-          ${this.rwsIsAdmin()?`<div class="pr"><span>Pour seq</span><b>#${p.seq}</b></div>`:''}
           <div class="pr"><span>Plan start</span><b>${this.ml(Math.round(p.start))}</b></div>
           <div class="pr"><span>Plan end</span><b>${this.ml(Math.round(p.end))}</b></div>
-          <div class="pr"><span>Activities</span><b>${z.n_acts||0}</b></div>
-          <div class="pr"><span>${p.udate?'Updated':'Critical acts'}</span><b style="color:${z.n_crit&&!p.udate?'var(--crit)':'var(--txt)'}">${p.udate||z.n_crit||0}</b></div>
+          ${p.udate?`<div class="pr"><span>Updated</span><b>${p.udate}</b></div>`:''}
         </div>
       </div>
       <div class="statgrid">
@@ -1686,7 +1691,7 @@ class Component extends DCLogic {
       </div>`;
     this.setSummaryVis();
     this.root.querySelector('#back').addEventListener('click',()=>{this.selKey=null;this.paintSel();this.paintTimelineSel();this.buildList();});
-    const ck=this.root.querySelector('#critChk');if(ck)ck.addEventListener('change',()=>{this.setCrit(this.curLevel,z,ck.checked);this.render();this.selectZone(z);this.paintSel();});
+    const ck=this.root.querySelector('#critChk');if(ck)ck.addEventListener('change',()=>{const _vb={...this.vb};this.setCrit(this.curLevel,z,ck.checked);this.render();this.vb=_vb;this._vbLevel=this.curLevel;if(this.svg)this.svg.setAttribute('viewBox',`${_vb.x} ${_vb.y} ${_vb.w} ${_vb.h}`);if(this.colLOD)this.colLOD();this.selectZone(z);this.paintSel();});
     const sv=this.root.querySelector('#in_save');
     if(sv)sv.addEventListener('click',()=>{
       const pct=this.clamp(Math.round(+this.root.querySelector('#in_pct').value||0),0,100);
@@ -1699,7 +1704,7 @@ class Component extends DCLogic {
     const sb=this.root.querySelector('#sidebody');
     sb.querySelectorAll('.elchip').forEach(el=>el.addEventListener('click',()=>this.cycleElem(el.dataset.key)));
     sb.querySelectorAll('.eldate').forEach(el=>{el.addEventListener('click',e=>e.stopPropagation());el.addEventListener('change',()=>{const key=el.dataset.key;if(!this.rwsCanEditElement(key)){this.rwsDeny('You can only update columns inside your assigned zones.');this.selectZone(z);return;}this._flashSel='.eldate[data-key="'+key+'"]';this.setElemDate(key,el.value);this.commitElem();});});
-    const _jl=sb.querySelector('.lnk[data-jump="col"]');if(_jl)_jl.addEventListener('click',()=>{const d=sb.querySelector('details.sec[data-sec="col"]');if(!d)return;d.open=true;const sm=d.querySelector('summary');setTimeout(()=>{d.scrollIntoView({block:'start',behavior:'smooth'});if(sm){sm.classList.add('hlrow');setTimeout(()=>sm.classList.remove('hlrow'),1800);}},30);});
+    sb.querySelectorAll('.lnk[data-jump]').forEach(_jl=>_jl.addEventListener('click',()=>{const d=sb.querySelector('details.sec[data-sec="'+_jl.dataset.jump+'"]');if(!d)return;d.open=true;const sm=d.querySelector('summary');setTimeout(()=>{d.scrollIntoView({block:'start',behavior:'smooth'});if(sm){sm.classList.add('hlrow');setTimeout(()=>sm.classList.remove('hlrow'),1800);}},30);}));
     const _colIdx={};(this.COLUMNS&&this.COLUMNS[this.curLevel]||[]).forEach((c,ci)=>{_colIdx[c.id]=ci;});
     sb.querySelectorAll('.collink').forEach(el=>el.addEventListener('click',()=>{const ci=_colIdx[el.dataset.colid];if(ci!=null)this.focusColumn(ci);}));
     sb.querySelectorAll('.statcust').forEach(el=>el.addEventListener('click',()=>{const code=el.dataset.jumpsec;const d=sb.querySelector('details.sec[data-sec="'+code+'"]');if(!d)return;d.open=true;const sm=d.querySelector('summary');setTimeout(()=>{d.scrollIntoView({block:'center',behavior:'smooth'});if(sm){sm.classList.add('hlrow');setTimeout(()=>sm.classList.remove('hlrow'),1600);}},30);}));
@@ -1875,7 +1880,7 @@ class Component extends DCLogic {
   paintTimelineSel(){this.root.querySelectorAll('#schedbody .gbar').forEach(el=>el.classList.toggle('sel',this.selKey&&el.dataset.k===this.selKey));}
 
   /* ---------- controls ---------- */
-  _ovlDefaults(lv){const podiumBase={'B2':1,'B1':1,'B1M':1,'L1':1};return podiumBase[lv]?{podium:true,transfer:true,podcis:false}:{podium:false,transfer:false,podcis:true};}
+  _ovlDefaults(lv){const podiumBase={'B2':1,'B1':1,'B1M':1,'L1':1};return podiumBase[lv]?{podium:true,transfer:true,podcis:false}:{podium:false,transfer:true,podcis:true};}
   _applyOvlForLevel(lv){this._ovlByLevel=this._ovlByLevel||{};this.showOvl=this._ovlByLevel[lv]?{...this._ovlByLevel[lv]}:this._ovlDefaults(lv);}
   setLevel(lv){this.curLevel=lv;this._applyOvlForLevel(lv);this.selKey=null;this.syncRail();this.buildMetrics();this.render();this.paintTimelineSel();}
   syncRail(){this.root.querySelectorAll('.rbtn').forEach(x=>x.classList.toggle('on',x.dataset.lv===this.curLevel));}
