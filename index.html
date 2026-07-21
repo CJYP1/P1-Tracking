@@ -3,8 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RWS P1 · CJ — Zone Progress Map</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%231f4a73'/%3E%3Cg transform='translate(28,28)'%3E%3Crect x='0' y='0' width='18' height='18' rx='3' fill='%234a90e2'/%3E%3Crect x='22' y='0' width='18' height='18' rx='3' fill='%2335c08e'/%3E%3Crect x='0' y='22' width='18' height='18' rx='3' fill='%23f5a623'/%3E%3Crect x='22' y='22' width='18' height='18' rx='3' fill='%23ef5f7a'/%3E%3C/g%3E%3C/svg%3E">
+<title>P1 Tracking</title>
+<link rel="icon" id="p1favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f4a73'/%3E%3Crect x='16' y='16' width='14' height='14' rx='3' fill='%234a90e2'/%3E%3Crect x='34' y='16' width='14' height='14' rx='3' fill='%2335c08e'/%3E%3Crect x='16' y='34' width='14' height='14' rx='3' fill='%23f5a623'/%3E%3Crect x='34' y='34' width='14' height='14' rx='3' fill='%23ef5f7a'/%3E%3C/svg%3E">
+<script>
+(function(){try{
+  document.title='P1 Tracking';
+  var cv=document.createElement('canvas');cv.width=cv.height=64;var x=cv.getContext&&cv.getContext('2d');
+  if(!x)return;
+  var link=document.getElementById('p1favicon')||(function(){var l=document.createElement('link');l.rel='icon';l.id='p1favicon';document.head.appendChild(l);return l;})();
+  var cols=['#4a90e2','#35c08e','#f5a623','#ef5f7a'],pos=[[16,16],[34,16],[16,34],[34,34]],t=0;
+  function tile(px,py,sz,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+sz,py,px+sz,py+sz,r);x.arcTo(px+sz,py+sz,px,py+sz,r);x.arcTo(px,py+sz,px,py,r);x.arcTo(px,py,px+sz,py,r);x.closePath();}
+  function frame(){
+    x.clearRect(0,0,64,64);
+    x.fillStyle='#1f4a73';tile(0,0,64,14);x.fill();
+    var active=Math.floor(t)%4;
+    for(var i=0;i<4;i++){
+      var p=pos[i],k=(i===active)?1:0.4,base=14,sz=base*(0.8+0.2*k),off=(base-sz)/2;
+      x.globalAlpha=0.4+0.6*k;x.fillStyle=cols[i];
+      tile(p[0]+off,p[1]+off,sz,3);x.fill();
+    }
+    x.globalAlpha=1;link.href=cv.toDataURL('image/png');t+=1;
+  }
+  frame();setInterval(frame,200);
+}catch(e){}})();
+</script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -16,8 +38,8 @@
 *{font-family:'Poppins',-apple-system,BlinkMacSystemFont,sans-serif !important}
 .zpsave{display:flex;width:100%;margin-top:8px;align-items:center;justify-content:center;gap:7px;background:var(--accent);color:#fff;border:0;border-radius:9px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.3)}
 .zpsave:hover{filter:brightness(1.06)}
-html[data-theme="dark"]{--beam:#7fd39a;--bg:#0f1115;--panel:#181b22;--panel2:#1f232c;--line:#2a2f3a;--txt:#e8eaed;--dim:#9aa0ac;--faint:#6b7280;--accent:#4f9cff;--stage:#0c0e12;--chip:#232733;--crit:#f0609c;--shadow:rgba(0,0,0,.5);--todo:#6b7482;--wip:#f5b23c;--done:#43d18a;--heat0:#20304a;--heat1:#66aaff}
-:root,[data-theme="light"]{--bg:#f2f4f7;--panel:#ffffff;--panel2:#eef0f3;--line:#dde0e6;--txt:#1b1e26;--dim:#5b6271;--faint:#969cab;--accent:#2563eb;--stage:#e9edf2;--chip:#eef0f3;--crit:#c23a72;--shadow:rgba(0,0,0,.14);--beam:#2f6d3a;--todo:#94a3b8;--wip:#e59517;--done:#1faa5a;--heat0:#dce7f5;--heat1:#1d4ed8}
+html[data-theme="dark"]{--beam:#7fd39a;--bg:#0f1115;--panel:#181b22;--panel2:#1f232c;--line:#2a2f3a;--txt:#e8eaed;--dim:#9aa0ac;--faint:#6b7280;--accent:#93a2f2;--stage:#0c0e12;--chip:#232733;--crit:#f277a8;--shadow:rgba(0,0,0,.5);--todo:#6b7482;--wip:#aab6f5;--done:#5bd6a2;--heat0:#20304a;--heat1:#93a2f2}
+:root,[data-theme="light"]{--bg:#f2f4f7;--panel:#ffffff;--panel2:#eef0f3;--line:#dde0e6;--txt:#1b1e26;--dim:#5b6271;--faint:#969cab;--accent:#5b6bd6;--stage:#e9edf2;--chip:#eef0f3;--crit:#cf4f86;--shadow:rgba(0,0,0,.14);--beam:#4a9b6e;--todo:#a8b3c4;--wip:#7d8ee8;--done:#43b586;--heat0:#e2e8f6;--heat1:#5b6bd6}
 html,body{height:100%}
 body{background:var(--bg);color:var(--txt);overflow:hidden;font-size:13px}
 a{color:var(--accent);text-decoration:none}a:hover{color:var(--txt)}
@@ -72,6 +94,12 @@ header .sub{font-size:11px;color:var(--dim)}
 .zone.critln{stroke:var(--crit);stroke-width:900;stroke-opacity:1;stroke-dasharray:none}
 .ovl{fill:none;pointer-events:none;vector-effect:non-scaling-stroke}
 .beamln{fill:none;stroke:var(--beam);stroke-width:1.1;stroke-opacity:.7;pointer-events:none;vector-effect:non-scaling-stroke}
+.colmk{cursor:pointer}
+.colmk.hl{stroke:#5b6bd6 !important;stroke-width:700 !important}
+.elchip.hlrow{outline:2.5px solid var(--accent);outline-offset:1px;border-radius:6px}
+.hlrow{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:6px}
+.collbl{font-size:1350px;font-weight:600;fill:var(--dim);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--stage);stroke-width:320px;display:none}
+svg.collabels .collbl{display:block}
 .zlabel{font-weight:700;fill:var(--txt);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--stage);stroke-width:520px}
 .zname{font-weight:700;fill:var(--txt);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:var(--stage);stroke-width:600px}
 .zname.crit{fill:var(--crit)}
@@ -198,13 +226,40 @@ header .sub{font-size:11px;color:var(--dim)}
 #schedMonths{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:9px 20px;background:#e8edf3;border-bottom:1px solid #d3dbe6}
 .gbar .gfill{position:absolute;left:0;top:0;bottom:0;background:var(--c);opacity:.85}
 .gbar .glab{position:relative;z-index:1;font-size:9.5px;font-weight:700;color:var(--txt);padding:0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 3px var(--panel),0 0 3px var(--panel)}
-#side{width:344px;background:var(--panel);border-left:1px solid var(--line);flex-shrink:0;display:flex;flex-direction:column;min-height:0}
+#side{width:344px;background:var(--panel);border-left:1px solid var(--line);flex-shrink:0;display:flex;flex-direction:column;min-height:0;position:relative}
+.side-resize{position:absolute;left:-3px;top:0;bottom:0;width:8px;cursor:col-resize;z-index:30}
+.side-resize::after{content:'';position:absolute;left:2px;top:0;bottom:0;width:2px;background:transparent}
+.side-resize:hover::after,.side-resize.drag::after{background:var(--accent)}
 #side .hd{padding:12px 14px;border-bottom:1px solid var(--line);font-weight:700;font-size:12.5px;display:flex;justify-content:space-between;align-items:center}
 #side .hd .pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--panel2);color:var(--dim)}
 #kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:12px 14px 10px;border-bottom:1px solid var(--line)}
 .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 9px}
 .kpi .n{font-size:16px;font-weight:700}
 .kpi .l{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+.kpi .kmini{height:5px;border-radius:3px;overflow:hidden;display:flex;background:var(--line);margin-top:7px}
+.kpi .kmini i{display:block;height:100%}
+.kpi .kmc{display:flex;justify-content:space-between;gap:2px;font-size:8.5px;font-weight:800;margin-top:4px;line-height:1}
+.kpi .kmc span{white-space:nowrap}
+.actrow{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.actrow.act-off{opacity:.4}
+.actlbl{flex:1;font-size:10.5px;color:var(--dim);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act-done{width:46px;font-size:10px;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:5px;padding:2px 4px;text-align:right;background:var(--panel);color:var(--txt);flex:0 0 auto}
+.act-tgt{width:46px;font-size:10px;font-variant-numeric:tabular-nums;border:1px dashed var(--accent);border-radius:5px;padding:2px 4px;text-align:right;background:var(--panel);color:var(--accent);flex:0 0 auto}
+.acttgt{width:56px;font-size:9px;color:var(--faint);text-align:left;flex:0 0 auto;white-space:nowrap}
+.actbar{width:34px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;flex:0 0 auto}.actbar i{display:block;height:100%}
+.actpct{width:30px;text-align:right;font-size:9.5px;font-weight:700;flex:0 0 auto}
+.act-vis{width:13px;height:13px;accent-color:var(--accent);flex:0 0 auto;cursor:pointer}
+.actsub{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:9px;color:var(--dim);margin:-2px 0 8px 2px}
+.actsub .am{font-weight:800;color:var(--faint);text-transform:uppercase;letter-spacing:.3px}
+.actsub .am2{font-weight:700;color:var(--faint)}
+.actsub input{width:38px;font-size:9.5px;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:5px;padding:1px 4px;text-align:right;background:var(--panel);color:var(--txt)}
+.actsub input.act-tot,.actsub input.act-plan{border:1px dashed var(--accent);color:var(--accent)}
+.actsub .au{color:var(--faint)}.actsub .asep{color:var(--line)}
+.actsub .acum{margin-left:auto;font-weight:800;color:var(--dim)}
+.actmn{display:flex;flex-wrap:wrap;gap:3px 8px;font-size:8.5px;color:var(--faint);margin:-4px 0 9px 2px}
+.actmn b{color:var(--dim)}
+.actmn span.on{color:var(--accent)}
+.actmn span.on b{color:var(--accent)}
 #progroll{padding:10px 14px;border-bottom:1px solid var(--line)}
 #progroll .ph{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
 #progroll .ph .t{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--accent)}
@@ -271,13 +326,18 @@ header .sub{font-size:11px;color:var(--dim)}
 .sec{margin-bottom:10px}
 .sec .t{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--accent);margin-bottom:5px;display:flex;justify-content:space-between}
 .sec .t span{color:var(--faint);font-weight:600}
-.idrow{display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 6px;border-radius:5px;color:var(--dim)}
+.idrow{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px 8px;font-size:11px;padding:3px 6px;border-radius:5px;color:var(--dim)}
 .idrow:nth-child(odd){background:var(--panel2)}
 .idrow .id{font-weight:600;color:var(--txt);font-family:'Consolas',monospace;font-size:10.5px}
 .idrow.crit .id{color:var(--crit)}
 .idrow .meta{color:var(--faint);font-size:10px;text-align:right;white-space:nowrap;flex:1}
 .elchip{flex-shrink:0;font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;cursor:pointer;color:var(--c);border:1px solid var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);user-select:none;min-width:52px;text-align:center}
 .elchip:hover{background:var(--c);color:#fff}
+.eldate{flex-shrink:0;font-size:9px;font-family:inherit;color:var(--done);background:color-mix(in srgb,var(--done) 10%,transparent);border:1px solid color-mix(in srgb,var(--done) 45%,transparent);border-radius:6px;padding:1px 4px;margin-left:5px;cursor:pointer;width:118px}
+.elbkt{flex-shrink:0;font-size:8.5px;font-weight:800;color:var(--done);margin-left:5px;letter-spacing:.2px}
+.act-derived{font-size:12px;font-weight:800;color:var(--done);display:inline-flex;align-items:center;gap:4px}
+.act-derived .lnk{font-size:8px;font-weight:700;color:var(--accent);background:var(--panel);border:1px solid var(--accent);border-radius:5px;padding:0 4px;cursor:pointer}
+.act-derived .lnk:hover{background:var(--accent);color:#fff}
 .eltool{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:11px}
 .eltool .lb{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--dim)}
 .eltool .eb{flex:1;height:9px;border-radius:5px;background:var(--panel);overflow:hidden;display:flex;min-width:90px}
@@ -287,6 +347,13 @@ header .sub{font-size:11px;color:var(--dim)}
 .eltool button:hover{border-color:var(--accent);color:var(--accent)}
 .sec .t .allbtn{color:var(--faint);font-weight:700;cursor:pointer;font-size:9.5px}
 .sec .t .allbtn:hover{color:var(--accent)}
+details.sec>summary{list-style:none;cursor:pointer;outline:none;user-select:none;justify-content:flex-start;gap:0}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::before{content:'\25BE';display:inline-block;margin-right:6px;font-size:10px;color:var(--accent);transition:transform .15s}
+details.sec[open]>summary::before{transform:rotate(180deg)}
+details.sec>summary>span{margin-left:auto}
+@keyframes flashok{0%{box-shadow:0 0 0 2px var(--done);border-color:var(--done)}70%{box-shadow:0 0 0 2px var(--done);border-color:var(--done)}100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}}
+.flash-ok{animation:flashok .85s ease-out}
 .span{color:var(--accent);font-weight:600}
 .back{color:var(--accent);cursor:pointer;font-size:11px;font-weight:600;margin-bottom:9px;display:inline-block}
 .foot{padding:8px 14px;font-size:9.5px;color:var(--faint);border-top:1px solid var(--line);line-height:1.5}
@@ -435,30 +502,6 @@ async function rwsSyncPlanQty(planKey, level, zoneMk, value){
   if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
   return r;
 }
-async function rwsAddCat(code, label){
-  const s=rwsGetSession(); if(!s) return {ok:false};
-  const args={p_token:s.token,p_code:code,p_label:label};
-  const r=await rwsCall('rws_add_cat',args); if(!r.ok && r.offline) rwsQueuePush('rws_add_cat',args);
-  if(window.__rwsApp) window.__rwsApp.rwsOnQueueChange(); return r;
-}
-async function rwsDelCat(code){
-  const s=rwsGetSession(); if(!s) return {ok:false};
-  const args={p_token:s.token,p_code:code};
-  const r=await rwsCall('rws_del_cat',args); if(!r.ok && r.offline) rwsQueuePush('rws_del_cat',args);
-  if(window.__rwsApp) window.__rwsApp.rwsOnQueueChange(); return r;
-}
-async function rwsAddItem(itemKey, level, zoneMk, type, elemId){
-  const s=rwsGetSession(); if(!s) return {ok:false};
-  const args={p_token:s.token,p_item_key:itemKey,p_level:level,p_zone_mk:zoneMk,p_type:type,p_elem_id:elemId};
-  const r=await rwsCall('rws_add_item',args); if(!r.ok && r.offline) rwsQueuePush('rws_add_item',args);
-  if(window.__rwsApp) window.__rwsApp.rwsOnQueueChange(); return r;
-}
-async function rwsDelItem(itemKey){
-  const s=rwsGetSession(); if(!s) return {ok:false};
-  const args={p_token:s.token,p_item_key:itemKey};
-  const r=await rwsCall('rws_del_item',args); if(!r.ok && r.offline) rwsQueuePush('rws_del_item',args);
-  if(window.__rwsApp) window.__rwsApp.rwsOnQueueChange(); return r;
-}
 async function rwsAdminActivityLog(limit){ const s=rwsGetSession(); if(!s) throw new Error('not logged in'); const r=await rwsCall('rws_admin_activity_log',{p_token:s.token,p_limit:limit||300}); if(!r.ok) throw new Error(r.error&&r.error.message||'failed'); return r.data; }
 async function rwsAdminListUsers(){ const s=rwsGetSession(); if(!s) throw new Error('not logged in'); const r=await rwsCall('rws_admin_list_users',{p_token:s.token}); if(!r.ok) throw new Error(r.error&&r.error.message||'failed'); return r.data; }
 async function rwsAdminUpsertUser(u){ const s=rwsGetSession(); if(!s) throw new Error('not logged in'); const r=await rwsCall('rws_admin_upsert_user',{p_token:s.token,p_username:u.username,p_password:u.password||null,p_display_name:u.displayName||'',p_role:u.role,p_allowed_scopes:u.allowedScopes||[],p_active:u.active!==false}); if(!r.ok) throw new Error(r.error&&r.error.message||'failed'); return r.data; }
@@ -478,7 +521,6 @@ async function rwsAdminUpsertUser(u){ const s=rwsGetSession(); if(!s) throw new 
     <button class="hbtn primary" id="saveLock" title="Save the whole page — all progress embedded — as one HTML file to forward or archive">💾 Save</button>
     <button class="hbtn" id="loadLock" title="Open a previously saved file to continue from its data">📂 Open</button>
     <button class="hbtn" id="exportXls" title="Export the progress table to Excel">⬇ Excel</button>
-    <button class="hbtn" id="exportJson" style="display:none" title="Export the complete data set (plan vs actual, all changes, accounts) as one JSON file for tracking">⬇ Full JSON</button>
     <button class="hbtn" id="openTable" title="Full progress table of every zone (review / print)">▤ Table <span class="cnt" id="elemCnt">0</span></button>
     <input id="lockFile" type="file" accept=".json,.html,.xls,.csv" style="display:none">
     <div class="seg" id="themeseg"><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
@@ -497,6 +539,7 @@ async function rwsAdminUpsertUser(u){ const s=rwsGetSession(); if(!s) throw new 
       </div>
     </div>
     <div id="side">
+      <div class="side-resize" id="sideResize" title="Drag to resize · double-click to reset"></div>
       <div class="hd" id="sideTitle">Level summary</div>
       <div id="kpis"></div>
       <div id="progroll"></div>
@@ -553,7 +596,7 @@ class Component extends DCLogic {
     const boot=(DATA,CAT,OVL,ZP,T)=>{ this.DATA=DATA; this.CAT=CAT; this.OVL=OVL; this.ZP=ZP;
       T.order.forEach(lv=>{if(!this.DATA.levels[lv]){this.DATA.order.push(lv);this.DATA.levels[lv]=T.levels[lv];this.DATA.levelTotals[lv]={...T.totals};}});
       try{this.zpSetup();}catch(e){console.error('zp setup',e);}
-      this.init(); };
+      this.init(); try{this.initSideResize();}catch(e){} };
     const g=window.__RWS;
     if(g&&g.DATA&&g.ZP&&g.FLOOR_TEMPLATES){ boot(g.DATA,g.CAT,g.OVL,g.ZP,g.FLOOR_TEMPLATES); return; }
     Promise.all([import('./zone-data.js'),import('./floor-templates.js'),import('./zp-data.js')]).then(([m,t,zp]) => {
@@ -561,7 +604,9 @@ class Component extends DCLogic {
     }).catch(e => { console.error('data load failed', e); });
   }
 
+  initSideResize(){const side=this.root.querySelector('#side'),h=this.root.querySelector('#sideResize');if(!side||!h||h._b)return;h._b=1;const clamp=v=>Math.max(300,Math.min(v,(window.innerWidth||1200)-340));let w=0;try{w=parseInt(localStorage.getItem('rws_side_w')||'0',10);}catch(e){}if(w)side.style.width=clamp(w)+'px';let sx=0,sw=0,drag=false;h.addEventListener('mousedown',e=>{drag=true;sx=e.clientX;sw=side.getBoundingClientRect().width;h.classList.add('drag');document.body.style.userSelect='none';e.preventDefault();});window.addEventListener('mousemove',e=>{if(!drag)return;side.style.width=clamp(sw+(sx-e.clientX))+'px';});window.addEventListener('mouseup',()=>{if(!drag)return;drag=false;h.classList.remove('drag');document.body.style.userSelect='';try{localStorage.setItem('rws_side_w',String(Math.round(side.getBoundingClientRect().width)));}catch(e){}});h.addEventListener('dblclick',()=>{side.style.width='';try{localStorage.removeItem('rws_side_w');}catch(e){}});}
   init(){
+    this.ACT_MONTHS=["Before Apr'26","Apr'26","May'26","Jun'26","Jul'26","Aug'26","Sep'26","Oct'26","Nov'26","Dec'26"];
     this.METRICS = [
       {k:'columns',label:'Columns'},{k:'pilecap',label:'Pile Caps'},{k:'mainbeam',label:'Main Beams'},
       {k:'steelbeam',label:'Steel Beams'},{k:'liftstairAll',label:'Lift / Stair'},{k:'area',label:'Area m²'}];
@@ -579,13 +624,17 @@ class Component extends DCLogic {
     this.BDASH = {EB:'0',NB:'0',MA:'0'};
     this.BCAP = {EB:'butt',NB:'butt',MA:'round'};
     this.AREA_OUTLINES = {"B2":{"NB":[[[81488,148249],[96063,157396],[97666,158163],[97970,159159],[110257,180018],[110882,180548],[111146,181643],[127872,210092],[128602,210115],[152777,198673],[153381,198085],[187435,182203],[187996,181679],[189064,181461],[218368,167453],[218850,167009],[219851,166855],[242571,155995],[243123,155448],[245198,154826],[258618,148178],[279948,138238],[280433,137793],[281431,137641],[299139,129215],[299802,128545],[301056,128330],[314774,121755],[321935,89122],[324935,76678],[324941,75071],[279545,57170],[278662,57180],[273127,59876],[272457,60561],[271216,60760],[259220,66595],[258115,66329],[255485,63471],[254627,63471],[246199,67837],[225009,77921],[224364,78564],[221510,79527],[190781,94533],[190182,95119],[154550,112148],[120037,128903],[119464,129409],[118693,129503],[81514,147520],[81488,148249]]],"EB":[[[38239,98127],[38398,99009],[53561,118747],[54302,118730],[74323,104397],[74904,104461],[75459,104883],[85784,119177],[86642,119463],[93497,114387],[94196,114287],[94914,114684],[95254,115480],[102046,124724],[101957,125406],[101507,125928],[94806,129347],[94824,129945],[98754,135313],[98812,136427],[98259,136999],[80056,146102],[80485,147245],[153350,112031],[153927,111541],[154691,111433],[177124,100574],[177604,100131],[178464,99976],[210348,84392],[210923,83903],[211688,83793],[255341,62466],[255055,61179],[252160,57712],[226987,35116],[226105,35275],[204355,51648],[203568,51813],[202853,51443],[196073,42585],[195425,42128],[195193,41273],[191982,36902],[191826,36109],[192299,35323],[202786,27997],[203903,28182],[205363,29814],[206386,29495],[207045,29644],[208657,31819],[209515,31962],[215672,27380],[215672,26665],[213309,23155],[213388,22375],[213954,21652],[213954,21080],[209945,15783],[207941,16784],[207512,17929],[209914,21371],[209951,22480],[205323,26008],[204743,26013],[204144,25662],[196596,15781],[195885,15800],[187259,22142],[186144,22097],[184167,20079],[183452,20079],[181415,22008],[180445,22227],[176471,25030],[175687,25246],[174946,24913],[170992,20270],[170705,18932],[165569,12225],[164835,12202],[153687,20346],[153019,21493],[151921,21670],[134500,34379],[133856,35479],[132731,35704],[119009,45713],[118723,46571],[126739,56156],[126700,56834],[126386,57309],[122732,59604],[122186,60412],[120987,60623],[112120,66916],[93540,79350],[93082,79995],[92227,80227],[90413,81253],[89346,80903],[79643,68649],[78909,68627],[59886,82213],[59337,83035],[58404,83251],[38239,98127]]]},"B1":{"NB":[[[82347,148249],[97751,158425],[108967,177582],[109670,178164],[110287,179926],[128057,210107],[130923,209100],[158364,195951],[158984,195364],[161574,194491],[187436,182203],[188074,181611],[190363,180884],[218799,167452],[219294,167002],[220137,166855],[243039,155756],[244916,155254],[255602,150125],[256191,149564],[257948,149096],[274648,141103],[275260,140512],[298996,129644],[299606,129062],[302209,128182],[315203,121755],[324937,76241],[324798,75214],[323431,75169],[322622,74342],[279545,57170],[278661,57181],[267686,62597],[267072,63190],[259184,66750],[258184,66538],[256201,63900],[255056,63471],[201808,89378],[201236,89994],[181760,99259],[154837,112434],[154364,112873],[153353,113032],[129202,124750],[128611,125328],[125882,126340],[125232,126927],[123708,127354],[82373,147520],[82347,148249]]],"EB":[[[92085,110730],[92228,111587],[94585,114285],[94822,115047],[101976,124497],[101992,125299],[101499,125932],[94805,129376],[94821,129941],[100677,137794],[101965,137507],[125227,125797],[129056,124322],[153495,112317],[153972,111876],[154834,111719],[176264,101290],[176857,100707],[202328,88545],[202906,88055],[203669,87947],[254888,63052],[255341,61465],[253480,58888],[252479,58602],[221879,73900],[220944,73959],[220374,73536],[203357,50296],[195482,49293],[187195,55401],[186071,55508],[184740,53876],[184036,53420],[183721,52420],[179441,46572],[171566,45570],[169952,46718],[169389,46785],[168767,46519],[165567,41869],[164566,41101],[154110,26831],[153378,26810],[127214,46109],[121730,49436],[121747,50031],[126387,55780],[126481,56923],[126018,57456],[118415,62196],[112851,66335],[112850,67050],[116768,72321],[116941,72979],[116789,73527],[103828,83233],[103828,83948],[108079,89658],[108183,90354],[107878,90988],[107046,91429],[106157,91194],[102108,85668],[101393,85526],[92801,96838],[92658,97696],[99040,106425],[99270,107193],[98964,107935],[98194,108389],[97520,108310],[96809,107723],[96094,107723],[92085,110730]]]},"B1M":{"NB":[[[82347,148249],[97751,158425],[110257,179731],[110853,180294],[111292,181649],[128057,210108],[130359,209382],[158364,196094],[158985,195507],[161573,194634],[202329,175329],[202817,174883],[203674,174729],[258181,148978],[258784,148391],[290403,133654],[290900,133204],[291885,133058],[315060,122041],[324937,76241],[324798,75214],[316951,72359],[316207,72281],[315462,71478],[279545,57170],[278661,57180],[259182,66681],[258177,66498],[255772,63471],[255057,63471],[232027,74770],[231439,75330],[229680,75799],[136649,121170],[136061,121730],[134302,122200],[126194,126183],[125628,126796],[101991,137927],[101395,138510],[82373,147521],[82347,148249]]]},"L1":{"MA":[[[164263,224149],[184884,219575],[187890,219577],[193673,221043],[196115,222663],[207349,237446],[208422,238022],[208673,239212],[215388,249212],[220257,253221],[223264,253650],[228991,250644],[230003,248760],[233513,238673],[236185,235661],[239877,234771],[246087,235765],[259254,239162],[264953,241733],[267211,245270],[267657,251329],[268519,256229],[270953,258950],[274103,259379],[276394,258663],[286841,251041],[288956,250277],[292661,250221],[295393,251017],[306752,259097],[316920,269408],[326447,282776],[328381,290313],[330558,291172],[349860,290742],[347139,172023],[330384,128918],[329813,128918],[328183,131387],[324228,134566],[280574,154396],[280043,154898],[213122,185186],[212445,185851],[207918,187500],[165408,207253],[164263,224149]]],"NB":[[[74041,169444],[88717,175735],[89206,176120],[98084,191045],[98623,191515],[98831,192529],[119852,227993],[120582,228016],[136170,220357],[174547,202395],[175161,201714],[176743,201370],[224097,179625],[224630,179121],[286106,151413],[286721,150756],[287734,150672],[323940,134071],[327949,130777],[330097,127484],[330669,125337],[318841,123019],[318187,122534],[317993,121744],[327949,74497],[327477,73955],[327349,73197],[307927,65485],[306869,65375],[306298,64891],[279259,54162],[278375,54173],[271837,57442],[271254,57953],[270495,58042],[260239,63097],[259145,62972],[258063,61753],[255943,62458],[255681,63131],[255229,63501],[229154,76431],[209399,85655],[208789,86385],[207629,86539],[191350,94760],[129344,124894],[128862,125337],[128030,125481],[127462,126050],[106242,136268],[105521,136375],[101420,138355],[100796,139034],[99790,139097],[82373,147377],[81704,148189],[80627,148251],[78623,149253],[78007,149897],[77191,149970],[74041,169444]]],"EB":[[[91512,111444],[93517,114021],[94290,114508],[94681,115767],[101699,125209],[101708,126010],[101211,126638],[94950,129776],[95253,130945],[100534,137937],[106567,135495],[128718,124634],[129294,124145],[130059,124035],[155643,111458],[156120,111017],[156982,110860],[183712,97710],[184190,97268],[185052,97112],[208917,85251],[209418,84768],[211114,84367],[254885,63053],[255055,61465],[250616,55595],[249901,55594],[243194,58883],[242507,58995],[241789,58625],[240448,56883],[232853,56606],[232334,56409],[231684,55736],[230998,55738],[229805,56434],[222215,56169],[220648,55230],[219826,54019],[209127,53326],[208574,53078],[208083,52444],[206225,52725],[193252,50375],[192590,49854],[168155,39851],[167248,39709],[154237,28814],[152784,29401],[126049,49273],[125604,49872],[124708,50170],[121013,52730],[102843,82201],[102237,84326],[100803,85259],[91656,97268],[91942,98269],[96952,104659],[97207,105409],[96863,106241],[91512,110730],[91512,111444]]]},"L2":{"MA":[[[176579,191784],[211016,201360],[211693,201818],[262423,215680],[263105,216139],[295012,224579],[296730,224436],[297875,223291],[298207,221819],[299451,221285],[301574,218549],[302171,218204],[306015,218385],[306648,218696],[307026,219545],[306613,224866],[309877,225151],[310633,219737],[311146,219003],[311911,218813],[317941,219367],[318568,219702],[318909,220429],[318500,225868],[321934,226154],[322541,220752],[323246,219894],[329332,220241],[329877,220493],[330242,220999],[333391,221285],[335539,194364],[332744,194020],[332203,193564],[332014,192882],[332242,192212],[333203,191325],[335682,191355],[336828,176750],[335359,176580],[334680,175891],[333455,175771],[332791,175295],[332603,174387],[333059,173502],[333786,173213],[335968,173310],[335969,172739],[323176,155586],[322936,153836],[321415,153240],[317352,147535],[316212,146959],[316010,146423],[316062,145387],[289286,143304],[288481,142904],[288137,142093],[279431,141378],[278970,142045],[278234,142319],[269092,141664],[267662,158114],[267135,158566],[266562,158665],[251621,157560],[250760,168822],[250101,169926],[249397,170090],[225727,168301],[225130,168425],[224380,168154],[214816,167441],[214314,172835],[213795,173610],[176746,191058],[176579,191784]]],"NB":[[[121443,129346],[137326,162115],[138927,162277],[139585,162781],[144070,171735],[145675,172299],[160352,183546],[160722,184262],[160683,185484],[161684,187344],[164491,186656],[168272,189350],[175432,191211],[188438,184924],[188989,184377],[191065,183755],[213668,172881],[214142,167744],[214462,167130],[214955,166826],[250043,169587],[250995,158044],[251506,157157],[252285,156947],[267228,158130],[268517,141663],[213345,137272],[212379,136651],[210226,136525],[209623,136249],[205792,131496],[204893,130978],[204174,129479],[204501,128059],[203515,128289],[202771,127956],[198407,122616],[200349,95836],[196627,95550],[195615,95875],[195059,95710],[194621,95264],[190183,94977],[178323,100834],[177723,101420],[154980,112434],[154513,112870],[153640,113032],[121469,128617],[121443,129346]]],"EB":[[[106120,97268],[107122,99843],[111688,97947],[112491,98064],[112986,98558],[113121,99244],[112413,106443],[112038,107152],[111275,107579],[111275,108294],[120856,128030],[121585,128056],[128577,124632],[129196,123904],[129918,123748],[153779,112461],[154358,111970],[155121,111862],[176694,101147],[177334,100460],[178323,100405],[190124,94509],[200492,95261],[202926,64043],[200492,60034],[183911,54600],[183246,54553],[182420,53720],[164281,46629],[162829,45140],[155383,44424],[153930,48049],[151087,49723],[150653,50204],[148484,50879],[132471,58744],[133182,60901],[133089,61697],[131468,64329],[131256,65157],[130591,65644],[124274,75606],[107122,83949],[108009,86388],[108839,86525],[113747,84192],[114745,84496],[115128,85467],[113592,93456],[106120,97268]]]}};
+    this.COLUMNS = {"B2":[{"id":"MK-B2C71","x":236936.6,"y":95357.0,"sz":"1200\u00d8","crit":false,"zone":"B2-S14"},{"id":"MK-B2C82","x":232898.9,"y":87021.4,"sz":"1200\u00d8","crit":false,"zone":"B2-S14a"},{"id":"MK-B2C83","x":240965.7,"y":83114.0,"sz":"1200\u00d8","crit":false,"zone":"B2-S14a"},{"id":"MK-B2C91","x":229738.3,"y":80496.3,"sz":"1200\u00d8","crit":false,"zone":"B2-S14a"},{"id":"MK-B2C92","x":237805.0,"y":76588.9,"sz":"1200\u00d8","crit":false,"zone":"B2-S14a"},{"id":"MK-B2C93a","x":244851.5,"y":70575.2,"sz":"1200\u00d8","crit":false,"zone":"B2-S14a"},{"id":"MK-B2C94a","x":252918.2,"y":66667.8,"sz":"1200\u00d8","crit":false,"zone":"B2-S13a"},{"id":"WF-B2C1","x":94667.8,"y":143233.4,"sz":"1000\u00d8","crit":false,"zone":"B2-S6a"},{"id":"WF-B2C2","x":104572.0,"y":138436.0,"sz":"1000\u00d8","crit":false,"zone":"B2-S6a"},{"id":"WF-B2C3","x":102447.3,"y":152257.5,"sz":"1000\u00d8","crit":false,"zone":"B2-S6a"},{"id":"WF-B2C4","x":114609.7,"y":159158.5,"sz":"1000\u00d8","crit":false,"zone":"B2-S6"},{"id":"WF-B2C5","x":119628.6,"y":169519.8,"sz":"1000\u00d8","crit":false,"zone":"B2-S6"},{"id":"WF-B2C6","x":124647.4,"y":179881.1,"sz":"1000\u00d8","crit":false,"zone":"B2-S7"},{"id":"WF-B2C7","x":129666.2,"y":190242.3,"sz":"1000\u00d8","crit":false,"zone":"B2-S7"},{"id":"WF-B2C9","x":133430.4,"y":198013.3,"sz":"1000\u00d8","crit":false,"zone":"B2-S7"},{"id":"WF-B2C11","x":120256.9,"y":143630.8,"sz":"1000\u00d8","crit":false,"zone":"B2-S6a"},{"id":"WF-B2C12","x":125275.7,"y":153992.0,"sz":"1000\u00d8","crit":false,"zone":"B2-S6"},{"id":"WF-B2C13","x":130294.6,"y":164353.3,"sz":"1000\u00d8","crit":false,"zone":"B2-S6"},{"id":"WF-B2C14","x":135313.4,"y":174714.6,"sz":"1000\u00d8","crit":false,"zone":"B2-S7"},{"id":"WF-B2C15","x":140332.3,"y":185075.9,"sz":"1000\u00d8","crit":false,"zone":"B2-S7"},{"id":"WF-B2C16","x":144704.2,"y":194101.7,"sz":"1000\u00d8","crit":false,"zone":"B2-S7"},{"id":"WF-B2C10","x":112282.6,"y":134754.1,"sz":"1000\u00d8","crit":false,"zone":"B2-S6a"},{"id":"WF-B2C17","x":115238.0,"y":133269.5,"sz":"1500\u00d8","crit":false,"zone":"B2-S6a"},{"id":"WF-B2C19","x":134238.8,"y":149650.5,"sz":"1500\u00d8","crit":false,"zone":"B2-S1"},{"id":"WF-B2C20","x":139257.6,"y":160011.8,"sz":"1500\u00d8","crit":false,"zone":"B2-S1"},{"id":"WF-B2C21","x":144276.5,"y":170373.0,"sz":"1500\u00d8","crit":false,"zone":"B2-S3-1"},{"id":"WF-B2C22","x":149295.3,"y":180734.3,"sz":"1000\u00d8","crit":false,"zone":"B2-S3-1"},{"id":"WF-B2C23","x":153667.3,"y":189760.1,"sz":"1000\u00d8","crit":false,"zone":"B2-S3-1"},{"id":"WF-B2C18","x":129219.9,"y":139289.2,"sz":"1500\u00d8","crit":false,"zone":"B2-S1a"},{"id":"WF-B2C25","x":139204.7,"y":134452.7,"sz":"2200\u00d8","crit":true,"zone":"B2-S1a"},{"id":"WF-B2C26","x":143650.0,"y":145091.8,"sz":"1500\u00d8","crit":false,"zone":"B2-S1"},{"id":"WF-B2C27","x":148668.8,"y":155453.1,"sz":"1500\u00d8","crit":false,"zone":"B2-S1"},{"id":"WF-B2C28","x":153687.7,"y":165814.4,"sz":"1500\u00d8","crit":false,"zone":"B2-S3-1"},{"id":"WF-B2C29","x":158706.5,"y":176175.7,"sz":"2200\u00d8","crit":true,"zone":"B2-S3-2"},{"id":"WF-B2C24","x":133612.3,"y":124369.3,"sz":"2200\u00d8","crit":true,"zone":"B2-S1a"},{"id":"WF-B2C31","x":153571.6,"y":153078.3,"sz":"2200\u00d8","crit":true,"zone":"B2-S1"},{"id":"WF-B2C32","x":163054.0,"y":161277.5,"sz":"2200\u00d8","crit":true,"zone":"B2-S3-2"},{"id":"WF-B2C33","x":147056.8,"y":117856.9,"sz":"2200\u00d8","crit":true,"zone":"B2-S1a"},{"id":"WF-B2C34","x":152075.7,"y":128218.2,"sz":"2200\u00d8","crit":true,"zone":"B2-S1a"},{"id":"WF-B2C35","x":157094.5,"y":138579.5,"sz":"2200\u00d8","crit":true,"zone":"B2-S1"},{"id":"WF-B2C36","x":162113.4,"y":148940.8,"sz":"2200\u00d8","crit":true,"zone":"B2-S1"},{"id":"WF-B2C38","x":172151.1,"y":169663.3,"sz":"2200\u00d8","crit":true,"zone":"B2-S3-2"},{"id":"WF-B2C39","x":160501.4,"y":111344.6,"sz":"2200\u00d8","crit":true,"zone":"B2-S2a"},{"id":"WF-B2C40","x":175557.9,"y":142428.4,"sz":"2200\u00d8","crit":true,"zone":"B2-S2-1"},{"id":"WF-B2C41","x":185479.6,"y":150414.9,"sz":"2200\u00d8","crit":true,"zone":"B2-S4-1"},{"id":"WF-B2C42","x":185595.6,"y":163151.0,"sz":"2200\u00d8","crit":true,"zone":"B2-S4-1"},{"id":"WF-B2C43","x":189967.6,"y":172176.8,"sz":"2200\u00d8","crit":true,"zone":"B2-S4-1"},{"id":"WF-B2C44","x":173946.0,"y":104832.2,"sz":"2200\u00d8","crit":true,"zone":"B2-S2a"},{"id":"WF-B2C45","x":178964.8,"y":115193.5,"sz":"2200\u00d8","crit":true,"zone":"B2-S2a"},{"id":"WF-B2C46","x":183983.7,"y":125554.8,"sz":"1800\u00d8","crit":false,"zone":"B2-S2-2"},{"id":"WF-B2C47","x":189002.5,"y":135916.1,"sz":"1500\u00d8","crit":false,"zone":"B2-S2-2"},{"id":"WF-B2C48","x":198054.3,"y":157116.2,"sz":"2200\u00d8","crit":true,"zone":"B2-S4-1"},{"id":"WF-B2C49","x":203412.2,"y":165664.4,"sz":"2200\u00d8","crit":true,"zone":"B2-S4-1"},{"id":"WF-B2C50","x":197938.2,"y":144380.1,"sz":"2200\u00d8","crit":true,"zone":"B2-S4-2"},{"id":"WF-B2C51","x":195536.6,"y":132751.1,"sz":"1500\u00d8","crit":false,"zone":"B2-S2-2"},{"id":"WF-B2C52","x":207841.9,"y":152375.2,"sz":"1000\u00d8","crit":true,"zone":"B2-S4-2"},{"id":"WF-B2C54","x":187390.5,"y":98319.9,"sz":"2200\u00d8","crit":true,"zone":"B2-S2a"},{"id":"WF-B2C55","x":192409.4,"y":108681.2,"sz":"1800\u00d8","crit":false,"zone":"B2-S2a"},{"id":"WF-B2C56","x":197420.0,"y":117061.0,"sz":"1500x1500","crit":false,"zone":"B2-S2-2"},{"id":"WF-B2C57","x":204907.3,"y":128211.9,"sz":"1500x1500","crit":false,"zone":"B2-S2-2"},{"id":"WF-B2C59","x":218176.4,"y":153036.0,"sz":"2200\u00d8","crit":true,"zone":"B2-S5-2"},{"id":"WF-B2C60","x":193835.7,"y":95199.2,"sz":"1000x1700","crit":true,"zone":"B2-S8a"},{"id":"WF-B2C61","x":199382.6,"y":105303.4,"sz":"1500x1500","crit":false,"zone":"B2-S8a"},{"id":"WF-B2C63","x":230089.3,"y":153989.3,"sz":"2000\u00d8","crit":true,"zone":"B2-S5-2"},{"id":"WF-B2C64","x":200584.1,"y":91929.1,"sz":"2200\u00d8","crit":true,"zone":"B2-S8a"},{"id":"WF-B2C65","x":223601.0,"y":137497.5,"sz":"1000x1500","crit":false,"zone":"B2-S5-1"},{"id":"WF-B2C67","x":255066.3,"y":141511.0,"sz":"3000x1200","crit":false,"zone":"B2-S5-1"},{"id":"WF-B2C68","x":260628.5,"y":144268.4,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"WF-B2C69","x":266979.2,"y":142464.3,"sz":"3000x1200","crit":false,"zone":"B2-S9"},{"id":"MK-B2C1","x":276419.0,"y":135745.5,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"MK-B2C2","x":284485.7,"y":131838.1,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C3","x":292552.5,"y":127930.7,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C4","x":257124.8,"y":137035.2,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"MK-B2C5","x":265191.6,"y":133127.8,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"MK-B2C6","x":273258.3,"y":129220.4,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"MK-B2C7","x":281325.1,"y":125313.0,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C8","x":289391.8,"y":121405.6,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C9","x":297458.5,"y":117498.1,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C10","x":304498.0,"y":113811.7,"sz":"1200\u00d8","crit":false,"zone":"B2-S11"},{"id":"MK-B2C11","x":308890.2,"y":111307.9,"sz":"1200\u00d8","crit":false,"zone":"B2-S11"},{"id":"MK-B2C12","x":310267.1,"y":106657.2,"sz":"1200\u00d8","crit":false,"zone":"B2-S11"},{"id":"MK-B2C13","x":236953.7,"y":136514.4,"sz":"1200\u00d8","crit":false,"zone":"B2-S5-1"},{"id":"MK-B2C14","x":245020.5,"y":132607.0,"sz":"1200\u00d8","crit":false,"zone":"B2-S5-1"},{"id":"MK-B2C15","x":253087.2,"y":128699.6,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"MK-B2C16","x":261153.9,"y":124792.2,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"MK-B2C17","x":269220.7,"y":120884.7,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"MK-B2C18","x":277287.4,"y":116977.3,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C19","x":285354.1,"y":113069.9,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C20","x":293420.9,"y":109162.5,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C21","x":305168.9,"y":105087.6,"sz":"1200\u00d8","crit":false,"zone":"B2-S11"},{"id":"MK-B2C22","x":310271.4,"y":101000.4,"sz":"1200\u00d8","crit":false,"zone":"B2-S11"},{"id":"MK-B2C24","x":305540.2,"y":100071.9,"sz":"1200\u00d8","crit":false,"zone":"B2-S11"},{"id":"MK-B2C23","x":301182.9,"y":102569.8,"sz":"1200\u00d8","crit":false,"zone":"B2-S11"},{"id":"MK-B2C27","x":224558.4,"y":131485.6,"sz":"1200\u00d8","crit":false,"zone":"B2-S5-1"},{"id":"MK-B2C28","x":232916.1,"y":128178.7,"sz":"1200\u00d8","crit":false,"zone":"B2-S5-1"},{"id":"MK-B2C29","x":240982.8,"y":124271.3,"sz":"1200\u00d8","crit":false,"zone":"B2-S5-1"},{"id":"MK-B2C30","x":249049.5,"y":120363.9,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"MK-B2C31","x":257116.3,"y":116456.5,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"MK-B2C32","x":265183.0,"y":112549.1,"sz":"1200\u00d8","crit":false,"zone":"B2-S9"},{"id":"MK-B2C33","x":273249.8,"y":108641.7,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C34","x":281316.5,"y":104734.3,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C35","x":289383.2,"y":100826.9,"sz":"1200\u00d8","crit":false,"zone":"B2-S10"},{"id":"MK-B2C36","x":297245.1,"y":94440.4,"sz":"1200\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C37","x":304774.0,"y":90793.4,"sz":"1200\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C25","x":318455.9,"y":96582.2,"sz":"1200\u00d8","crit":false,"zone":"B2-S11"},{"id":"MK-B2C26","x":312963.3,"y":91706.0,"sz":"1200x1200","crit":false,"zone":"B2-S12"},{"id":"MK-B2C39","x":319114.9,"y":83846.9,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C40","x":222700.2,"y":127649.5,"sz":"1200\u00d8","crit":false,"zone":"B2-S5-1"},{"id":"MK-B2C41","x":213309.3,"y":128823.1,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C42","x":228878.4,"y":119843.1,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C43","x":236945.1,"y":115935.7,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C44","x":245011.9,"y":112028.3,"sz":"1200\u00d8","crit":false,"zone":"B2-S14"},{"id":"MK-B2C45","x":253078.6,"y":108120.9,"sz":"1200\u00d8","crit":false,"zone":"B2-S14"},{"id":"MK-B2C46","x":261145.4,"y":104213.5,"sz":"1200\u00d8","crit":false,"zone":"B2-S14"},{"id":"MK-B2C47","x":269212.1,"y":100306.1,"sz":"1200\u00d8","crit":false,"zone":"B2-S13"},{"id":"MK-B2C48","x":277278.8,"y":96398.7,"sz":"1300\u00d8","crit":false,"zone":"B2-S13"},{"id":"MK-B2C49","x":285345.6,"y":92491.3,"sz":"1500\u00d8","crit":false,"zone":"B2-S13"},{"id":"MK-B2C50","x":294770.4,"y":89331.4,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C51","x":308909.6,"y":78325.0,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C52","x":315164.1,"y":75690.6,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C53","x":219066.4,"y":120147.4,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C55","x":224840.7,"y":111507.5,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C56","x":232907.5,"y":107600.1,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C57","x":240974.2,"y":103692.7,"sz":"1200\u00d8","crit":false,"zone":"B2-S14"},{"id":"MK-B2C58","x":249041.0,"y":99785.3,"sz":"1200\u00d8","crit":false,"zone":"B2-S14"},{"id":"MK-B2C59","x":257107.7,"y":95877.9,"sz":"1200\u00d8","crit":false,"zone":"B2-S14"},{"id":"MK-B2C60","x":265174.4,"y":91970.4,"sz":"1200\u00d8","crit":false,"zone":"B2-S13"},{"id":"MK-B2C61","x":273241.2,"y":88063.0,"sz":"1200\u00d8","crit":false,"zone":"B2-S13"},{"id":"MK-B2C66","x":215033.0,"y":111820.7,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C69","x":220803.1,"y":103171.9,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C70","x":228869.8,"y":99264.5,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C72","x":245003.3,"y":91449.6,"sz":"1200\u00d8","crit":false,"zone":"B2-S14"},{"id":"MK-B2C73","x":253070.0,"y":87542.2,"sz":"1200\u00d8","crit":false,"zone":"B2-S14"},{"id":"MK-B2C74","x":261136.8,"y":83634.8,"sz":"1200\u00d8","crit":false,"zone":"B2-S13"},{"id":"MK-B2C75","x":269203.5,"y":79727.4,"sz":"1200\u00d8","crit":false,"zone":"B2-S13"},{"id":"MK-B2C62","x":281307.9,"y":84155.6,"sz":"1500\u00d8","crit":false,"zone":"B2-S13"},{"id":"MK-B2C76","x":277270.3,"y":75820.0,"sz":"1500\u00d8","crit":false,"zone":"B2-S13"},{"id":"MK-B2C63","x":290020.7,"y":79525.8,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C64","x":297549.6,"y":75878.9,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C65","x":303823.8,"y":72839.8,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C77","x":285766.0,"y":70742.1,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C78","x":293294.9,"y":67095.2,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C68","x":212736.4,"y":107079.3,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C54","x":208707.3,"y":119322.3,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C67","x":204669.6,"y":110986.7,"sz":"1200\u00d8","crit":false,"zone":"B2-S8"},{"id":"MK-B2C79","x":209627.8,"y":100661.7,"sz":"1200\u00d8","crit":false,"zone":"B2-S8a"},{"id":"MK-B2C80","x":217694.5,"y":96754.3,"sz":"1200\u00d8","crit":false,"zone":"B2-S8a"},{"id":"MK-B2C81","x":224832.2,"y":90928.8,"sz":"1200\u00d8","crit":false,"zone":"B2-S8a"},{"id":"MK-B2C84","x":249032.4,"y":79206.6,"sz":"1200\u00d8","crit":false,"zone":"B2-S14a"},{"id":"MK-B2C85","x":257099.1,"y":75299.2,"sz":"1200\u00d8","crit":false,"zone":"B2-S13a"},{"id":"MK-B2C86","x":264771.4,"y":73113.3,"sz":"1200\u00d8","crit":false,"zone":"B2-S13a"},{"id":"MK-B2C87","x":273232.6,"y":67484.4,"sz":"1500\u00d8","crit":false,"zone":"B2-S13a"},{"id":"MK-B2C88","x":281554.6,"y":62047.9,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"MK-B2C89","x":212619.2,"y":86276.5,"sz":"1200\u00d8","crit":false,"zone":"B2-S8a"},{"id":"MK-B2C90","x":220686.0,"y":82369.1,"sz":"1200\u00d8","crit":false,"zone":"B2-S8a"},{"id":"MK-B2C93","x":245871.7,"y":72681.5,"sz":"1200\u00d8","crit":false,"zone":"B2-S14a"},{"id":"MK-B2C94","x":253938.5,"y":68774.1,"sz":"1200\u00d8","crit":false,"zone":"B2-S13a"},{"id":"CX12-CY42","x":99553.2,"y":128074.7,"sz":"1000\u00d8","crit":false,"zone":"EB2-2.4"},{"id":"CX13-CY43-1","x":113508.6,"y":121314.9,"sz":"1000\u00d8","crit":false,"zone":"EB2-2.4"},{"id":"CX14-CY43-1","x":119182.2,"y":118566.6,"sz":"1500\u00d8","crit":false,"zone":"EB2-2.3"},{"id":"CX15-CY43-1","x":128593.4,"y":114008.0,"sz":"1600\u00d8","crit":true,"zone":"EB2-2.3"},{"id":"CX17-CY42-1","x":142038.0,"y":107495.7,"sz":"1500\u00d8","crit":true,"zone":"EB2-2.3"},{"id":"CX18-CY43-1","x":155482.5,"y":100983.3,"sz":"2200\u00d8","crit":true,"zone":"EB2-2.2"},{"id":"CX20-CY43-1","x":168927.1,"y":94471.0,"sz":"2200\u00d8","crit":true,"zone":"EB2-2.2"},{"id":"CX24-CY44-1","x":193898.1,"y":82375.4,"sz":"2200\u00d8","crit":true,"zone":"EB2-2.1"},{"id":"CX13-CY41-1","x":105200.3,"y":112546.9,"sz":"1000\u00d8","crit":false,"zone":"EB2-2.4"},{"id":"CX14-CY42","x":114163.4,"y":108205.4,"sz":"1500\u00d8","crit":false,"zone":"EB2-2.3"},{"id":"CX15-CY41","x":123574.6,"y":103646.7,"sz":"1500\u00d8","crit":false,"zone":"EB2-2.3"},{"id":"CX17-CY42","x":137019.1,"y":97134.4,"sz":"1500\u00d8","crit":false,"zone":"EB2-2.3"},{"id":"CX19-CY43-1","x":150463.7,"y":90622.0,"sz":"1500\u00d8","crit":false,"zone":"EB2-2.2"},{"id":"CX20-CY42-1","x":165665.0,"y":83258.7,"sz":"2200\u00d8","crit":true,"zone":"EB2-2.2"},{"id":"CX25-CY42-1","x":197923.0,"y":67633.4,"sz":"1000\u00d8","crit":true,"zone":"EB2-2.1"},{"id":"CX25-CY43-1","x":203198.0,"y":64910.4,"sz":"1500x1500","crit":true,"zone":"EB2-1"},{"id":"CX14-CY41","x":103870.4,"y":104958.0,"sz":"1000\u00d8","crit":false,"zone":"EB2-3.4"},{"id":"CX15-CY40","x":109144.5,"y":97844.1,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.3"},{"id":"CX15-CY40-1","x":118555.7,"y":93285.4,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.3"},{"id":"CX17-CY41","x":132000.3,"y":86773.1,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.3"},{"id":"CX18-CY39","x":126981.4,"y":76411.8,"sz":"1800\u00d8","crit":false,"zone":"EB2-3.3"},{"id":"CX19-CY41","x":145444.8,"y":80260.8,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.2-2"},{"id":"CX20-CY37","x":133337.1,"y":47748.5,"sz":"1000\u00d8","crit":false,"zone":"EB2-3.2-2"},{"id":"CX22-CY37","x":143832.9,"y":42664.6,"sz":"1000\u00d8","crit":false,"zone":"EB2-3.1A-2"},{"id":"CX23-CY37","x":153315.8,"y":38071.2,"sz":"1500x800","crit":false,"zone":"EB2-3.1A-2"},{"id":"CX21-CY38","x":143635.2,"y":55552.6,"sz":"2200\u00d8","crit":true,"zone":"EB2-3.2-1"},{"id":"CX22-CY38","x":152248.7,"y":51380.4,"sz":"2200\u00d8","crit":true,"zone":"EB2-3.1A-1"},{"id":"CX24-CY39","x":163443.5,"y":45957.8,"sz":"2200\u00d8","crit":true,"zone":"EB2-3.1A-1"},{"id":"CX24-CY40","x":173329.3,"y":53961.6,"sz":"2200\u00d8","crit":true,"zone":"EB2-3.1A-1"},{"id":"CX22-CY40","x":161713.2,"y":59588.3,"sz":"2200\u00d8","crit":true,"zone":"EB2-3.1A-1"},{"id":"CX21-CY40","x":150088.2,"y":65219.3,"sz":"2200\u00d8","crit":true,"zone":"EB2-3.2-1"},{"id":"CX21-CY41","x":157795.9,"y":74278.1,"sz":"2200\u00d8","crit":true,"zone":"EB2-3.2-1"},{"id":"CX25-CY42","x":192123.1,"y":57396.0,"sz":"1200x2000","crit":true,"zone":"EB2-2.1"},{"id":"CX18-CY38","x":121962.6,"y":66050.5,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.3"},{"id":"CX26-CY42","x":199514.0,"y":55520.1,"sz":"800\u00d8","crit":false,"zone":"EB2-1"},{"id":"CX25-CY44","x":202215.8,"y":78346.4,"sz":"1500x1500","crit":false,"zone":"EB2-2.1"},{"id":"WF-B2C58","x":207262.8,"y":134881.0,"sz":"1000x3700","crit":true,"zone":"B2-S4-2"},{"id":"CX19-CY39-1","x":144782.0,"y":67789.5,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.2-2"},{"id":"CX20-CY38-1","x":137925.8,"y":58318.2,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.2-2"},{"id":"CX27-CY43-1","x":213990.1,"y":60846.7,"sz":"800\u00d8","crit":false,"zone":"EB2-1"},{"id":"CX27-CY44","x":216530.3,"y":64297.4,"sz":"800\u00d8","crit":false,"zone":"EB2-1"},{"id":"CX28-CY45-1","x":227057.6,"y":64133.4,"sz":"1200\u00d8","crit":false,"zone":"EB2-1"},{"id":"CX28-CY44","x":223446.0,"y":59244.7,"sz":"800\u00d8","crit":false,"zone":"EB2-1"},{"id":"CX28-CY43-1","x":221242.5,"y":56171.9,"sz":"1000\u00d8","crit":false,"zone":"EB2-1"},{"id":"CX30-CY45-1","x":243885.0,"y":58162.5,"sz":"800\u00d8","crit":false,"zone":"EB2-1"},{"id":"CX29-CY46-1","x":233949.2,"y":59102.1,"sz":"1200\u00d8","crit":false,"zone":"EB2-1"},{"id":"CX29-CY44-1","x":233730.5,"y":52048.3,"sz":"1700x2200","crit":false,"zone":"EB2-1"},{"id":"CX30-CY44-1","x":240828.4,"y":46551.9,"sz":"800\u00d8","crit":false,"zone":"EB2-1"},{"id":"WF-B2C30","x":166627.8,"y":183482.2,"sz":"1500\u00d8","crit":true,"zone":"B2-S3-2"},{"id":"CX22-CY43-2","x":182371.7,"y":87958.6,"sz":"2200\u00d8","crit":true,"zone":"EB2-2.1"},{"id":"CX19-CY39-2","x":136840.8,"y":71636.1,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.2-2"},{"id":"CX20-CY38-2","x":129912.8,"y":62199.6,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.2-2"},{"id":"MK-B2C50a","x":300823.2,"y":82637.1,"sz":"1500\u00d8","crit":false,"zone":"B2-S12"},{"id":"CX29-CY43","x":225516.4,"y":47130.0,"sz":"1600x2100","crit":false,"zone":"EB2-1"},{"id":"CX29-CY43-1","x":230286.7,"y":43956.2,"sz":"1600x2100","crit":false,"zone":"EB2-1"},{"id":"CX28-CY43","x":218593.6,"y":52165.4,"sz":"1600x2100","crit":false,"zone":"EB2-1"},{"id":"CX29-CY44","x":230507.3,"y":54395.3,"sz":"1600x2100","crit":false,"zone":"EB2-1"},{"id":"WF-B2C3a","x":109590.9,"y":148797.2,"sz":"1000\u00d8","crit":false,"zone":"B2-S6a"},{"id":"CX16-CY39","x":113536.9,"y":82924.2,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.3"},{"id":"CX15-CY39","x":110095.1,"y":84591.3,"sz":"1500\u00d8","crit":false,"zone":"EB2-3.3"},{"id":"WF-B2C37","x":172035.0,"y":156927.2,"sz":"2200\u00d8","crit":true,"zone":"B2-S3-2"},{"id":"CX26-CY44","x":212541.4,"y":73345.0,"sz":"1000\u00d8","crit":false,"zone":"EB2-1"},{"id":"CX27-CY45-1","x":220375.0,"y":69550.5,"sz":"800\u00d8","crit":false,"zone":"EB2-1"}]};
+    this.showColumns = true;
     this.ASHORT = {EB:'Existing',NB:'New',MA:'Marine'};
-    this.showOvl = {podium:true,transfer:false,podcis:false};
-    this.showBeams = false; this.showSeq = true; this.showCrit = true; this.showAreaBounds = true;
+    this._ovlByLevel = {}; this.showOvl = this._ovlDefaults(this.curLevel);
+    this.showBeams = false; this.showSeq = false; this.showCrit = true; this.showAreaBounds = true;
     try{this._critOv=JSON.parse(localStorage.getItem('rws_crit_ov')||'{}');}catch(e){this._critOv={};}
     try{this._qtyOv=JSON.parse(localStorage.getItem('rws_qty_ov')||'{}');}catch(e){this._qtyOv={};}
-    try{this._catAdd=JSON.parse(localStorage.getItem('rws_cat_add')||'[]');}catch(e){this._catAdd=[];}
-    try{this._elemAdd=JSON.parse(localStorage.getItem('rws_elem_add')||'{}');}catch(e){this._elemAdd={};}
+    try{this._actTotal=JSON.parse(localStorage.getItem('rws_act_total')||'{}');}catch(e){this._actTotal={};}
+    try{this._actPlan=JSON.parse(localStorage.getItem('rws_act_plan')||'{}');}catch(e){this._actPlan={};}
+    try{this._actDoneM=JSON.parse(localStorage.getItem('rws_act_donem')||'{}');}catch(e){this._actDoneM={};}
+    try{this._actHidden=JSON.parse(localStorage.getItem('rws_act_hidden')||'{}');}catch(e){this._actHidden={};}
     this.loadUpdates();
     this.loadElem();
     this.deriveProgress();
@@ -619,8 +668,8 @@ class Component extends DCLogic {
     let done=0,wip=0,todo=0,ws=0,wa=0;uniq.forEach(z=>{const p=z._p||{pct:0,status:'todo'};ws+=p.pct*(z.area||1);wa+=(z.area||1);if(p.status==='done')done++;else if(p.status==='wip')wip++;else todo++;});
     return {avg:Math.round(ws/Math.max(1,wa)),done,wip,todo,count:uniq.length};}
 
-  applyCritOv(){const ov=this._critOv||{};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{z.crit=!!ov[lv+'|'+this.zid(z)];}));}
-  setCrit(lv,z,on){const k=lv+'|'+this.zid(z);if(on)this._critOv[k]=true;else delete this._critOv[k];try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}this.applyCritOv();}
+  applyCritOv(){const ov=this._critOv||{};this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{z.crit=!!ov[lv+'|'+this.zid(z)];}));this._critPlanSet=null;}
+  setCrit(lv,z,on){const k=lv+'|'+this.zid(z);if(on)this._critOv[k]=true;else delete this._critOv[k];try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}this.applyCritOv();this._critPlanSet=null;}
   /* ---------- zone quantity overrides (admin-editable totals: area/columns/pilecap/mainbeam/steelbeam/lift-stair) ---------- */
   applyQtyOv(){
     // snapshot the original baked-in values once, so clearing an override
@@ -641,6 +690,21 @@ class Component extends DCLogic {
       const ak=zk+'||area'; z.area=(ak in ov)?ov[ak]:base.area;
     }));
   }
+  /* ---------- zone activities: per-month plan / actual (Total + Planned/Done by month) ---------- */
+  actCurLabel(){const AB={January:'Jan',February:'Feb',March:'Mar',April:'Apr',May:'May',June:'Jun',July:'Jul',August:'Aug',September:'Sep',October:'Oct',November:'Nov',December:'Dec'};const p=((this.ZP&&this.ZP.current)||'July 2026').split(' ');return (AB[p[0]]||p[0])+"'"+String(p[1]||'2026').slice(2);}
+  actDefaultMonth(){const c=this.actCurLabel();return this.ACT_MONTHS.indexOf(c)>=0?c:this.ACT_MONTHS[this.ACT_MONTHS.length-1];}
+  actTotal(lv,zmk,a,def){const v=(this._actTotal||{})[lv+'||'+zmk+'||'+a];return v==null?def:v;}
+  actPlan(lv,zmk,a,m){const v=(this._actPlan||{})[lv+'||'+zmk+'||'+a+'||'+m];return v==null?null:v;}
+  actDoneMonth(lv,zmk,a,m){if(a==='col'&&lv==='B2')return this.colDoneInMonth(lv,zmk,m);const v=(this._actDoneM||{})[lv+'||'+zmk+'||'+a+'||'+m];return v==null?null:v;}
+  actCumDone(lv,zmk,a){let s=0;this.ACT_MONTHS.forEach(m=>{const v=(this._actDoneM||{})[lv+'||'+zmk+'||'+a+'||'+m];if(v!=null)s+=v;});return s;}
+  actHidden(lv,zmk,a){return !!(this._actHidden||{})[lv+'||'+zmk+'||'+a];}
+  saveAct(){try{localStorage.setItem('rws_act_total',JSON.stringify(this._actTotal||{}));localStorage.setItem('rws_act_plan',JSON.stringify(this._actPlan||{}));localStorage.setItem('rws_act_donem',JSON.stringify(this._actDoneM||{}));localStorage.setItem('rws_act_hidden',JSON.stringify(this._actHidden||{}));}catch(e){}}
+  _actRerender(z){this.render();const zz=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(zz)this.selectZone(zz);else if(z)this.selectZone(z);}
+  _numOrNull(raw){const s=String(raw==null?'':raw).replace(/,/g,'').trim();const v=s===''?null:parseFloat(s);if(v!=null&&(isNaN(v)||v<0))return undefined;return v;}
+  setActTotal(lv,zmk,a,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the total.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a;this._actTotal=this._actTotal||{};if(v==null)delete this._actTotal[k];else this._actTotal[k]=v;this.saveAct();this._actRerender(z);}
+  setActPlan(lv,zmk,a,m,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the planned quantity.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actPlan=this._actPlan||{};if(v==null)delete this._actPlan[k];else this._actPlan[k]=v;this.saveAct();this._actRerender(z);}
+  setActDoneMonth(lv,zmk,a,m,raw,z){if(!(this.rwsIsAdmin()||this.rwsScopeOk(lv,zmk))){this.rwsDeny('Outside your assigned zones.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actDoneM=this._actDoneM||{};if(v==null)delete this._actDoneM[k];else this._actDoneM[k]=v;this.saveAct();this._actRerender(z);}
+  setActVis(lv,zmk,a,shown,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can choose which activities show.');return;}const k=lv+'||'+zmk+'||'+a;this._actHidden=this._actHidden||{};if(shown)delete this._actHidden[k];else this._actHidden[k]=true;this.saveAct();this._actRerender(z);}
   setQtyOv(lv,zoneMk,field,raw){
     if(!this.rwsIsAdmin()){this.rwsDeny('Only admin accounts can edit quantities.');return;}
     const s=String(raw==null?'':raw).replace(/,/g,'').trim();
@@ -736,26 +800,25 @@ class Component extends DCLogic {
   /* ---------- element-level status store ---------- */
   loadElem(){
     try{this.elem=JSON.parse(localStorage.getItem('rws_elem_status')||'{}');}catch(e){this.elem={};}
+    try{this._elemDate=JSON.parse(localStorage.getItem('rws_elem_date')||'{}');}catch(e){this._elemDate={};}
     const emb=document.getElementById('locked-data');
-    if(emb){try{const d=JSON.parse(emb.textContent||'{}');if(d.elem)this.elem={...d.elem,...this.elem};if(d.updates)this.updates={...d.updates,...this.updates};if(d.zpOv){this._embZpOv=d.zpOv;if(this._zpOv){this._zpOv={...d.zpOv,...this._zpOv};if(this.zpApplyOv)this.zpApplyOv();}}if(d.qtyOv){this._qtyOv={...d.qtyOv,...(this._qtyOv||{})};}if(d.zpPlanOv){this._embZpPlanOv=d.zpPlanOv;this._zpPlanOv={...d.zpPlanOv,...(this._zpPlanOv||{})};}if(d.crit){this._critOv={...d.crit,...(this._critOv||{})};}if(Array.isArray(d.catAdd)){this._catAdd=this._catAdd||[];d.catAdd.forEach(c=>{if(c&&c.code&&!this._catAdd.some(x=>x.code===c.code))this._catAdd.push({code:c.code,label:c.label});});}if(d.elemAdd){this._elemAdd=this._elemAdd||{};Object.keys(d.elemAdd).forEach(k=>{const cur=this._elemAdd[k]||(this._elemAdd[k]=[]);(d.elemAdd[k]||[]).forEach(id=>{if(cur.indexOf(id)<0)cur.push(id);});});}}catch(e){}}
+    if(emb){try{const d=JSON.parse(emb.textContent||'{}');if(d.elem)this.elem={...d.elem,...this.elem};if(d.elemDate)this._elemDate={...d.elemDate,...this._elemDate};if(d.updates)this.updates={...d.updates,...this.updates};if(d.zpOv){this._embZpOv=d.zpOv;if(this._zpOv){this._zpOv={...d.zpOv,...this._zpOv};if(this.zpApplyOv)this.zpApplyOv();}}if(d.crit){this._critOv={...d.crit,...(this._critOv||{})};}if(d.actTotal){this._actTotal={...d.actTotal,...(this._actTotal||{})};}if(d.actPlan){this._actPlan={...d.actPlan,...(this._actPlan||{})};}if(d.actDoneM){this._actDoneM={...d.actDoneM,...(this._actDoneM||{})};}if(d.actHidden){this._actHidden={...d.actHidden,...(this._actHidden||{})};}}catch(e){}}
   }
   saveElem(){try{localStorage.setItem('rws_elem_status',JSON.stringify(this.elem));}catch(e){}}
+  saveElemDate(){try{localStorage.setItem('rws_elem_date',JSON.stringify(this._elemDate||{}));}catch(e){}}
+  elemDate(key){return (this._elemDate||{})[key]||'';}
+  setElemDate(key,iso){this._elemDate=this._elemDate||{};if(iso)this._elemDate[key]=iso;else delete this._elemDate[key];this.saveElemDate();}
+  todayISOStr(){return new Date().toISOString().slice(0,10);}
+  /* Map a YYYY-MM-DD completion date to one of the activity month buckets */
+  dateToActMonth(iso){const M=this.ACT_MONTHS;if(!iso)return M[M.length-1];const y=+iso.slice(0,4),mo=+iso.slice(5,7);const val=y*12+mo;const aprVal=2026*12+4;if(val<aprVal)return "Before Apr'26";const nm=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];if(y===2026&&mo>=4&&mo<=12)return nm[mo]+"'26";return M[M.length-1];}
+  /* Columns completed in a given month bucket for a zone (drives the Columns activity) */
+  colDoneInMonth(lv,zmk,m){const z=(this.DATA.levels[lv]?this.DATA.levels[lv].zones:[]).find(x=>(x.mk||x.lid)===zmk);if(!z||!z.cols)return null;let n=0;z.cols.forEach(x=>{const k=this.ekey(lv,z,'col',x.id);if(this.elemStatus(k)==='done'){const d=this.elemDate(k)||this.todayISOStr();if(this.dateToActMonth(d)===m)n++;}});return n>0?n:null;}
 
   /* ---------- cloud sync (Supabase accounts + per-record sync) ---------- */
-  // construction area (EB/NB/MA) of a zone, from the built-in data
-  zoneCat(lv,zoneMk){
-    if(!this._zoneCat){
-      this._zoneCat={};
-      this.DATA.order.forEach(l=>this.DATA.levels[l].zones.forEach(z=>{this._zoneCat[l+'||'+this.zid(z)]=z.cat||'NB';}));
-    }
-    return this._zoneCat[lv+'||'+zoneMk];
-  }
-  // admin: everything. normal user: only zones whose area is in allowed_scopes
-  // (allowed_scopes is an array of area codes, e.g. ["EB","MA"]).
   rwsScopeOk(lv,zoneMk){
-    const u=this._rwsUser; if(!u)return false; if(u.role==='admin')return true;
-    const areas=Array.isArray(u.allowed_scopes)?u.allowed_scopes:[];
-    return areas.indexOf(this.zoneCat(lv,zoneMk))>=0;
+    // no per-zone restriction — any logged-in account may edit any zone;
+    // the only remaining restriction is by element type (see rwsCanEditElement)
+    return !!this._rwsUser;
   }
   rwsCanEditElement(key){
     const u=this._rwsUser; if(!u)return false; if(u.role==='admin')return true;
@@ -772,15 +835,12 @@ class Component extends DCLogic {
     else {b.textContent='☁ Synced';b.style.color='var(--done)';}
   }
   rwsRenderUserBar(){
-    const info=this.root.querySelector('#rwsUserInfo'), lo=this.root.querySelector('#rwsLogoutBtn'), ab=this.root.querySelector('#rwsAdminBtn'), jb=this.root.querySelector('#exportJson');
+    const info=this.root.querySelector('#rwsUserInfo'), lo=this.root.querySelector('#rwsLogoutBtn'), ab=this.root.querySelector('#rwsAdminBtn');
     const u=this._rwsUser;
-    if(!u){info.textContent='';lo.style.display='none';ab.style.display='none';if(jb)jb.style.display='none';return;}
-    let areaTxt='';
-    if(u.role!=='admin'){const AL={EB:'Existing Basement',NB:'New Basement',MA:'Marine'};const a=Array.isArray(u.allowed_scopes)?u.allowed_scopes:[];areaTxt=a.length?' · '+a.map(c=>AL[c]||c).join(', '):' · read-only';}
-    info.textContent='👤 '+(u.display_name||u.username)+(u.role==='admin'?' (admin)':areaTxt);
+    if(!u){info.textContent='';lo.style.display='none';ab.style.display='none';return;}
+    info.textContent='👤 '+(u.display_name||u.username)+(u.role==='admin'?' (admin)':'');
     lo.style.display='';
-    ab.style.display=(u.role==='admin')?'':'none';
-    if(jb)jb.style.display=(u.role==='admin')?'':'none';
+    ab.style.display=(this._adminEntry && u.role==='admin')?'':'none';
   }
   async rwsBoot(){
     window.__rwsApp=this;
@@ -833,9 +893,6 @@ class Component extends DCLogic {
       if(state.slab_qty){ this._zpOv={...this._zpOv,...state.slab_qty}; if(this.zpApplyOv)this.zpApplyOv(); }
       if(state.qty_ov){ this._qtyOv={...this._qtyOv,...state.qty_ov}; try{localStorage.setItem('rws_qty_ov',JSON.stringify(this._qtyOv));}catch(e){} this.applyQtyOv(); }
       if(state.plan_qty_ov){ this._zpPlanOv={...this._zpPlanOv,...state.plan_qty_ov}; try{localStorage.setItem('rws_zp_plan_ov',JSON.stringify(this._zpPlanOv));}catch(e){} if(this.zpApplyOv)this.zpApplyOv(); }
-      if(Array.isArray(state.custom_cats)){ const seen={}; this._catAdd=[]; state.custom_cats.forEach(c=>{if(c&&c.code&&!seen[c.code]){seen[c.code]=1;this._catAdd.push({code:c.code,label:c.label});}}); }
-      if(Array.isArray(state.custom_items)){ this._elemAdd={}; state.custom_items.forEach(it=>{if(!it)return;const k=it.level+'||'+it.zone_mk+'||'+it.type;(this._elemAdd[k]=this._elemAdd[k]||[]).push(it.elem_id);}); }
-      if(state.custom_cats||state.custom_items){ this.saveCustom(); }
       if(state.zone_updates && state.zone_updates.length){
         state.zone_updates.forEach(row=>{
           const mk=row.zone_mk; if(!mk)return;
@@ -851,7 +908,6 @@ class Component extends DCLogic {
       if(this.selKey){const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);}
     }catch(e){ console.warn('[rws] cloud state pull skipped (offline?)',e); }
     rwsQueueFlush();
-    this.rwsMaybeDailyExport();
   }
   async rwsOpenAdmin(){
     if(!this.rwsIsAdmin())return;
@@ -864,21 +920,15 @@ class Component extends DCLogic {
     body.innerHTML='<div class="empty">Loading…</div>';
     if(this._rwsAdminTab==='log'){
       try{
-        const rows=await rwsAdminActivityLog(500);
-        const fmtV=v=>{if(v==null||v==='')return '—';const s=(typeof v==='object')?JSON.stringify(v):String(v);return this.esc(s.replace(/^"|"$/g,''));};
-        body.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;color:var(--dim)">${rows.length} most-recent changes · who did what, when</div><button class="hbtn" id="rwsLogCsv">⬇ Export log CSV</button></div>
-        <table class="reg"><thead><tr><th>When</th><th>Who</th><th>Type</th><th>Area</th><th>Level · Zone</th><th>Detail</th><th>Old→New</th></tr></thead><tbody>`+
-          rows.map(r=>{const d=this.rwsLogParts(r);return `<tr><td>${this.esc(new Date(r.created_at).toLocaleString())}</td><td>${this.esc(r.username||'')}</td><td>${this.esc(this.rwsActionLabel(r))}</td><td>${this.esc(d.area)}</td><td>${this.esc(d.zone)}</td><td>${this.esc(d.detail)}</td><td>${fmtV(r.old_value)} → ${fmtV(r.new_value)}</td></tr>`;}).join('')+
+        const rows=await rwsAdminActivityLog(300);
+        body.innerHTML='<table class="reg"><thead><tr><th>When</th><th>Who</th><th>Type</th><th>Target</th><th>Old</th><th>New</th></tr></thead><tbody>'+
+          rows.map(r=>`<tr><td>${this.esc(new Date(r.created_at).toLocaleString())}</td><td>${this.esc(r.username||'')}</td><td>${this.esc(this.rwsActionLabel(r))}</td><td>${this.esc(r.target_key||'')}</td><td>${this.esc(JSON.stringify(r.old_value??''))}</td><td>${this.esc(JSON.stringify(r.new_value??''))}</td></tr>`).join('')+
           '</tbody></table>';
-        const csvBtn=body.querySelector('#rwsLogCsv');
-        if(csvBtn)csvBtn.addEventListener('click',()=>this.exportLogCsv(rows));
       }catch(e){ body.innerHTML='<div class="empty">Could not load activity log: '+this.esc(e.message)+'</div>'; }
       return;
     }
     try{
       const users=await rwsAdminListUsers();
-      const AREAS=[['EB','Existing Basement'],['NB','New Basement'],['MA','Marine']];
-      const areaLabel=code=>({EB:'Existing Basement',NB:'New Basement',MA:'Marine'}[code]||code);
       body.innerHTML=`<div style="margin-bottom:14px;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel2)">
         <div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Add / update account</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
@@ -887,26 +937,12 @@ class Component extends DCLogic {
           <input id="rwsNuName" placeholder="display name" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)">
           <select id="rwsNuRole" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)"><option value="user">user</option><option value="admin">admin</option></select>
         </div>
-        <div style="font-size:9.5px;font-weight:700;color:var(--dim);margin-bottom:4px">Areas this user may edit (leave all unchecked = read-only)</div>
-        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px">
-          ${AREAS.map(([c,l])=>`<label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt);cursor:pointer"><input type="checkbox" class="rwsNuArea" value="${c}" style="cursor:pointer">${l}</label>`).join('')}
-        </div>
         <button class="hbtn primary" id="rwsNuSave">Save account</button>
-        <div style="font-size:9.5px;color:var(--faint);margin-top:6px">A "user" account can only change column status (progress/complete) and enter actual completed quantities, and only inside the areas checked above. Admins can edit everything, including plan quantities, and manage accounts.</div>
+        <div style="font-size:9.5px;color:var(--faint);margin-top:6px">No zone restriction — any "user" account can edit column status and slab quantities anywhere on the map. Only "admin" accounts can add zone-level site updates and manage accounts.</div>
       </div>
-      <table class="reg"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Areas</th><th>Active</th></tr></thead><tbody>
-      ${users.map(u=>{const areas=Array.isArray(u.allowed_scopes)?u.allowed_scopes:[];return `<tr data-u="${this.esc(u.username)}" class="rwsUserRow" style="cursor:pointer"><td>${this.esc(u.username)}</td><td>${this.esc(u.display_name||'')}</td><td>${this.esc(u.role)}</td><td>${u.role==='admin'?'<span style="color:var(--faint)">(all)</span>':this.esc(areas.map(areaLabel).join(', ')||'—')}</td><td>${u.active?'yes':'no'}</td></tr>`;}).join('')}
-      </tbody></table>
-      <div style="font-size:9.5px;color:var(--faint);margin-top:6px">Tip: click a row to load that account into the form (change password or areas, then Save).</div>`;
-      const collectAreas=()=>[...body.querySelectorAll('.rwsNuArea:checked')].map(x=>x.value);
-      body.querySelectorAll('.rwsUserRow').forEach(tr=>tr.addEventListener('click',()=>{
-        const u=users.find(x=>x.username===tr.dataset.u); if(!u)return;
-        body.querySelector('#rwsNuUser').value=u.username;
-        body.querySelector('#rwsNuName').value=u.display_name||'';
-        body.querySelector('#rwsNuRole').value=u.role;
-        const areas=Array.isArray(u.allowed_scopes)?u.allowed_scopes:[];
-        body.querySelectorAll('.rwsNuArea').forEach(cb=>cb.checked=areas.indexOf(cb.value)>=0);
-      }));
+      <table class="reg"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Active</th></tr></thead><tbody>
+      ${users.map(u=>`<tr><td>${this.esc(u.username)}</td><td>${this.esc(u.display_name||'')}</td><td>${this.esc(u.role)}</td><td>${u.active?'yes':'no'}</td></tr>`).join('')}
+      </tbody></table>`;
       body.querySelector('#rwsNuSave').addEventListener('click',async()=>{
         const username=body.querySelector('#rwsNuUser').value.trim();
         if(!username){alert('username required');return;}
@@ -915,7 +951,7 @@ class Component extends DCLogic {
             username, password:body.querySelector('#rwsNuPass').value,
             displayName:body.querySelector('#rwsNuName').value.trim(),
             role:body.querySelector('#rwsNuRole').value,
-            allowedScopes:collectAreas(),
+            allowedScopes:[],
             active:true
           });
           this.rwsRenderAdmin();
@@ -924,161 +960,22 @@ class Component extends DCLogic {
     }catch(e){ body.innerHTML='<div class="empty">Could not load accounts: '+this.esc(e.message)+'</div>'; }
   }
   rwsActionLabel(r){
-    if(r.action==='slab_qty') return 'Actual qty';
-    if(r.action==='plan_qty') return 'Plan qty';
-    if(r.action==='qty_ov') return 'Quantity total';
+    if(r.action==='slab_qty') return 'Slab qty';
     if(r.action==='element_status'){
       const parts=(r.target_key||'').split('||'); const t=parts[2];
       const map={col:'Column',pile:'Pile cap',beam:'Beam',lift:'Lift',stair:'Stair',core:'Core wall'};
       return map[t]||('Element'+(t?' ('+t+')':''));
     }
     if(r.action==='zone_update') return 'Zone update';
-    if(r.action==='add_cat') return 'New category';
-    if(r.action==='del_cat') return 'Delete category';
-    if(r.action==='add_item') return 'Add item';
-    if(r.action==='del_item') return 'Delete item';
     if(r.action==='login') return 'Login';
     return r.action||'';
-  }
-  /* ---------- admin-defined custom categories + custom items ---------- */
-  customCats(){ return this._catAdd||(this._catAdd=[]); }
-  catLabelOf(type){ const b={col:'Columns',pile:'Pile Caps',beam:'Main Beams',steel:'Steel Beams',lift:'Lifts',stair:'Staircases',core:'Core Walls'}; if(b[type])return b[type]; const c=this.customCats().find(x=>x.code===type); return c?c.label:type; }
-  customItemsFor(lv,zoneMk,type){ return (this._elemAdd&&this._elemAdd[lv+'||'+zoneMk+'||'+type])||[]; }
-  saveCustom(){ try{localStorage.setItem('rws_cat_add',JSON.stringify(this._catAdd||[]));localStorage.setItem('rws_elem_add',JSON.stringify(this._elemAdd||{}));}catch(e){} }
-  addCustomCat(label){
-    if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can add categories.');return;}
-    label=(label||'').trim(); if(!label)return;
-    const code='cust_'+label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,24)+'_'+Math.random().toString(36).slice(2,6);
-    this._catAdd=this.customCats(); this._catAdd.push({code,label}); this.saveCustom();
-    rwsAddCat(code,label);
-    if(this.selKey){const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);}
-  }
-  delCustomCat(code){
-    if(!this.rwsIsAdmin())return;
-    if(!confirm('Delete this category and all its items everywhere?'))return;
-    this._catAdd=(this.customCats()).filter(c=>c.code!==code);
-    Object.keys(this._elemAdd||{}).forEach(k=>{if(k.split('||')[2]===code)delete this._elemAdd[k];});
-    this.saveCustom(); rwsDelCat(code);
-    this.applyUpdates();this.buildRail();this.render();
-    if(this.selKey){const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);}
-  }
-  addCustomItem(lv,zoneMk,type,id){
-    if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can add items.');return;}
-    id=(id||'').trim(); if(!id||id.indexOf('||')>=0)return;
-    const k=lv+'||'+zoneMk+'||'+type; const arr=this._elemAdd[k]||(this._elemAdd[k]=[]);
-    if(arr.indexOf(id)>=0){alert('That ID already exists here.');return;}
-    arr.push(id); this.saveCustom();
-    rwsAddItem(lv+'||'+zoneMk+'||'+type+'||'+id, lv, zoneMk, type, id);
-    this.applyUpdates();this.buildRail();this.render();
-    const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);
-  }
-  delCustomItem(lv,zoneMk,type,id){
-    if(!this.rwsIsAdmin())return;
-    const k=lv+'||'+zoneMk+'||'+type; const arr=this._elemAdd[k]||[];
-    this._elemAdd[k]=arr.filter(x=>x!==id); if(!this._elemAdd[k].length)delete this._elemAdd[k];
-    const ekey=lv+'||'+zoneMk+'||'+type+'||'+id; delete this.elem[ekey]; this.saveElem();
-    this.saveCustom(); rwsDelItem(ekey);
-    this.applyUpdates();this.buildRail();this.render();
-    const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);
-  }
-  // break a log row's target_key into readable area / zone / detail columns
-  rwsLogParts(r){
-    const areaLabel=code=>({EB:'Existing Basement',NB:'New Basement',MA:'Marine'}[code]||'');
-    if(!this._zoneLabel){ this._zoneLabel={}; this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{this._zoneLabel[lv+'||'+this.zid(z)]=z.label;})); }
-    const k=r.target_key||''; const p=k.split('||');
-    if(r.action==='element_status' && p.length===4){
-      const lv=p[0],zmk=p[1]; return {area:areaLabel(this.zoneCat(lv,zmk)),zone:lv+' · '+(this._zoneLabel[lv+'||'+zmk]||zmk),detail:p[2]+' '+p[3]};
-    }
-    if((r.action==='qty_ov') && p.length>=3){ const lv=p[0],zmk=p[1]; return {area:areaLabel(this.zoneCat(lv,zmk)),zone:lv+' · '+(this._zoneLabel[lv+'||'+zmk]||zmk),detail:p[2]}; }
-    if((r.action==='slab_qty'||r.action==='plan_qty') && p.length>=3){ return {area:'',zone:p[0],detail:p[1]+' · row '+p[2]}; }
-    if(r.action==='zone_update'){ return {area:'',zone:k,detail:''}; }
-    return {area:'',zone:'',detail:k};
-  }
-  exportLogCsv(rows){
-    const esc=v=>'"'+String(v==null?'':(typeof v==='object'?JSON.stringify(v):v)).replace(/"/g,'""')+'"';
-    const head=['When','User','Type','Area','Level_Zone','Detail','Old','New'];
-    const lines=[head.join(',')];
-    rows.forEach(r=>{const d=this.rwsLogParts(r);lines.push([new Date(r.created_at).toISOString(),r.username||'',this.rwsActionLabel(r),d.area,d.zone,d.detail,r.old_value,r.new_value].map(esc).join(','));});
-    const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');
-    a.href=url;a.download='RWS_P1_activity_log_'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();
-    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},400);
-  }
-
-  /* ---------- full data export (granular, for future tracking) ---------- */
-  // Builds one self-contained object: current state + per-zone plan-vs-actual
-  // broken down by element type AND by schedule work-package, plus (admin)
-  // the account list and the full who-changed-what activity log.
-  async buildFullExport(){
-    const AL={EB:'Existing Basement',NB:'New Basement',MA:'Marine'};
-    const zones=[];
-    this.DATA.order.forEach(lv=>{
-      const seen={};
-      this.DATA.levels[lv].zones.forEach(z=>{
-        const zid=this.zid(z); if(seen[zid])return; seen[zid]=1;
-        const c=z.counts||{};
-        // actual (done/wip/todo) per element type, from element_status marks
-        const et={};
-        [['columns','col'],['pilecap','pile'],['mainbeam','beam'],['steelbeam',null],['lift','lift'],['stair','stair'],['core','core']].forEach(([label,type])=>{
-          if(!type)return;
-          const src={col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores}[type]||[];
-          if(!src.length)return;
-          let done=0,wip=0; src.forEach(x=>{const s=this.elemStatus(this.ekey(lv,z,type,typeof x==='string'?x:x.id));if(s==='done')done++;else if(s==='wip')wip++;});
-          et[type]={plan_total:src.length,done,wip,todo:src.length-done-wip};
-        });
-        // admin-added custom items (built-in types + custom categories)
-        ['col','pile','beam','steel','lift','stair','core'].concat(this.customCats().map(c=>c.code)).forEach(type=>{
-          const ids=this.customItemsFor(lv,zid,type); if(!ids.length)return;
-          let done=0,wip=0; ids.forEach(id=>{const s=this.elemStatus(lv+'||'+zid+'||'+type+'||'+id);if(s==='done')done++;else if(s==='wip')wip++;});
-          const key='added_'+type; const prev=et[key]||{plan_total:0,done:0,wip:0,todo:0,label:this.catLabelOf(type)};
-          et[key]={label:this.catLabelOf(type),plan_total:prev.plan_total+ids.length,done:prev.done+done,wip:prev.wip+wip,todo:prev.todo+(ids.length-done-wip),ids};
-        });
-        // schedule work packages: plan qty vs actual done qty vs %
-        const sched=[]; const nm=this.zpMatchOf(z); const pz=nm&&(this.ZP.plan[nm]?nm:this.zpResolvePlan(nm)); const zd=pz?this.ZP.plan[pz]:null;
-        if(zd){this.ZP.months.forEach(m=>{(zd[m]||[]).forEach((it,idx)=>{sched.push({month:m,work:it.w,unit:it.u||'',plan_qty:it.p==null?null:it.p,actual_qty:it.d==null?null:it.d,pct:it.pct==null?null:it.pct,key:pz+'||'+m+'||'+idx});});});}
-        const p=z._p||{};
-        zones.push({level:lv,zone_mk:zid,label:z.label,area_code:z.cat||'NB',area:AL[z.cat||'NB'],critical:!!z.crit,
-          totals:{area_m2:z.area||0,columns:c.columns||0,pilecap:c.pilecap||0,mainbeam:c.mainbeam||0,steelbeam:c.steelbeam||0,lift:z.lifts?z.lifts.length:0,stair:z.stairs?z.stairs.length:0},
-          progress_pct:p.pct==null?null:p.pct,status:p.status||'todo',
-          elements:et,schedule:sched});
-      });
-    });
-    const out={
-      meta:{project:'RWS P1 CJ',exported_at:new Date().toISOString(),exported_by:(this._rwsUser&&this._rwsUser.username)||'',project_pct:this.projPct},
-      current_state:{element_status:this.elem,actual_slab_qty:this._zpOv||{},quantity_overrides:this._qtyOv||{},plan_qty_overrides:this._zpPlanOv||{},critical:this._critOv||{},zone_updates:this.updates||{},custom_categories:this._catAdd||[],custom_items:this._elemAdd||{}},
-      zones
-    };
-    if(this.rwsIsAdmin()){
-      try{ out.accounts=await rwsAdminListUsers(); }catch(e){ out.accounts_error=e.message; }
-      try{ out.activity_log=await rwsAdminActivityLog(5000); }catch(e){ out.activity_log_error=e.message; }
-    }
-    return out;
-  }
-  _downloadJson(obj,name){
-    const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);const a=document.createElement('a');
-    a.href=url;a.download=name;document.body.appendChild(a);a.click();
-    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},400);
-  }
-  async exportFullJson(){
-    const btn=this.root.querySelector('#exportJson'); if(btn){btn.textContent='⏳ Building…';}
-    try{ const data=await this.buildFullExport(); this._downloadJson(data,'RWS_P1_CJ_full_'+new Date().toISOString().slice(0,10)+'.json'); }
-    catch(e){ alert('Export failed: '+e.message); }
-    finally{ if(btn)btn.textContent='⬇ Full JSON'; }
-  }
-  // once per calendar day, when an admin opens the page, auto-download a
-  // full JSON snapshot as a lightweight daily backup (needs no server).
-  async rwsMaybeDailyExport(){
-    if(!this.rwsIsAdmin())return;
-    const today=new Date().toISOString().slice(0,10);
-    let last=''; try{last=localStorage.getItem('rws_last_daily_export')||'';}catch(e){}
-    if(last===today)return;
-    try{ const data=await this.buildFullExport(); this._downloadJson(data,'RWS_P1_CJ_daily_'+today+'.json'); localStorage.setItem('rws_last_daily_export',today); }catch(e){ console.warn('[rws] daily export failed',e); }
   }
 
   elemStatus(k){return this.elem[k]||'todo';}
   doneCount(){return Object.values(this.elem).filter(v=>v==='done').length;}
   elemMarked(){return Object.keys(this.elem).length;}
   ekey(lv,z,type,id){return lv+'||'+(z.mk||z.lid)+'||'+type+'||'+id;}
+  levelTypeStats(){const seen={},st={col:{total:0,done:0,wip:0},pile:{total:0,done:0,wip:0},beam:{total:0,done:0,wip:0},lift:{total:0,done:0,wip:0},stair:{total:0,done:0,wip:0},core:{total:0,done:0,wip:0}};this.DATA.levels[this.curLevel].zones.forEach(z=>{if(!this.zoneVisible(z))return;const k=this.zid(z);if(seen[k])return;seen[k]=1;this.zoneElems(this.curLevel,z).forEach(it=>{const o=st[it.type];if(!o)return;o.total++;const s2=this.elemStatus(it.key);if(s2==='done')o.done++;else if(s2==='wip')o.wip++;});});return st;}
   zoneElems(lv,z){
     const out=[];
     (z.cols||[]).forEach(x=>out.push({key:this.ekey(lv,z,'col',x.id),type:'col'}));
@@ -1087,21 +984,18 @@ class Component extends DCLogic {
     (z.lifts||[]).forEach(x=>out.push({key:this.ekey(lv,z,'lift',x.id),type:'lift'}));
     (z.stairs||[]).forEach(x=>out.push({key:this.ekey(lv,z,'stair',x.id),type:'stair'}));
     (z.cores||[]).forEach(x=>out.push({key:this.ekey(lv,z,'core',x),type:'core'}));
-    // admin-added custom items (built-in types AND custom categories)
-    const zmk=this.zid(z), pre=lv+'||'+zmk+'||';
-    Object.keys(this._elemAdd||{}).forEach(k=>{ if(k.indexOf(pre)!==0)return; const type=k.split('||')[2];
-      (this._elemAdd[k]||[]).forEach(id=>out.push({key:pre+type+'||'+id,type})); });
     return out;
   }
   zoneElemStats(lv,z){const items=this.zoneElems(lv,z);let done=0,wip=0;items.forEach(it=>{const s=this.elemStatus(it.key);if(s==='done')done++;else if(s==='wip')wip++;});return{total:items.length,done,wip,todo:items.length-done-wip};}
+  _syncElemDate(key,st){if(!key.includes('||col||'))return;if(st==='done'){if(!this.elemDate(key))this.setElemDate(key,this.todayISOStr());}else{this.setElemDate(key,'');}}
   cycleElem(key){
     if(!this.rwsCanEditElement(key)){this.rwsDeny('You can only update column status inside your assigned zones.');return;}
-    const o=['todo','wip','done'];const nx=o[(o.indexOf(this.elemStatus(key))+1)%3];if(nx==='todo')delete this.elem[key];else this.elem[key]=nx;this.commitElem();
+    const o=['todo','wip','done'];const nx=o[(o.indexOf(this.elemStatus(key))+1)%3];if(nx==='todo')delete this.elem[key];else this.elem[key]=nx;this._syncElemDate(key,nx);this.commitElem();
     rwsSyncElementStatus(key,nx);
   }
   setElem(key,st){
     if(!this.rwsCanEditElement(key)){this.rwsDeny('You can only update column status inside your assigned zones.');return;}
-    if(st==='todo')delete this.elem[key];else this.elem[key]=st;this.commitElem();
+    if(st==='todo')delete this.elem[key];else this.elem[key]=st;this._syncElemDate(key,st);this.commitElem();
     rwsSyncElementStatus(key,st);
   }
   setZoneElems(lv,z,st){
@@ -1110,12 +1004,15 @@ class Component extends DCLogic {
     this.zoneElems(lv,z).forEach(it=>{
       if(!isAdmin && it.type!=='col')return;
       if(st==='todo')delete this.elem[it.key];else this.elem[it.key]=st;
+      this._syncElemDate(it.key,st);
       rwsSyncElementStatus(it.key,st);
     });
     this.commitElem();
   }
-  commitElem(){this.saveElem();this.applyUpdates();this.buildRail();this.buildTimeline();this.render();
+  commitElem(){const _scEl=this.root.querySelector('#sidebody');const _sy=_scEl?_scEl.scrollTop:0;const _open=[...(this.root.querySelectorAll('#sidebody details.sec[open]'))].map(d=>d.dataset.sec);
+    this.saveElem();this.applyUpdates();this.buildRail();this.buildTimeline();this.render();
     const z=this.selKey&&this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z){this.selectZone(z);this.paintSel();this.paintTimelineSel();}
+    const _sc2=this.root.querySelector('#sidebody');if(_sc2){_open.forEach(t=>{const d=_sc2.querySelector('details.sec[data-sec="'+t+'"]');if(d)d.open=true;});_sc2.scrollTop=_sy;}
     this.refreshUpdBadge();if(this.root.querySelector('#modal').classList.contains('open'))this.openTable();}
 
   levelMax(){let m=0;this.DATA.levels[this.curLevel].zones.forEach(z=>m=Math.max(m,this.mval(z,this.curMetric)));return m||1;}
@@ -1155,12 +1052,16 @@ class Component extends DCLogic {
       const op=vis?(this.colorMode==='area'?0.5:0.72):0.05;
       s+=`<polygon class="zone${vis?'':' dim'}${crit}" data-i="${i}" points="${pts}" fill="${this.zoneFill(z)}" fill-opacity="${op}"/>`;
     });
+    {const _hk=['podcis','podium','transfer'].filter(k=>this.showOvl[k]);
+     const _HS={podium:{rot:45,sp:2800,sw:300,op:0.22,cross:false},transfer:{rot:-45,sp:1700,sw:300,op:0.26,cross:false},podcis:{rot:0,sp:2400,sw:260,op:0.20,cross:true}};
+     if(_hk.length){s+=`<defs>${_hk.map(k=>{const o=this.OVL[k],h=_HS[k];return `<pattern id="hz_${k}" patternUnits="userSpaceOnUse" width="${h.sp}" height="${h.sp}" patternTransform="rotate(${h.rot})"><rect width="${h.sp}" height="${h.sp}" fill="${o.c}" fill-opacity="0.065"/><line x1="0" y1="0" x2="0" y2="${h.sp}" stroke="${o.c}" stroke-width="${h.sw}" stroke-opacity="${h.op}"/>${h.cross?`<line x1="0" y1="0" x2="${h.sp}" y2="0" stroke="${o.c}" stroke-width="${h.sw}" stroke-opacity="${h.op}"/>`:''}</pattern>`;}).join('')}</defs>`;}}
     ['podcis','podium','transfer'].forEach(k=>{
       if(!this.showOvl[k])return;const o=this.OVL[k];
       (this.DATA.overlays[k]||[]).forEach(seg=>{
         const p=seg.pts.map(pt=>{const q=this.proj(pt,H);return q[0].toFixed(1)+','+q[1].toFixed(1);}).join(' ');
         const tag=seg.closed?'polygon':'polyline';
-        s+=`<${tag} class="ovl" points="${p}" stroke="${o.c}" stroke-width="${(o.w*0.58).toFixed(0)}" stroke-dasharray="5 4" stroke-opacity="0.85"/>`;
+        s+=`<${tag} class="ovl" points="${p}" stroke="#ffffff" stroke-width="${(o.w*1.05+0.8).toFixed(1)}" stroke-opacity="0.9"/>`;
+        s+=`<${tag} class="ovl" points="${p}" ${seg.closed?`style="fill:url(#hz_${k})"`:''} stroke="${o.c}" stroke-width="${(o.w*1.05).toFixed(1)}" stroke-dasharray="6 4.5" stroke-opacity="0.95"/>`;
       });
     });
     if(this.showBeams && this.DATA.beamlines && this.DATA.beamlines[this.curLevel]){
@@ -1179,35 +1080,86 @@ class Component extends DCLogic {
           s+=`<polyline class="areabound" points="${pts}" stroke="${bc}" stroke-width="900" stroke-linecap="round"/>`;});
       });
     }
+    // --- smart zone labels: font scaled to zone size, collision-avoided (never overlap) ---
+    const _lbls=[];
     L.zones.forEach((z,i)=>{
       if(!this.zoneVisible(z))return;
       let cx,cy;if(z.lx!=null){cx=z.lx;cy=H-z.ly;}else{const c=this.centroid(z.ring,H);cx=c[0];cy=c[1];}
+      let x0=1e18,x1=-1e18,y0=1e18,y1=-1e18;z.ring.forEach(p=>{if(p[0]<x0)x0=p[0];if(p[0]>x1)x1=p[0];if(p[1]<y0)y0=p[1];if(p[1]>y1)y1=p[1];});
+      const bw=x1-x0,bh=y1-y0;
+      let fs=Math.max(1500,Math.min(3500,(bw*0.92)/(Math.max(4,z.label.length)*0.6),bh*0.34));
+      if(/^(M-SLAB|CAPPING)/i.test(z.label))fs=1400;
+      _lbls.push({z,i,cx,cy,fs,w:z.label.length*fs*0.62,h:fs*1.85});
+    });
+    _lbls.sort((a,b)=>(b.z.area||0)-(a.z.area||0));
+    const _placed=[];
+    const _hit=(a,b)=>Math.abs(a.cx-b.cx)*2<(a.w+b.w)*1.04 && Math.abs(a.cy-b.cy)*2<(a.h+b.h)*1.04;
+    _lbls.forEach(lb=>{
+      const offs=[[0,0],[0,lb.h*0.75],[0,-lb.h*0.75],[lb.w*0.4,0],[-lb.w*0.4,0],[0,lb.h*1.5],[lb.w*0.5,lb.h*0.8],[-lb.w*0.5,lb.h*0.8],[0,-lb.h*1.5]];
+      let fin=null;
+      for(const o of offs){const cand={cx:lb.cx+o[0],cy:lb.cy+o[1],w:lb.w,h:lb.h};if(!_placed.some(p=>_hit(cand,p))){fin=cand;break;}}
+      if(!fin){fin={cx:lb.cx,cy:lb.cy,w:lb.w,h:lb.h};}
+      lb.fx=fin.cx;lb.fy=fin.cy;_placed.push(fin);
+    });
+    _lbls.forEach(lb=>{
+      const z=lb.z,cx=lb.fx,cy=lb.fy,fs=lb.fs;
       const isCrit=z.crit&&this.showCrit;
-      s+=`<text class="zname${isCrit?' crit':''}" style="font-size:3500px" x="${cx.toFixed(0)}" y="${(cy-1600).toFixed(0)}">${this.esc(z.label)}</text>`;
+      s+=`<text class="zname${isCrit?' crit':''}" style="font-size:${fs.toFixed(0)}px" x="${cx.toFixed(0)}" y="${(cy-fs*0.25).toFixed(0)}">${this.esc(z.label)}</text>`;
+      const sub=fs*0.62;
       if(this.colorMode==='progress' && z._p){
         const d=this.zoneDisplayPct(z);const col=this.progColor(d.pct);
-        s+=`<text class="zpct" style="font-size:2600px;fill:${col}" x="${cx.toFixed(0)}" y="${(cy+1100).toFixed(0)}">${d.pct}%</text>`;
+        s+=`<text class="zpct" style="font-size:${(sub*1.15).toFixed(0)}px;fill:${col}" x="${cx.toFixed(0)}" y="${(cy+sub*1.05).toFixed(0)}">${d.pct}%</text>`;
       } else if(this.colorMode==='quantity'){
-        s+=`<text class="zarea" style="font-size:2200px" x="${cx.toFixed(0)}" y="${(cy+1100).toFixed(0)}">${this.fmt(this.mval(z,this.curMetric))}</text>`;
+        s+=`<text class="zarea" style="font-size:${sub.toFixed(0)}px" x="${cx.toFixed(0)}" y="${(cy+sub*1.05).toFixed(0)}">${this.fmt(this.mval(z,this.curMetric))}</text>`;
       } else {
-        s+=`<text class="zarea" style="font-size:2000px" x="${cx.toFixed(0)}" y="${(cy+1100).toFixed(0)}">${this.fmt(z.area)} m²</text>`;
+        s+=`<text class="zarea" style="font-size:${sub.toFixed(0)}px" x="${cx.toFixed(0)}" y="${(cy+sub*1.05).toFixed(0)}">${this.fmt(z.area)} m²</text>`;
       }
       if(this.showSeq && this.rwsIsAdmin() && z._p){
         const bc=z._p.status==='done'?this.cssvar('--done'):z._p.status==='wip'?this.cssvar('--wip'):this.cssvar('--todo');
-        s+=`<text class="zseq" style="font-size:1750px;fill:${bc}" x="${cx.toFixed(0)}" y="${(cy+3600).toFixed(0)}">${this.ordinal(z._p.seq)} pour</text>`;
+        s+=`<text class="zseq" style="font-size:${(sub*0.85).toFixed(0)}px;fill:${bc}" x="${cx.toFixed(0)}" y="${(cy+sub*2.15).toFixed(0)}">${this.ordinal(z._p.seq)} pour</text>`;
       }
     });
+    if(this.showColumns && this.COLUMNS && this.COLUMNS[this.curLevel]){
+      const zoneByLabel={};L.zones.forEach(z=>{zoneByLabel[z.label]=z;});
+      this.COLUMNS[this.curLevel].forEach((c,ci)=>{
+        const sy=H-c.y;
+        const zz=zoneByLabel[c.zone];
+        const st=zz?this.elemStatus(this.ekey(this.curLevel,zz,'col',c.id)):'todo';
+        const fill=st==='done'?this.cssvar('--done'):st==='wip'?this.cssvar('--wip'):(c.crit?'#c8102e':'#8a93a3');
+        s+=`<circle class="colmk" data-ci="${ci}" cx="${c.x.toFixed(0)}" cy="${sy.toFixed(0)}" r="980" fill="${fill}" stroke="${c.crit?'#8f0a20':'#ffffff'}" stroke-width="220"/>`;
+        s+=`<text class="collbl" ${c.crit?`style="fill:#c8102e"`:''} x="${c.x.toFixed(0)}" y="${(sy-2300).toFixed(0)}">${this.esc(c.id.replace('WF-B2','').replace('MK-B2','MK-'))}</text>`;
+      });
+    }
     this.svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);
     this.svg.innerHTML=s;
+    this.colLOD();
     this.svg.querySelectorAll('.zone').forEach(el=>{
       el.addEventListener('mousemove',ev=>this.showTip(ev,+el.dataset.i));
       el.addEventListener('mouseleave',()=>this.tip.style.opacity=0);
       el.addEventListener('click',()=>{const z=L.zones[+el.dataset.i];if(!this.zoneVisible(z))return;this.selKey=this.zid(z);this.selectZone(z);this.paintSel();this.paintTimelineSel();});
     });
+    this.svg.querySelectorAll('.colmk').forEach(el=>{
+      el.addEventListener('mousemove',ev=>{const c=this.COLUMNS[this.curLevel][+el.dataset.ci];
+        this.tip.innerHTML=`<h4>${this.esc(c.id)}</h4><div class="grp">Column · ${this.esc(c.sz||'')} · zone ${this.esc(c.zone||'')} · click to open</div>`;
+        const r=this.svg.getBoundingClientRect();let x=ev.clientX-r.left+14,y=ev.clientY-r.top+14;
+        if(x>r.width-220)x-=240;if(y>r.height-80)y-=80;
+        this.tip.style.left=x+'px';this.tip.style.top=y+'px';this.tip.style.opacity=1;});
+      el.addEventListener('mouseleave',()=>this.tip.style.opacity=0);
+      el.addEventListener('click',ev=>{ev.stopPropagation();
+        const c=this.COLUMNS[this.curLevel][+el.dataset.ci];
+        const z=L.zones.find(zz=>zz.label===c.zone);
+        if(!z)return;
+        this.selKey=this.zid(z);this.selectZone(z);this.paintSel();this.paintTimelineSel();
+        const key=this.ekey(this.curLevel,z,'col',c.id);
+        setTimeout(()=>{const row=this.root.querySelector(`.elchip[data-key="${(window.CSS&&CSS.escape)?CSS.escape(key):key}"]`);
+          if(row){row.scrollIntoView({block:'center',behavior:'smooth'});row.classList.add('hlrow');setTimeout(()=>row.classList.remove('hlrow'),2200);}},60);
+      });
+    });
     this.paintSel();this.drawLegend();this.buildKPIs();this.buildProgRoll();this.buildAreaBreak();this.buildList();
   }
 
   ordinal(n){n=parseInt(n,10);if(isNaN(n))return n;const v=n%100,x=['th','st','nd','rd'];return n+(x[(v-20)%10]||x[v]||x[0]);}
+  colLOD(){this.svg.classList.toggle('collabels', this.vb.w < this.base.w*0.45);}
   paintSel(){const L=this.DATA.levels[this.curLevel],H=L.h;
     const old=this.svg.querySelector('#selovl');if(old)old.remove();
     this.svg.querySelectorAll('.zone').forEach(el=>el.classList.remove('sel'));
@@ -1261,6 +1213,7 @@ class Component extends DCLogic {
     s+='<div style="height:6px"></div>';
     Object.keys(this.OVL).forEach(k=>{if(this.showOvl[k]){const o=this.OVL[k];s+=`<div class="lr"><span class="dash" style="border-color:${o.c}"></span>${o.label}</div>`;}});
     if(this.showBeams && this.DATA.beamlines && this.DATA.beamlines[this.curLevel]) s+=`<div class="lr"><span style="width:18px;border-top:2px solid var(--beam)"></span>Main-beam lines (approx.)</div>`;
+    if(this.showColumns && this.COLUMNS && this.COLUMNS[this.curLevel]) s+=`<div class="lr"><span style="width:10px;height:10px;border-radius:50%;background:#b9c0cc"></span>Column · fill = status (grey / periwinkle WIP / green done) · <span style="width:10px;height:10px;border-radius:50%;background:#fff;border:2.5px solid #c8102e;display:inline-block"></span> red ring = critical col</div>`;
     if(this.showCrit)s+=`<div class="lr"><span style="width:13px;color:var(--crit);font-weight:800;text-align:center">Ab</span>Red zone name = critical path</div>`;
     if(this.showSeq && this.rwsIsAdmin())s+=`<div class="lr"><span class="sw" style="border-radius:50%;background:var(--dim);color:#fff;font-size:8px;text-align:center;line-height:13px;font-weight:800">#</span>Pour sequence</div>`;
     if(this.showAreaBounds){s+=`<div style="font-weight:700;color:var(--txt);margin:5px 0 2px">Area boundaries</div>`;
@@ -1270,12 +1223,28 @@ class Component extends DCLogic {
     lg.innerHTML=s;
   }
 
+  setSummaryVis(){const sel=!!this.selKey;['#sideTitle','#kpis','#progroll'].forEach(id=>{const el=this.root.querySelector(id);if(el)el.style.display=sel?'none':'';});const a=this.root.querySelector('#areastrip');if(a){if(sel)a.style.display='none';else this.buildAreaBreak();}}
   buildKPIs(){
     const seen={},uniq=[];this.DATA.levels[this.curLevel].zones.forEach(z=>{if(!this.zoneVisible(z))return;const k=this.zid(z);if(!seen[k]){seen[k]=1;uniq.push(z);}});
     const t={columns:0,pilecap:0,mainbeam:0,steelbeam:0,ls:0,area:0};
     uniq.forEach(z=>{const c=z.counts;t.columns+=c.columns||0;t.pilecap+=c.pilecap||0;t.mainbeam+=c.mainbeam||0;t.steelbeam+=c.steelbeam||0;t.ls+=this.lsAll(c);t.area+=z.area||0;});
-    const items=[['Columns',t.columns],['Pile Caps',t.pilecap],['Main Beams',t.mainbeam],['Steel Beams',t.steelbeam],['Lift/Stair',t.ls],['Area m²',this.fmt(t.area)]];
-    this.root.querySelector('#kpis').innerHTML=items.map(([l,n])=>`<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');}
+    const S=this.levelTypeStats();
+    const lsS={total:S.lift.total+S.stair.total,done:S.lift.done+S.stair.done,wip:S.lift.wip+S.stair.wip};
+    const dc=this.cssvar('--done'),wc=this.cssvar('--wip'),tc=this.cssvar('--todo');
+    const mini=(es)=>{ if(!es||!es.total) return ''; const rem=es.total-es.done-es.wip;
+      return `<div class="kmini" title="${es.done} done · ${es.wip} in progress · ${rem} remaining"><i style="width:${es.done/es.total*100}%;background:${dc}"></i><i style="width:${es.wip/es.total*100}%;background:${wc}"></i><i style="width:${rem/es.total*100}%;background:${tc}"></i></div>
+        <div class="kmc"><span style="color:${dc}">${es.done} done</span><span style="color:${wc}">${es.wip} wip</span><span style="color:var(--faint)">${rem} left</span></div>`; };
+    // Excavation / Demolition — admin totals + cumulative done, summed across the level
+    let excT=0,excD=0,demoT=0,demoD=0;
+    uniq.forEach(z=>{const zmk=z.mk||z.lid;excT+=this.actTotal(this.curLevel,zmk,'exc',0)||0;excD+=this.actCumDone(this.curLevel,zmk,'exc')||0;demoT+=this.actTotal(this.curLevel,zmk,'demo',0)||0;demoD+=this.actCumDone(this.curLevel,zmk,'demo')||0;});
+    const miniVol=(tot,done)=>{ if(!tot) return ''; const rem=Math.max(0,tot-done); const dp=Math.min(100,done/tot*100);
+      return `<div class="kmini" title="${this.fmt(done)} done · ${this.fmt(rem)} remaining"><i style="width:${dp}%;background:${dc}"></i><i style="width:${100-dp}%;background:${tc}"></i></div>
+        <div class="kmc"><span style="color:${dc}">${this.fmt(done)} done</span><span style="color:var(--faint)">${this.fmt(rem)} left</span></div>`; };
+    const cards=[['Columns',t.columns,S.col],['Pile Caps',t.pilecap,S.pile],['Main Beams',t.mainbeam,S.beam],['Steel Beams',t.steelbeam,null],['Lift/Stair',t.ls,lsS],['Area m²',this.fmt(t.area),null]];
+    const volCards=[['Excavation m³',this.fmt(excT),excT,excD],['Demolition m³',this.fmt(demoT),demoT,demoD]];
+    this.root.querySelector('#kpis').innerHTML=cards.map(([l,n,es])=>`<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div>${mini(es)}</div>`).join('')
+      +volCards.map(([l,n,tot,done])=>`<div class="kpi"><div class="n">${n}</div><div class="l">${l}</div>${miniVol(tot,done)}</div>`).join('');
+  }
 
   buildProgRoll(){
     const lp=this.progFilter(this.curLevel), tot=lp.done+lp.wip+lp.todo||1;
@@ -1377,33 +1346,30 @@ class Component extends DCLogic {
     arr.sort((a,b)=>this.mval(b,this.curMetric)-this.mval(a,this.curMetric));
     const m=this.METRICS.find(x=>x.k===this.curMetric),mx=this.levelMax();
     this.root.querySelector('#sideTitle').innerHTML=`<span>${this.curLevel} · ${this.esc(this.DATA.levels[this.curLevel].title)}</span><span class="pill">${arr.length} zones</span>`;
-    // level totals comparison
-    let cmpMax=0;this.DATA.order.forEach(lv=>{const t=this.DATA.levelTotals[lv];const v=this.curMetric==='liftstairAll'?(t.liftcw+t.stair+t.liftstair):(t[this.curMetric]||0);cmpMax=Math.max(cmpMax,v);});
-    let cmp=`<div class="cmp"><div class="sub">Level totals · ${m.label} by level</div>`;
-    this.DATA.order.forEach(lv=>{const t=this.DATA.levelTotals[lv];const v=this.curMetric==='liftstairAll'?(t.liftcw+t.stair+t.liftstair):(t[this.curMetric]||0);
-      cmp+=`<div class="crow ${lv===this.curLevel?'on':''}" data-lv="${lv}"><div class="clv">${lv}</div><div class="ctrack"><i style="width:${v/(cmpMax||1)*100}%"></i></div><div class="cval">${this.curMetric==='area'?this.fmt(v):v}</div></div>`;});
-    cmp+='</div>';
-    let s=cmp+`<div class="sub"><span>Zones · ranked by ${m.label}</span><span>${arr.length} zones</span></div>
-     <div style="display:flex;flex-wrap:wrap;gap:4px 10px;font-size:9px;color:var(--faint);margin:-3px 0 8px"><span><b style="color:var(--dim)">C</b> Col</span><span><b style="color:var(--dim)">P</b> Cap</span><span><b style="color:var(--dim)">B</b> MB</span><span><b style="color:var(--dim)">S</b> SB</span><span><b style="color:var(--dim)">L</b> Lift/Stair</span></div>`;
+    let s=`<div class="sub"><span>Zones · ranked by ${m.label}</span><span>${arr.length} zones</span></div>
+`;
     arr.forEach(z=>{const v=this.mval(z,this.curMetric),col=(this.CAT[z.cat]||this.CAT.NB).c,c=z.counts,p=z._p||{pct:0,status:'todo'};
       const stc=p.status==='done'?this.cssvar('--done'):p.status==='wip'?this.cssvar('--wip'):this.cssvar('--todo');
       s+=`<div class="zrow ${this.selKey===this.zid(z)?'sel':''}" data-k="${this.esc(this.zid(z))}">
         <div class="sw" style="background:${col}"></div>
         <div class="zmid"><div class="nm">${this.esc(z.label)}${z.crit?' <span style="color:var(--crit)">◆</span>':''} <span class="stbadge" style="background:${stc}">${p.pct}%</span></div>
-          <div class="cnts"><span class="ct">C${c.columns||0}</span><span class="ct">P${c.pilecap||0}</span><span class="ct">B${c.mainbeam||0}</span><span class="ct">S${c.steelbeam||0}</span><span class="ct">L${this.lsAll(c)}</span></div></div>
+          </div>
         <div class="rt"><div class="val">${this.curMetric==='area'?this.fmt(v):v}</div><div class="mpb"><i style="width:${p.pct}%;background:${this.progColor(p.pct)}"></i></div></div>
       </div>`;});
     const sb=this.root.querySelector('#sidebody');
     if(!this.selKey||arr.every(z=>this.zid(z)!==this.selKey))sb.innerHTML=s;
     sb.querySelectorAll('.crow').forEach(el=>el.addEventListener('click',()=>{this.setLevel(el.dataset.lv);}));
     sb.querySelectorAll('.zrow').forEach(el=>el.addEventListener('click',()=>{const z=arr.find(x=>this.zid(x)===el.dataset.k);this.selKey=this.zid(z);this.selectZone(z);this.paintSel();this.paintTimelineSel();}));
+    this.setSummaryVis();
   }
 
   idList(items,render,empty){if(!items||!items.length)return `<div class="empty">${empty}</div>`;return items.map(render).join('');}
   elChip(key){const s=this.elemStatus(key);const m={todo:['Not started','--todo'],wip:['In progress','--wip'],done:['Complete','--done']}[s];return `<span class="elchip s-${s}" data-key="${this.esc(key)}" style="--c:var(${m[1]})" title="Click to cycle: Not started → In progress → Complete">${m[0]}</span>`;}
+  elDateCtl(key){const done=this.elemStatus(key)==='done';const d=this.elemDate(key);const bucket=done?this.dateToActMonth(d||this.todayISOStr()):'';return `<input type="date" class="eldate" data-key="${this.esc(key)}" value="${d}" title="Completion date → counts in ${bucket}" ${done?'':'style="display:none"'}><span class="elbkt" ${done?'':'style="display:none"'}>${bucket}</span>`;}
   elRows(lv,z,type,items,metaFn,empty,critFn){if(!items||!items.length)return `<div class="empty">${empty}</div>`;
     return items.map(x=>{const id=(typeof x==='string')?x:x.id;const key=this.ekey(lv,z,type,id);const crit=critFn&&critFn(x);
-      return `<div class="idrow ${crit?'crit':''}"><span class="id">${this.esc(id)}</span><span class="meta">${metaFn?metaFn(x):''}</span>${this.elChip(key)}</div>`;}).join('');}
+      const dc=(type==='col'&&lv==='B2')?this.elDateCtl(key):'';
+      return `<div class="idrow ${crit?'crit':''}"><span class="id">${this.esc(id)}</span><span class="meta">${metaFn?metaFn(x):''}</span>${this.elChip(key)}${dc}</div>`;}).join('');}
 
   /* ---------- schedule-record (ZP) integration — enriches the detail panel only; map unchanged ---------- */
   zpNorm(s){return String(s).replace(/[^a-z0-9]/gi,'').toLowerCase();}
@@ -1453,41 +1419,49 @@ class Component extends DCLogic {
     this.zpApplyOv();
   }
   zpSection(z){
-    if(!this.ZP)return '';
-    const name=this.zpMatchOf(z);
-    if(!name)return `<div class="sec"><div class="t">Schedule <span style="color:var(--faint);font-weight:600;text-transform:none">No linked schedule record</span></div></div>`;
-    const pz=this.ZP.plan[name]?name:this.zpResolvePlan(name);const zd=pz?this.ZP.plan[pz]:null;if(!zd)return '';
-    const cur=this.ZP.current;const short=m=>m.replace(' 20',"'");
-    const canEdit=this.rwsIsAdmin()||this.rwsScopeOk(this.curLevel,z.mk||z.lid);
-    let blocks='';
-    this.ZP.months.forEach(m=>{const items=zd[m];if(!items||!items.length)return;
-      const wp=items.filter(x=>x.pct!=null);let apct=null;if(wp.length)apct=Math.round(wp.reduce((a,b)=>a+(b.pct||0),0)/wp.length);
-      const past=this.zpMi(m)<=this.zpMi(cur);let sLabel,sCol,sBg;
-      if(apct!=null&&apct>=99){sLabel='Done';sCol='#218a5c';sBg='rgba(53,192,142,.16)';}
-      else if(apct!=null){if(past){sLabel='Behind '+apct+'%';sCol='#cf2f4c';sBg='rgba(239,95,122,.16)';}else{sLabel='WIP '+apct+'%';sCol='#a9720f';sBg='rgba(245,166,35,.18)';}}
-      else{if(past){sLabel='Due';sCol='#b06a12';sBg='rgba(217,138,42,.16)';}else{sLabel='Planned';sCol='var(--faint)';sBg='var(--panel)';}}
-      const rowsH=items.map((it,idx)=>{const pct=it.pct;const wt=this.zpClassify(it.w);const bc=pct>=100?'#35c08e':(pct>0?wt.color:'var(--faint)');
-        const pctText=pct==null?'—':pct+'%';
-        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-          <span style="width:7px;height:7px;border-radius:2px;background:${wt.color};flex:0 0 auto"></span>
-          <span style="flex:1;font-size:10px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${this.esc(it.w)}">${this.esc(it.w)}</span>
-          <span style="width:44px;height:5px;border-radius:3px;background:var(--panel);overflow:hidden;flex:0 0 auto"><i style="display:block;height:100%;width:${Math.min(pct||0,100)}%;background:${bc}"></i></span>
-          ${this.rwsIsAdmin()?`<input class="zp-plan-in" data-z="${this.esc(pz)}" data-m="${this.esc(m)}" data-i="${idx}" value="${it.p==null?'':it.p}" placeholder="plan" title="Edit planned quantity (admin)" style="width:42px;text-align:right;font-size:10px;flex:0 0 auto;font-variant-numeric:tabular-nums;border:1px dashed var(--accent);border-radius:5px;padding:2px 4px;background:var(--panel);color:var(--accent)">`:''}
-          <input class="zp-done-in" data-z="${this.esc(pz)}" data-m="${this.esc(m)}" data-i="${idx}" value="${it.d==null?'':(Math.round(it.d*100)/100)}" placeholder="—" title="${canEdit?'Enter completed quantity':'Outside your assigned area'}" ${canEdit?'':'disabled'} style="width:50px;text-align:right;font-size:10px;flex:0 0 auto;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:5px;padding:2px 4px;background:var(--panel);color:var(--txt)${canEdit?'':';opacity:.5'}">
-          <span style="font-size:9px;color:var(--faint);width:20px;text-align:right;flex:0 0 auto">${it.u||''}</span>
-          <span style="font-size:9.5px;font-weight:700;width:30px;text-align:right;flex:0 0 auto;color:${pct==null?'var(--faint)':bc}">${pctText}</span>
-        </div>`;}).join('');
-      blocks+=`<div style="margin-bottom:8px;border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:var(--panel2)${m===cur?';box-shadow:inset 0 0 0 1.5px var(--accent)':''}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="font-size:10.5px">${short(m)}${m===cur?' · current':''}</b><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:${sBg};color:${sCol}">${sLabel}</span></div>
-        ${rowsH}</div>`;
-    });
-    if(!blocks)return '';
-    return `<div class="sec"><div class="t">Schedule progress <span style="color:var(--faint);font-weight:600;text-transform:none">Record ${this.esc(name)} · enter completed quantity</span></div>${blocks}${canEdit?`<button class="zpsave" id="zpSaveBtn" style="display:${this._zpDirty?'flex':'none'}">💾 Save keyed updates</button>`:''}</div>`;
+    const lv=this.curLevel, zmk=z.mk||z.lid;
+    const canEdit=this.rwsIsAdmin()||this.rwsScopeOk(lv,zmk), admin=this.rwsIsAdmin();
+    const c=z.counts||{}, M=this.ACT_MONTHS;
+    if(!this._actMonth||M.indexOf(this._actMonth)<0)this._actMonth=this.actDefaultMonth();
+    const sm=this._actMonth, mi=M.indexOf(sm), curL=this.actCurLabel();
+    const acts=[
+      {id:'col',label:'Columns',unit:'nos',total:c.columns||0},
+      {id:'pile',label:'Pile Caps',unit:'nos',total:c.pilecap||0},
+      {id:'mbeam',label:'Main Beams',unit:'nos',total:c.mainbeam||0},
+      {id:'sbeam',label:'Steel Beams',unit:'nos',total:c.steelbeam||0},
+      {id:'ls',label:'Lift / Stairs',unit:'nos',total:this.lsAll(c)},
+      {id:'exc',label:'Excavation',unit:'m³',total:this.actTotal(lv,zmk,'exc',null)},
+      {id:'demo',label:'Demolition',unit:'m³',total:this.actTotal(lv,zmk,'demo',null)},
+      {id:'slab',label:'Cast Slab',unit:'m²',total:z.area||0},
+    ];
+    const rows=acts.map(a=>{
+      const hidden=this.actHidden(lv,zmk,a.id); if(!admin&&hidden)return '';
+      const total=a.total;
+      const cumThrough=M.slice(0,mi+1).reduce((sx,mm)=>{const v=this.actDoneMonth(lv,zmk,a.id,mm);return sx+(v||0);},0);
+      const doneMonths=M.map(mm=>({mm,v:this.actDoneMonth(lv,zmk,a.id,mm),p:this.actPlan(lv,zmk,a.id,mm)})).filter(x=>x.v!=null||x.p!=null);
+      const plan=this.actPlan(lv,zmk,a.id,sm), dm=this.actDoneMonth(lv,zmk,a.id,sm);
+      const pct=(total>0)?Math.min(100,Math.round(cumThrough/total*100)):null;
+      const bc=pct==null?'var(--faint)':(pct>=100?'#35c08e':(pct>0?this.cssvar('--wip'):'var(--faint)'));
+      const chk=admin?`<input type="checkbox" class="act-vis" data-a="${a.id}" ${hidden?'':'checked'} title="Show this activity in this zone">`:'';
+      const planCell=admin?`<input class="act-plan" data-a="${a.id}" value="${plan==null?'':plan}" placeholder="—" title="Planned in ${sm} (admin)">`:`${plan==null?'—':this.fmt(plan)}`;
+      const doneCell=(a.id==='col'&&lv==='B2')?`<span class="act-derived" title="Auto-counted from columns marked Complete in the Columns list below (by completion date)">${dm==null?0:this.fmt(dm)}<span class="lnk" data-jump="col" title="Jump to the Columns list to mark each column complete and set its date">✎ Edit Completed Columns</span></span>`:(canEdit?`<input class="act-donem" data-a="${a.id}" value="${dm==null?'':dm}" placeholder="—" title="Done in ${sm}"${canEdit?'':' disabled'}>`:`${dm==null?'—':this.fmt(dm)}`);
+      const mn=doneMonths.length?`<div class="actmn">Done/Plan: ${doneMonths.map(x=>`<span class="${x.mm===sm?'on':''}">${this.esc(x.mm)} <b>${this.fmt(x.v||0)}${x.p!=null?'/'+this.fmt(x.p):''}</b></span>`).join('')}</div>`:'';
+      return `<div class="actrow ${hidden?'act-off':''}">${chk}<span class="actlbl">${a.label}</span><span class="actbar"><i style="width:${Math.min(pct||0,100)}%;background:${bc}"></i></span><span class="actpct" style="color:${bc}">${pct==null?'—':pct+'%'}</span></div>`+
+        `<div class="actsub"><span class="am">${sm}</span><span class="am2">Plan</span>${planCell}<span class="asep">|</span><span class="am2">Done</span>${doneCell}<span class="acum">by ${sm}: ${this.fmt(cumThrough)}${total==null?'':' / '+this.fmt(total)} ${a.unit}</span></div>`+mn;
+    }).join('');
+    const opts=M.map(mm=>`<option value="${mm}" ${mm===sm?'selected':''}>${mm}${mm===curL?' (now)':''}</option>`).join('');
+    const nav=`<div style="display:flex;align-items:center;gap:5px">
+      <button class="hbtn zpm-nav" data-dir="-1" ${mi<=0?'disabled':''} style="padding:2px 7px;font-size:12px;line-height:1">‹</button>
+      <select class="act-month" style="font-size:10px;font-weight:700;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)">${opts}</select>
+      <button class="hbtn zpm-nav" data-dir="1" ${mi>=M.length-1?'disabled':''} style="padding:2px 7px;font-size:12px;line-height:1">›</button></div>`;
+    return `<div class="sec"><div class="t" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>Activities</span>${nav}</div>
+      <div style="font-size:9px;color:var(--faint);margin:-2px 0 8px">Bar = cumulative done ÷ total · editing month <b style="color:var(--dim)">${sm}</b>${admin?' · Total/Plan admin':''}</div>${rows}</div>`;
   }
 
-  zpIsCrit(name){ if(!this.ZP)return false; if(this.ZP.critical.indexOf(name)>=0)return true; const p=this.zpResolvePlan(name); return p?this.ZP.critical.indexOf(p)>=0:false; }
   zpAgg(name){ const pz=this.ZP.plan[name]?name:this.zpResolvePlan(name); const zd=pz?this.ZP.plan[pz]:null; if(!zd)return {pct:null}; const cur=this.ZP.months.indexOf(this.ZP.current); const rep=[]; for(const m in zd){ const idx=this.ZP.months.indexOf(m); if(idx>cur)continue; zd[m].forEach(it=>{ if(it.pct!=null)rep.push(it.pct); }); } if(!rep.length)return {pct:null}; return {pct:Math.round(rep.reduce((a,b)=>a+b,0)/rep.length)}; }
-  jumpToZone(name){ const r=this._zpRev&&this._zpRev[name]; this.root.querySelector('#schedpage').classList.remove('open'); this._schEdit=null; if(r){ if(r.lv!==this.curLevel){this.curLevel=r.lv;this.syncRail();this.buildMetrics();} this.selKey=r.mk; this.render(); const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===r.mk); if(z){this.selectZone(z);this.paintSel();} } }
+  zpIsCrit(name){ if(!this.ZP)return false; const set=this._critPlanSet||(this._critPlanSet=this.buildCritPlanSet()); if(set.has(name))return true; const p=this.zpResolvePlan(name); return p?set.has(p):false; }
+  buildCritPlanSet(){ const s=new Set(); if(!this.ZP)return s; this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{ if(!z.crit)return; const n=z.label; s.add(n); const pz=this.ZP.plan[n]?n:this.zpResolvePlan(n); if(pz)s.add(pz); })); return s; }
+  jumpToZone(name){ const r=this._zpRev&&this._zpRev[name]; this.root.querySelector('#schedpage').classList.remove('open'); this._schEdit=null; if(r){ if(r.lv!==this.curLevel){this.curLevel=r.lv;this._applyOvlForLevel(r.lv);this.syncRail();this.buildMetrics();} this.selKey=r.mk; this.render(); const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===r.mk); if(z){this.selectZone(z);this.paintSel();} } }
   schedDrawer(){ if(!this._schEdit)return ''; const z=this._schEdit.z,m=this._schEdit.m; const zd=this.ZP.plan[z]; const items=zd&&zd[m]; if(!items)return ''; const short=s=>s.replace(' 20',"'");
     const rows=items.map((it,idx)=>{ const wt=this.zpClassify(it.w); const pct=it.pct; const bc=pct>=100?'#35c08e':(pct>0?wt.color:'var(--faint)');
       return `<div class="zsd-row"><span class="zsd-sw" style="background:${wt.color}"></span><span class="zsd-w" title="${this.esc(it.w)}">${this.esc(it.w)}</span><span class="zsd-plan">plan ${it.p!=null?this.fmt(it.p):'—'} ${this.esc(it.u||'')}</span><input class="zsd-in zp-done" data-z="${this.esc(z)}" data-m="${this.esc(m)}" data-i="${idx}" value="${it.d==null?'':it.d}" placeholder="done"><span class="zsd-pct" style="color:${pct==null?'var(--faint)':bc}">${pct==null?'—':pct+'%'}</span></div>`; }).join('');
@@ -1497,28 +1471,21 @@ class Component extends DCLogic {
     if(!this.rwsIsAdmin()) return `<div class="stat"><div class="n">${value}</div><div class="l">${label}</div></div>`;
     return `<div class="stat"><input class="qty-ov-in" data-lv="${this.esc(lv)}" data-zmk="${this.esc(zmk)}" data-field="${field}" value="${value}" title="Edit ${label} (admin)" style="width:100%;background:transparent;border:1px dashed var(--accent);border-radius:5px;font-size:15px;font-weight:700;color:var(--accent);padding:1px 3px;font-family:inherit"><div class="l">${label}</div></div>`;
   }
+  flashOk(el){if(!el)return;el.classList.remove('flash-ok');void el.offsetWidth;el.classList.add('flash-ok');setTimeout(()=>{el.classList.remove('flash-ok');},900);}
   selectZone(z){
     const c=z.counts,ct=this.CAT[z.cat]||this.CAT.NB,p=z._p||{pct:0,status:'todo',seq:'-',start:0,end:0};
     const st=this.STATUS[p.status];
     const lv=this.curLevel;
     const es=this.zoneElemStats(lv,z);
     const subHtml=z.sub&&z.sub.length>1?`<div class="g">Sub-zones: ${z.sub.map(s=>this.esc(s.n)+' ('+this.fmt(s.a)+' m²)').join(', ')}</div>`:'';
-    const zmk=z.mk||z.lid;
-    const addLink=type=>this.rwsIsAdmin()?` · <span class="allbtn" data-add-item="${type}" style="color:var(--accent)">+ add</span>`:'';
-    const secHead=(title,cnt,type,items)=>{const ck=(items||[]).map(x=>this.ekey(lv,z,type,typeof x==='string'?x:x.id));const nd=ck.filter(k=>this.elemStatus(k)==='done').length;return `<div class="t">${title} <span>${nd}/${cnt} done · <span class="allbtn" data-bulk="${type}">All ✓</span>${addLink(type)}</span></div>`;};
-    // rows for admin-added custom items of a given type (with delete ×)
-    const custRows=type=>{const ids=this.customItemsFor(lv,zmk,type);if(!ids.length)return '';return ids.map(id=>{const key=lv+'||'+zmk+'||'+type+'||'+id;return `<div class="idrow"><span class="id">${this.esc(id)} <span style="color:var(--accent);font-size:8px;font-weight:800">+added</span></span><span class="meta"></span>${this.elChip(key)}${this.rwsIsAdmin()?`<span class="allbtn" data-del-item="${this.esc(type+'||'+id)}" title="Delete this added item" style="color:var(--crit);margin-left:6px">✕</span>`:''}</div>`;}).join('');};
-    const colHtml=this.elRows(lv,z,'col',z.cols,x=>this.esc(x.sz||'')+(x.c?' · crit':''),'none listed',x=>x.c)+custRows('col');
-    const pileHtml=this.elRows(lv,z,'pile',z.piles,x=>this.esc(x.rl||''),'none listed')+custRows('pile');
-    const beamHtml=this.elRows(lv,z,'beam',z.beams,x=>this.esc(x.sz||''),'none listed')+custRows('beam');
-    const steelIds=this.customItemsFor(lv,zmk,'steel');
-    const steelSec=(steelIds.length||this.rwsIsAdmin())?`<div class="sec">${secHead('Steel Beams',steelIds.length,'steel',steelIds)}${custRows('steel')||'<div class="empty">none listed</div>'}</div>`:'';
-    const liftHtml=this.elRows(lv,z,'lift',z.lifts,x=>x.f?'<span class="span">'+this.esc(x.f)+' → '+this.esc(x.t)+'</span>':'','no lifts')+custRows('lift');
-    const stairHtml=this.elRows(lv,z,'stair',z.stairs,x=>x.f?'<span class="span">'+this.esc(x.f)+' → '+this.esc(x.t)+'</span>':'','no stairs')+custRows('stair');
-    const coreSec=(z.cores&&z.cores.length)||this.customItemsFor(lv,zmk,'core').length?`<div class="sec">${secHead('Core Walls',(z.cores?z.cores.length:0),'core',z.cores||[])}${this.elRows(lv,z,'core',z.cores,null,'none')}${custRows('core')}</div>`:'';
-    // custom (admin-created) categories, e.g. "Wall"
-    const custCatSec=this.customCats().map(c=>{const ids=this.customItemsFor(lv,zmk,c.code);return `<div class="sec">${secHead(this.esc(c.label),ids.length,c.code,ids)}${custRows(c.code)||'<div class="empty">no items yet — use + add</div>'}${this.rwsIsAdmin()?`<div style="text-align:right;margin-top:2px"><span class="allbtn" data-del-cat="${this.esc(c.code)}" style="color:var(--crit);font-size:9px">Delete category</span></div>`:''}</div>`;}).join('');
-    const newCatBtn=this.rwsIsAdmin()?`<div class="sec"><span class="allbtn" data-add-cat="1" style="color:var(--accent);font-weight:700">+ New category</span></div>`:'';
+    const secHead=(title,cnt,type,items)=>{const ck=(items||[]).map(x=>this.ekey(lv,z,type,typeof x==='string'?x:x.id));const nd=ck.filter(k=>this.elemStatus(k)==='done').length;return `<div class="t">${title} <span>${nd}/${cnt} done · <span class="allbtn" data-bulk="${type}">All ✓</span></span></div>`;};
+    const collSec=(title,cnt,type,items,html)=>{const ck=(items||[]).map(x=>this.ekey(lv,z,type,typeof x==='string'?x:x.id));const nd=ck.filter(k=>this.elemStatus(k)==='done').length;return `<details class="sec" data-sec="${type}"><summary class="t">${title} <span>${nd}/${cnt} done · <span class="allbtn" data-bulk="${type}">All ✓</span></span></summary>${html}</details>`;};
+    const colHtml=this.elRows(lv,z,'col',z.cols,x=>this.esc(x.sz||'')+(x.c?' · crit':''),'none listed',x=>x.c);
+    const pileHtml=this.elRows(lv,z,'pile',z.piles,x=>this.esc(x.rl||''),'none listed');
+    const beamHtml=this.elRows(lv,z,'beam',z.beams,x=>this.esc(x.sz||''),'none listed');
+    const liftHtml=this.elRows(lv,z,'lift',z.lifts,x=>x.f?'<span class="span">'+this.esc(x.f)+' → '+this.esc(x.t)+'</span>':'','no lifts');
+    const stairHtml=this.elRows(lv,z,'stair',z.stairs,x=>x.f?'<span class="span">'+this.esc(x.f)+' → '+this.esc(x.t)+'</span>':'','no stairs');
+    const coreSec=z.cores&&z.cores.length?`<div class="sec">${secHead('Core Walls',z.cores.length,'core',z.cores)}${this.elRows(lv,z,'core',z.cores,null,'none')}</div>`:'';
     const dc=this.cssvar('--done'),wc=this.cssvar('--wip'),tc=this.cssvar('--todo');
     const eltool=es.total?`<div class="eltool">
         <span class="lb">Elements done</span>
@@ -1550,10 +1517,10 @@ class Component extends DCLogic {
      `<span class="back" id="back">‹ back to list</span>
       <div class="detail"><h3>${this.esc(z.label)} ${z.crit?'<span class="badge" style="font-size:9px;padding:1px 6px;border-radius:10px;background:var(--crit);color:#fff">CRITICAL</span>':''}</h3>
       <div class="g"><span class="cat" style="display:inline-block;padding:1px 7px;border-radius:10px;font-size:9.5px;font-weight:700;color:#fff;background:${ct.c}">${ct.label}</span> · ${z.grp&&z.grp!=='Ungrouped'?'Pour group: '+this.esc(z.grp):'Family: '+this.esc(z.fam)} · ${this.curLevel}</div>
-      ${this.rwsIsAdmin()?`<label style="display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:${z.crit?'var(--crit)':'var(--dim)'};margin:2px 0 8px;cursor:pointer;user-select:none"><input type="checkbox" id="critChk" ${z.crit?'checked':''} style="width:15px;height:15px;accent-color:var(--crit);cursor:pointer">Critical zone <span style="font-weight:500;color:var(--faint)">· auto-saved</span></label>`:''}
+      <label style="display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:${z.crit?'var(--crit)':'var(--dim)'};margin:2px 0 8px;cursor:pointer;user-select:none"><input type="checkbox" id="critChk" ${z.crit?'checked':''} style="width:15px;height:15px;accent-color:var(--crit);cursor:pointer">Critical zone <span style="font-weight:500;color:var(--faint)">· auto-saved</span></label>
       ${subHtml}
       <div class="progblock">
-        <div class="top"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--dim)">Site progress ${p.manual?'<span class="mkbadge">Site entry</span>':'<span style="color:var(--faint);font-weight:600;text-transform:none">Derived</span>'}</div><div class="pc" style="color:${this.progColor(p.pct)}">${p.pct}%</div></div>
+        <div class="top"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--dim)">Site progress ${p.manual?'':'<span style="color:var(--faint);font-weight:600;text-transform:none">Derived</span>'}</div><div class="pc" style="color:${this.progColor(p.pct)}">${p.pct}%</div></div>
         <div class="pbar"><i style="width:${p.pct}%;background:${this.progColor(p.pct)}"></i></div>
         <div class="prows">
           <div class="pr"><span>Status</span><b style="color:var(${st.v})">${st.label}</b></div>
@@ -1570,21 +1537,20 @@ class Component extends DCLogic {
         ${this.statCell(lv,z.mk||z.lid,'pilecap','Pile Caps',c.pilecap||0)}
         ${this.statCell(lv,z.mk||z.lid,'mainbeam','Main Beams',c.mainbeam||0)}
         ${this.statCell(lv,z.mk||z.lid,'steelbeam','Steel Beams',c.steelbeam||0)}
-        <div class="stat"><div class="n">${z.lifts.length}/${z.stairs.length}</div><div class="l">Lift / Stair</div></div>
+        <div class="stat"><div class="n">${z.lifts.length}/${z.stairs.length}</div><div class="l">Lift or Stairs</div></div>
+        ${this.rwsIsAdmin()?`<div class="stat"><input class="exc-ov-in" value="${this.actTotal(lv,z.mk||z.lid,'exc','')}" placeholder="\u2014" title="Excavation total m\u00b3 (admin)" style="width:100%;background:var(--panel);border:1px dashed var(--accent);border-radius:5px;padding:2px 5px;font-size:15px;font-weight:700;color:var(--accent);text-align:left"><div class="l">Excavation m\u00b3</div></div>`:`<div class="stat"><div class="n">${this.fmt(this.actTotal(lv,z.mk||z.lid,'exc',0))}</div><div class="l">Excavation m\u00b3</div></div>`}
+        ${this.rwsIsAdmin()?`<div class="stat"><input class="demo-ov-in" value="${this.actTotal(lv,z.mk||z.lid,'demo','')}" placeholder="\u2014" title="Demolition total m\u00b3 (admin)" style="width:100%;background:var(--panel);border:1px dashed var(--accent);border-radius:5px;padding:2px 5px;font-size:15px;font-weight:700;color:var(--accent);text-align:left"><div class="l">Demolition m\u00b3</div></div>`:`<div class="stat"><div class="n">${this.fmt(this.actTotal(lv,z.mk||z.lid,'demo',0))}</div><div class="l">Demolition m\u00b3</div></div>`}
       </div>
       ${this.rwsIsAdmin()?'<div style="font-size:9.5px;color:var(--faint);margin:-6px 0 9px">Dashed boxes above are editable (admin) — press Enter or click away to save. Lift/Stair count isn\'t editable here.</div>':''}
       ${this.zpSection(z)}
-      ${eltool}
-      <div class="sec">${secHead('Columns',z.cols.length,'col',z.cols)}${colHtml}</div>
-      <div class="sec">${secHead('Pile Caps',z.piles.length,'pile',z.piles)}${pileHtml}</div>
+      ${collSec('Pile Caps',z.piles.length,'pile',z.piles,pileHtml)}
+      ${collSec('Columns',z.cols.length,'col',z.cols,colHtml)}
       <div class="sec">${secHead('Main Beams',z.beams.length,'beam',z.beams)}${beamHtml}</div>
-      ${steelSec}
       <div class="sec">${secHead('Lifts',z.lifts.length,'lift',z.lifts)}${liftHtml}</div>
       <div class="sec">${secHead('Staircases',z.stairs.length,'stair',z.stairs)}${stairHtml}</div>
       ${coreSec}
-      ${custCatSec}
-      ${newCatBtn}
       </div>`;
+    this.setSummaryVis();
     this.root.querySelector('#back').addEventListener('click',()=>{this.selKey=null;this.paintSel();this.paintTimelineSel();this.buildList();});
     const ck=this.root.querySelector('#critChk');if(ck)ck.addEventListener('change',()=>{this.setCrit(this.curLevel,z,ck.checked);this.render();this.selectZone(z);this.paintSel();});
     const sv=this.root.querySelector('#in_save');
@@ -1598,30 +1564,41 @@ class Component extends DCLogic {
     });
     const sb=this.root.querySelector('#sidebody');
     sb.querySelectorAll('.elchip').forEach(el=>el.addEventListener('click',()=>this.cycleElem(el.dataset.key)));
-    sb.querySelectorAll('[data-bulk]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();
+    sb.querySelectorAll('.eldate').forEach(el=>{el.addEventListener('click',e=>e.stopPropagation());el.addEventListener('change',()=>{const key=el.dataset.key;if(!this.rwsCanEditElement(key)){this.rwsDeny('You can only update columns inside your assigned zones.');this.selectZone(z);return;}this._flashSel='.eldate[data-key="'+key+'"]';this.setElemDate(key,el.value);this.commitElem();});});
+    const _jl=sb.querySelector('.lnk[data-jump="col"]');if(_jl)_jl.addEventListener('click',()=>{const d=sb.querySelector('details.sec[data-sec="col"]');if(!d)return;d.open=true;const sm=d.querySelector('summary');setTimeout(()=>{d.scrollIntoView({block:'start',behavior:'smooth'});if(sm){sm.classList.add('hlrow');setTimeout(()=>sm.classList.remove('hlrow'),1800);}},30);});
+    const _colIdx={};(this.COLUMNS&&this.COLUMNS[this.curLevel]||[]).forEach((c,ci)=>{_colIdx[c.id]=ci;});
+    sb.querySelectorAll('.elchip').forEach(el=>{
+      const parts=(el.dataset.key||'').split('||');
+      if(parts[2]!=='col')return;
+      const ci=_colIdx[parts[3]];if(ci==null)return;
+      el.addEventListener('mouseenter',()=>{const d=this.svg.querySelector(`.colmk[data-ci="${ci}"]`);if(d)d.classList.add('hl');});
+      el.addEventListener('mouseleave',()=>{const d=this.svg.querySelector(`.colmk[data-ci="${ci}"]`);if(d)d.classList.remove('hl');});
+    });
+    sb.querySelectorAll('[data-bulk]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();ev.preventDefault();
       const type=el.dataset.bulk;
       if(!this.rwsIsAdmin() && type!=='col'){this.rwsDeny('You can only update column status.');return;}
-      if(!this.rwsIsAdmin() && !this.rwsScopeOk(this.curLevel,z.mk||z.lid)){this.rwsDeny('Outside your assigned area.');return;}
+      if(!this.rwsIsAdmin() && !this.rwsScopeOk(this.curLevel,z.mk||z.lid)){this.rwsDeny('Outside your assigned zones.');return;}
       const items=({col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores})[type]||[];
-      items.forEach(x=>{const key=this.ekey(this.curLevel,z,type,typeof x==='string'?x:x.id);this.elem[key]='done';rwsSyncElementStatus(key,'done');});
-      this.customItemsFor(this.curLevel,z.mk||z.lid,type).forEach(id=>{const key=this.curLevel+'||'+(z.mk||z.lid)+'||'+type+'||'+id;this.elem[key]='done';rwsSyncElementStatus(key,'done');});
-      this.commitElem();}));
+      items.forEach(x=>{const key=this.ekey(this.curLevel,z,type,typeof x==='string'?x:x.id);this.elem[key]='done';rwsSyncElementStatus(key,'done');});this.commitElem();}));
     sb.querySelectorAll('[data-bulk-all]').forEach(el=>el.addEventListener('click',()=>this.setZoneElems(this.curLevel,z,el.dataset.bulkAll)));
-    const zmk2=z.mk||z.lid;
-    sb.querySelectorAll('[data-add-item]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();
-      const type=el.dataset.addItem; const id=prompt('New '+this.catLabelOf(type)+' item — enter its ID / mark (e.g. C-15, W-3):'); if(id!=null)this.addCustomItem(this.curLevel,zmk2,type,id);}));
-    sb.querySelectorAll('[data-del-item]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();
-      const p=el.dataset.delItem.split('||'); if(confirm('Delete added item '+p[1]+'?'))this.delCustomItem(this.curLevel,zmk2,p[0],p[1]);}));
-    sb.querySelectorAll('[data-add-cat]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();
-      const label=prompt('New category name (e.g. Wall, Slab, Ramp):'); if(label!=null)this.addCustomCat(label);}));
-    sb.querySelectorAll('[data-del-cat]').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();this.delCustomCat(el.dataset.delCat);}));
+    sb.querySelectorAll('.exc-ov-in').forEach(el=>{const c=()=>{this._flashSel='.exc-ov-in';this.setActTotal(this.curLevel,z.mk||z.lid,'exc',el.value,z);};el.addEventListener('change',c);el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});
+    sb.querySelectorAll('.demo-ov-in').forEach(el=>{const c=()=>{this._flashSel='.demo-ov-in';this.setActTotal(this.curLevel,z.mk||z.lid,'demo',el.value,z);};el.addEventListener('change',c);el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});
     sb.querySelectorAll('.qty-ov-in').forEach(el=>{
-      const commit=()=>this.setQtyOv(el.dataset.lv,el.dataset.zmk,el.dataset.field,el.value);
+      const commit=()=>{this._flashSel='.qty-ov-in[data-field="'+el.dataset.field+'"]';this.setQtyOv(el.dataset.lv,el.dataset.zmk,el.dataset.field,el.value);};
       el.addEventListener('change',commit);
       el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});
     });
     sb.querySelectorAll('.zp-done-in').forEach(el=>{el.addEventListener('focus',()=>{const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});el.addEventListener('input',()=>{el.dataset.dirty='1';this._zpDirty=true;const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});});
     sb.querySelectorAll('.zp-plan-in').forEach(el=>{el.addEventListener('focus',()=>{const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});el.addEventListener('input',()=>{el.dataset.dirty='1';this._zpDirty=true;const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});});
+    {const _zk=[this.curLevel,z.mk||z.lid];
+     sb.querySelectorAll('.act-plan').forEach(el=>{el.addEventListener('change',()=>{this._flashSel='.act-plan[data-a="'+el.dataset.a+'"]';this.setActPlan(_zk[0],_zk[1],el.dataset.a,this._actMonth,el.value,z);});el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});
+     sb.querySelectorAll('.act-donem').forEach(el=>{el.addEventListener('change',()=>{this._flashSel='.act-donem[data-a="'+el.dataset.a+'"]';this.setActDoneMonth(_zk[0],_zk[1],el.dataset.a,this._actMonth,el.value,z);});el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});
+     sb.querySelectorAll('.act-vis').forEach(el=>el.addEventListener('change',()=>this.setActVis(_zk[0],_zk[1],el.dataset.a,el.checked,z)));
+     const _am=sb.querySelector('.act-month');if(_am)_am.addEventListener('change',()=>{this._actMonth=_am.value;this.selectZone(z);});
+     sb.querySelectorAll('.zpm-nav').forEach(b=>b.addEventListener('click',()=>{const sel=sb.querySelector('.act-month');if(!sel)return;const i=sel.selectedIndex+(+b.dataset.dir);if(i<0||i>=sel.options.length)return;this._actMonth=sel.options[i].value;this.selectZone(z);}));}
+    {const _msel=sb.querySelector('.zp-month-sel');
+     if(_msel){_msel.addEventListener('change',()=>{this._zpMonthSel=this._zpMonthSel||{};this._zpMonthSel[_msel.dataset.z]=_msel.value;this.selectZone(z);});}
+     sb.querySelectorAll('.zpm-nav').forEach(b=>b.addEventListener('click',()=>{const sel=sb.querySelector('.zp-month-sel');if(!sel)return;const i=sel.selectedIndex+ (+b.dataset.dir); if(i<0||i>=sel.options.length)return; this._zpMonthSel=this._zpMonthSel||{}; this._zpMonthSel[sel.dataset.z]=sel.options[i].value; this.selectZone(z);}));}
     const _zsb=sb.querySelector('#zpSaveBtn');if(_zsb)_zsb.addEventListener('click',()=>{
       const lv=this.curLevel,zmk=z.mk||z.lid;
       sb.querySelectorAll('.zp-plan-in').forEach(el=>{
@@ -1641,7 +1618,7 @@ class Component extends DCLogic {
         }
       });
       _zsb.innerHTML='✓ Saved';_zsb.style.background='#218a5c';this._zpDirty=false;setTimeout(()=>this.selectZone(z),650);});
-
+    if(this._flashSel){const _fe=sb.querySelector(this._flashSel);this._flashSel=null;if(_fe)this.flashOk(_fe);}
   }
 
   /* ---------- schedule (secondary page · Gantt) ---------- */
@@ -1754,7 +1731,9 @@ class Component extends DCLogic {
   paintTimelineSel(){this.root.querySelectorAll('#schedbody .gbar').forEach(el=>el.classList.toggle('sel',this.selKey&&el.dataset.k===this.selKey));}
 
   /* ---------- controls ---------- */
-  setLevel(lv){this.curLevel=lv;this.selKey=null;this.syncRail();this.buildMetrics();this.render();this.paintTimelineSel();}
+  _ovlDefaults(lv){const podiumBase={'B2':1,'B1':1,'B1M':1,'L1':1};return podiumBase[lv]?{podium:true,transfer:true,podcis:false}:{podium:false,transfer:false,podcis:true};}
+  _applyOvlForLevel(lv){this._ovlByLevel=this._ovlByLevel||{};this.showOvl=this._ovlByLevel[lv]?{...this._ovlByLevel[lv]}:this._ovlDefaults(lv);}
+  setLevel(lv){this.curLevel=lv;this._applyOvlForLevel(lv);this.selKey=null;this.syncRail();this.buildMetrics();this.render();this.paintTimelineSel();}
   syncRail(){this.root.querySelectorAll('.rbtn').forEach(x=>x.classList.toggle('on',x.dataset.lv===this.curLevel));}
 
   buildRail(){
@@ -1782,23 +1761,17 @@ class Component extends DCLogic {
     const seg=document.createElement('div');seg.className='modeseg';
     modes.forEach(([k,lab,dot])=>{const btn=document.createElement('button');btn.className=k===this.colorMode?'on':'';btn.innerHTML=`<span class="dt" style="background:${dot}"></span>${lab}`;btn.addEventListener('click',()=>{this.colorMode=k;this.buildMetrics();this.render();});seg.appendChild(btn);});
     mc.appendChild(seg);
-    const dv1=document.createElement('span');dv1.className='divv';mc.appendChild(dv1);
-    mc.appendChild(mkLbl(this.colorMode==='quantity'?'Heat / rank by:':'Rank by:'));
-    const tt=this.metricTotals();
-    this.METRICS.forEach(m=>{
-      const tot=m.k==='area'?this.fmt(tt.area):tt[m.k];
-      const c=document.createElement('div');c.className='mchip'+(m.k===this.curMetric?' on':'');
-      c.innerHTML=`${m.label} <span class="v">${tot}</span>`;
-      c.addEventListener('click',()=>{this.curMetric=m.k;this.render();this.buildMetrics();});mc.appendChild(c);});
     const dv2=document.createElement('span');dv2.className='divv';mc.appendChild(dv2);
     mc.appendChild(mkLbl('Overlays:'));
     const mkToggle=(on,inner,fn)=>{const c=document.createElement('div');c.className='tchip '+(on?'on':'off');c.innerHTML=inner;c.addEventListener('click',fn);mc.appendChild(c);};
     if(this.rwsIsAdmin())mkToggle(this.showSeq,`<span style="width:14px;height:14px;border-radius:50%;background:var(--dim);color:#fff;font-size:8px;line-height:14px;text-align:center;font-weight:800">#</span>Pour sequence`,()=>{this.showSeq=!this.showSeq;this.buildMetrics();this.render();});
     mkToggle(this.showCrit,`<span style="width:9px;height:9px;border-radius:50%;background:var(--crit)"></span>Critical path`,()=>{this.showCrit=!this.showCrit;this.buildMetrics();this.render();});
     mkToggle(this.showAreaBounds,`<span style="width:16px;border-top:3px solid var(--dim);display:inline-block"></span>Area boundaries`,()=>{this.showAreaBounds=!this.showAreaBounds;this.buildMetrics();this.render();});
-    Object.keys(this.OVL).forEach(k=>{const o=this.OVL[k];mkToggle(this.showOvl[k],`<span class="dash" style="color:${o.c}"></span>${o.label}`,()=>{this.showOvl[k]=!this.showOvl[k];this.buildMetrics();this.render();});});
+    Object.keys(this.OVL).forEach(k=>{const o=this.OVL[k];mkToggle(this.showOvl[k],`<span class="dash" style="color:${o.c}"></span>${o.label}`,()=>{this.showOvl[k]=!this.showOvl[k];this._ovlByLevel=this._ovlByLevel||{};this._ovlByLevel[this.curLevel]={...this.showOvl};this.buildMetrics();this.render();});});
     if(this.DATA.beamlines && this.DATA.beamlines[this.curLevel])
       mkToggle(this.showBeams,`<span style="width:16px;border-top:2px solid var(--beam);display:inline-block"></span>Main beams`,()=>{this.showBeams=!this.showBeams;this.buildMetrics();this.render();});
+    if(this.COLUMNS && this.COLUMNS[this.curLevel])
+      mkToggle(this.showColumns,`<span style="width:9px;height:9px;border-radius:50%;background:#c8102e;display:inline-block"></span>Columns`,()=>{this.showColumns=!this.showColumns;this.buildMetrics();this.render();});
   }
 
   bindGlobal(){
@@ -1806,18 +1779,17 @@ class Component extends DCLogic {
     svg.addEventListener('wheel',ev=>{ev.preventDefault();const r=svg.getBoundingClientRect();
       const mxr=(ev.clientX-r.left)/r.width,myr=(ev.clientY-r.top)/r.height,f=ev.deltaY<0?0.85:1/0.85;
       this.vb={x:this.vb.x+(this.vb.w-this.vb.w*f)*mxr,y:this.vb.y+(this.vb.h-this.vb.h*f)*myr,w:this.vb.w*f,h:this.vb.h*f};
-      svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);},{passive:false});
+      svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);this.colLOD();},{passive:false});
     let dragging=false,last=null;
     svg.addEventListener('mousedown',ev=>{dragging=true;last=[ev.clientX,ev.clientY];svg.classList.add('drag');});
     window.addEventListener('mouseup',()=>{dragging=false;svg.classList.remove('drag');});
     window.addEventListener('mousemove',ev=>{if(!dragging)return;const r=svg.getBoundingClientRect();
       this.vb.x-=(ev.clientX-last[0])/r.width*this.vb.w;this.vb.y-=(ev.clientY-last[1])/r.height*this.vb.h;last=[ev.clientX,ev.clientY];
       svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);});
-    svg.addEventListener('dblclick',()=>{this.vb={...this.base};svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);});
+    svg.addEventListener('dblclick',()=>{this.vb={...this.base};svg.setAttribute('viewBox',`${this.vb.x} ${this.vb.y} ${this.vb.w} ${this.vb.h}`);this.colLOD();});
     this.root.querySelector('#themeseg').addEventListener('click',e=>{if(e.target.dataset.t){this.root.closest('html')?.setAttribute('data-theme',e.target.dataset.t);document.documentElement.setAttribute('data-theme',e.target.dataset.t);this.root.querySelectorAll('#themeseg button').forEach(b=>b.classList.toggle('on',b===e.target));this.buildMetrics();this.buildTimeline();this.render();}});
     this.root.querySelector('#openTable').addEventListener('click',()=>this.openTable());
     this.root.querySelector('#exportXls').addEventListener('click',()=>this.exportExcel());
-    this.root.querySelector('#exportJson').addEventListener('click',()=>this.exportFullJson());
     this.root.querySelector('#saveLock').addEventListener('click',()=>this.saveLock());
     const lf=this.root.querySelector('#lockFile');
     this.root.querySelector('#loadLock').addEventListener('click',()=>lf.click());
@@ -1937,7 +1909,7 @@ class Component extends DCLogic {
   }
 
   /* ---------- lock file: persist all markers to a portable file & reload ---------- */
-  snapshot(){return {v:4,project:'RWS P1 CJ',savedAt:new Date().toISOString(),elem:this.elem,updates:this.updates,zpOv:this._zpOv,qtyOv:this._qtyOv,zpPlanOv:this._zpPlanOv,crit:this._critOv,catAdd:this._catAdd,elemAdd:this._elemAdd};}
+  snapshot(){return {v:2,project:'RWS P1 CJ',savedAt:new Date().toISOString(),elem:this.elem,elemDate:this._elemDate,updates:this.updates,zpOv:this._zpOv,crit:this._critOv,actTotal:this._actTotal,actPlan:this._actPlan,actDoneM:this._actDoneM,actHidden:this._actHidden};}
   saveLock(){
     if(this._locking)return; this._locking=true; setTimeout(()=>{this._locking=false;},900);
     const S='<'+'script', ES='<'+'/script>';
@@ -1957,19 +1929,9 @@ class Component extends DCLogic {
       let txt=String(r.result);let elemN=0,updN=0;
       const m=txt.match(/<script id="locked-data"[^>]*>([\s\S]*?)<\/script>/i);
       if(m||(txt.trim()[0]==='{')){
-        let data=JSON.parse(m?m[1]:txt);
-        // accept the richer "Full JSON" export shape too (current_state.*)
-        if(data.current_state){const cs=data.current_state;data={elem:cs.element_status,updates:cs.zone_updates,zpOv:cs.actual_slab_qty,qtyOv:cs.quantity_overrides,zpPlanOv:cs.plan_qty_overrides,crit:cs.critical,catAdd:cs.custom_categories,elemAdd:cs.custom_items};}
+        const data=JSON.parse(m?m[1]:txt);
         if(data.elem){this.elem={...this.elem,...data.elem};elemN=Object.keys(data.elem).length;}
         if(data.updates){Object.keys(data.updates).forEach(k=>{this.updates[k]=data.updates[k];});updN=Object.keys(data.updates).length;}
-        if(data.zpOv){this._zpOv={...this._zpOv,...data.zpOv};try{localStorage.setItem('rws_zp_ov',JSON.stringify(this._zpOv));}catch(e){}}
-        if(data.qtyOv){this._qtyOv={...this._qtyOv,...data.qtyOv};try{localStorage.setItem('rws_qty_ov',JSON.stringify(this._qtyOv));}catch(e){}}
-        if(data.zpPlanOv){this._zpPlanOv={...this._zpPlanOv,...data.zpPlanOv};try{localStorage.setItem('rws_zp_plan_ov',JSON.stringify(this._zpPlanOv));}catch(e){}}
-        if(data.crit){this._critOv={...this._critOv,...data.crit};try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){}}
-        if(Array.isArray(data.catAdd)){const seen={};this._catAdd=this._catAdd||[];data.catAdd.forEach(c=>{if(c&&c.code&&!this._catAdd.some(x=>x.code===c.code)){this._catAdd.push({code:c.code,label:c.label});}});}
-        if(data.elemAdd&&typeof data.elemAdd==='object'){this._elemAdd=this._elemAdd||{};Object.keys(data.elemAdd).forEach(k=>{const inc=data.elemAdd[k]||[];const cur=this._elemAdd[k]||(this._elemAdd[k]=[]);inc.forEach(id=>{if(cur.indexOf(id)<0)cur.push(id);});});}
-        if(data.catAdd||data.elemAdd){this.saveCustom();}
-        if(this.zpApplyOv)this.zpApplyOv(); if(this.applyQtyOv)this.applyQtyOv(); if(this.applyCritOv)this.applyCritOv();
       } else {
         // Excel/CSV/HTML-table archive: restore element marks from the Element Detail table
         this.buildLabelMap();
