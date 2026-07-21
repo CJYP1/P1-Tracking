@@ -2116,6 +2116,7 @@ class Component extends DCLogic {
         if(data.actPlan){this._actPlan={...(this._actPlan||{}),...data.actPlan};planN=Object.keys(data.actPlan).length;}
         if(data.actDoneM){this._actDoneM={...(this._actDoneM||{}),...data.actDoneM};actN=Object.keys(data.actDoneM).length;}
         if(data.actHidden){this._actHidden={...(this._actHidden||{}),...data.actHidden};}
+        [['_actPlan',data.actPlan],['_actTotal',data.actTotal],['_actDoneM',data.actDoneM]].forEach(([s,src])=>{if(src){const ob=this[s];if(ob)Object.keys(src).forEach(k=>{if(src[k]==null)delete ob[k];});}});
         if(Array.isArray(data.actDefs)){this._actDefs=this._actDefs||[];data.actDefs.forEach(d=>{if(d&&d.id&&!this._actDefs.some(x=>x.id===d.id))this._actDefs.push(d);});}
         if(data.zdate&&typeof data.zdate==='object'){this._zdate={...(this._zdate||{}),...data.zdate};try{localStorage.setItem('rws_zdate',JSON.stringify(this._zdate));}catch(e){}}
         if(Array.isArray(data.catAdd)){this._catAdd=this._catAdd||[];data.catAdd.forEach(c=>{if(c&&c.code&&!this._catAdd.some(x=>x.code===c.code))this._catAdd.push({code:c.code,label:c.label});});}
