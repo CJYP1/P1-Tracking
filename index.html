@@ -411,13 +411,20 @@ const RWS_SESSION_KEY = 'rws_session';
 function rwsGetSession(){ try{ return JSON.parse(localStorage.getItem(RWS_SESSION_KEY)||'null'); }catch(e){ return null; } }
 function rwsSetSession(s){ try{ localStorage.setItem(RWS_SESSION_KEY, JSON.stringify(s)); }catch(e){} }
 function rwsClearSession(){ try{ localStorage.removeItem(RWS_SESSION_KEY); }catch(e){} }
+function rwsHandleExpired(){
+  rwsClearSession();
+  const app=window.__rwsApp;
+  if(app){ app._rwsUser=null; try{app.rwsRenderUserBar();}catch(e){} const g=app.root&&app.root.querySelector('#rwsAuthGate'); if(g)g.style.display='flex'; const err=app.root&&app.root.querySelector('#rwsLoginErr'); if(err){err.textContent='Your session expired — please sign in again.';err.style.display='';} }
+}
 async function rwsCall(fn, args){
   try{
     const { data, error } = await rwsSb.rpc(fn, args);
     if (error) {
       const msg = (error.message || '').toLowerCase();
+      const expired = msg.includes('invalid or expired');
       const rejected = msg.includes('not permitted') || msg.includes('admin only') ||
-        msg.includes('bad ') || msg.includes('invalid username') || msg.includes('invalid or expired');
+        msg.includes('bad ') || msg.includes('invalid username') || expired;
+      if (expired && fn !== 'rws_check_session') rwsHandleExpired();
       return { ok:false, error, rejected, offline:false };
     }
     return { ok:true, data };
@@ -432,6 +439,7 @@ async function rwsLogout(){ const s=rwsGetSession(); if(s) await rwsCall('rws_lo
 async function rwsRestoreSession(){
   const s = rwsGetSession(); if (!s) return null;
   const r = await rwsCall('rws_check_session', { p_token: s.token });
+  if (r.ok && r.data===null){ rwsClearSession(); return null; } // confirmed expired -> force re-login
   if (!r.ok || !r.data) return s; // offline / transient — keep the cached session so the app still works
   const merged = { ...s, ...r.data }; rwsSetSession(merged); return merged;
 }
@@ -457,6 +465,14 @@ async function rwsQueueFlush(){
 }
 window.addEventListener('online', rwsQueueFlush);
 setInterval(rwsQueueFlush, 20000);
+async function rwsSyncKV(store, key, value, level, zoneMk){
+  const s = rwsGetSession(); if (!s) return { ok:false };
+  const args = { p_token:s.token, p_store:store, p_k:key, p_value:(value==null?null:value), p_level:level||null, p_zone_mk:zoneMk||null };
+  const r = await rwsCall('rws_set_kv', args);
+  if (!r.ok && r.offline) rwsQueuePush('rws_set_kv', args);
+  if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
+  return r;
+}
 async function rwsGetState(token){
   const r = await rwsCall('rws_get_state', { p_token: token });
   if (!r.ok) throw new Error(r.error && r.error.message ? r.error.message : 'failed to load state');
@@ -521,6 +537,7 @@ async function rwsAdminUpsertUser(u){ const s=rwsGetSession(); if(!s) throw new 
     <button class="hbtn primary" id="saveLock" title="Save the whole page — all progress embedded — as one HTML file to forward or archive">💾 Save</button>
     <button class="hbtn" id="loadLock" title="Open a previously saved file to continue from its data">📂 Open</button>
     <button class="hbtn" id="exportXls" title="Export the progress table to Excel">⬇ Excel</button>
+    <button class="hbtn" id="exportJson" style="display:none" title="Export ALL data (plan vs actual, who changed what, accounts) as one JSON for tracking">⬇ Full JSON</button>
     <button class="hbtn" id="openTable" title="Full progress table of every zone (review / print)">▤ Table <span class="cnt" id="elemCnt">0</span></button>
     <input id="lockFile" type="file" accept=".json,.html,.xls,.csv" style="display:none">
     <div class="seg" id="themeseg"><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
@@ -701,10 +718,10 @@ class Component extends DCLogic {
   saveAct(){try{localStorage.setItem('rws_act_total',JSON.stringify(this._actTotal||{}));localStorage.setItem('rws_act_plan',JSON.stringify(this._actPlan||{}));localStorage.setItem('rws_act_donem',JSON.stringify(this._actDoneM||{}));localStorage.setItem('rws_act_hidden',JSON.stringify(this._actHidden||{}));}catch(e){}}
   _actRerender(z){this.render();const zz=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(zz)this.selectZone(zz);else if(z)this.selectZone(z);}
   _numOrNull(raw){const s=String(raw==null?'':raw).replace(/,/g,'').trim();const v=s===''?null:parseFloat(s);if(v!=null&&(isNaN(v)||v<0))return undefined;return v;}
-  setActTotal(lv,zmk,a,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the total.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a;this._actTotal=this._actTotal||{};if(v==null)delete this._actTotal[k];else this._actTotal[k]=v;this.saveAct();this._actRerender(z);}
-  setActPlan(lv,zmk,a,m,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the planned quantity.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actPlan=this._actPlan||{};if(v==null)delete this._actPlan[k];else this._actPlan[k]=v;this.saveAct();this._actRerender(z);}
-  setActDoneMonth(lv,zmk,a,m,raw,z){if(!(this.rwsIsAdmin()||this.rwsScopeOk(lv,zmk))){this.rwsDeny('Outside your assigned zones.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actDoneM=this._actDoneM||{};if(v==null)delete this._actDoneM[k];else this._actDoneM[k]=v;this.saveAct();this._actRerender(z);}
-  setActVis(lv,zmk,a,shown,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can choose which activities show.');return;}const k=lv+'||'+zmk+'||'+a;this._actHidden=this._actHidden||{};if(shown)delete this._actHidden[k];else this._actHidden[k]=true;this.saveAct();this._actRerender(z);}
+  setActTotal(lv,zmk,a,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the total.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a;this._actTotal=this._actTotal||{};if(v==null)delete this._actTotal[k];else this._actTotal[k]=v;this.saveAct();rwsSyncKV('act_total',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
+  setActPlan(lv,zmk,a,m,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the planned quantity.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actPlan=this._actPlan||{};if(v==null)delete this._actPlan[k];else this._actPlan[k]=v;this.saveAct();rwsSyncKV('act_plan',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
+  setActDoneMonth(lv,zmk,a,m,raw,z){if(!(this.rwsIsAdmin()||this.rwsScopeOk(lv,zmk))){this.rwsDeny('Outside your assigned zones.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actDoneM=this._actDoneM||{};if(v==null)delete this._actDoneM[k];else this._actDoneM[k]=v;this.saveAct();rwsSyncKV('act_done_m',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
+  setActVis(lv,zmk,a,shown,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can choose which activities show.');return;}const k=lv+'||'+zmk+'||'+a;this._actHidden=this._actHidden||{};if(shown)delete this._actHidden[k];else this._actHidden[k]=true;this.saveAct();rwsSyncKV('act_hidden',k,(shown?null:true),lv,zmk);this._actRerender(z);}
   setQtyOv(lv,zoneMk,field,raw){
     if(!this.rwsIsAdmin()){this.rwsDeny('Only admin accounts can edit quantities.');return;}
     const s=String(raw==null?'':raw).replace(/,/g,'').trim();
@@ -807,7 +824,7 @@ class Component extends DCLogic {
   saveElem(){try{localStorage.setItem('rws_elem_status',JSON.stringify(this.elem));}catch(e){}}
   saveElemDate(){try{localStorage.setItem('rws_elem_date',JSON.stringify(this._elemDate||{}));}catch(e){}}
   elemDate(key){return (this._elemDate||{})[key]||'';}
-  setElemDate(key,iso){this._elemDate=this._elemDate||{};if(iso)this._elemDate[key]=iso;else delete this._elemDate[key];this.saveElemDate();}
+  setElemDate(key,iso){this._elemDate=this._elemDate||{};if(iso)this._elemDate[key]=iso;else delete this._elemDate[key];this.saveElemDate();const _p=key.split('||');rwsSyncKV('elem_date',key,(iso||null),_p[0],_p[1]);}
   todayISOStr(){return new Date().toISOString().slice(0,10);}
   /* Map a YYYY-MM-DD completion date to one of the activity month buckets */
   dateToActMonth(iso){const M=this.ACT_MONTHS;if(!iso)return M[M.length-1];const y=+iso.slice(0,4),mo=+iso.slice(5,7);const val=y*12+mo;const aprVal=2026*12+4;if(val<aprVal)return "Before Apr'26";const nm=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];if(y===2026&&mo>=4&&mo<=12)return nm[mo]+"'26";return M[M.length-1];}
@@ -815,10 +832,15 @@ class Component extends DCLogic {
   colDoneInMonth(lv,zmk,m){const z=(this.DATA.levels[lv]?this.DATA.levels[lv].zones:[]).find(x=>(x.mk||x.lid)===zmk);if(!z||!z.cols)return null;let n=0;z.cols.forEach(x=>{const k=this.ekey(lv,z,'col',x.id);if(this.elemStatus(k)==='done'){const d=this.elemDate(k)||this.todayISOStr();if(this.dateToActMonth(d)===m)n++;}});return n>0?n:null;}
 
   /* ---------- cloud sync (Supabase accounts + per-record sync) ---------- */
+  zoneCat(lv,zoneMk){
+    if(!this._zoneCat){ this._zoneCat={}; this.DATA.order.forEach(l=>this.DATA.levels[l].zones.forEach(z=>{this._zoneCat[l+'||'+this.zid(z)]=z.cat||'NB';})); }
+    let c=this._zoneCat[lv+'||'+zoneMk]; if(c==null)c=this._zoneCat[lv+'||_'+zoneMk]; return c;
+  }
+  // admin: everything. normal user: only zones whose area (EB/NB/MA) is in allowed_scopes.
   rwsScopeOk(lv,zoneMk){
-    // no per-zone restriction — any logged-in account may edit any zone;
-    // the only remaining restriction is by element type (see rwsCanEditElement)
-    return !!this._rwsUser;
+    const u=this._rwsUser; if(!u)return false; if(u.role==='admin')return true;
+    const areas=Array.isArray(u.allowed_scopes)?u.allowed_scopes:[];
+    return areas.indexOf(this.zoneCat(lv,zoneMk))>=0;
   }
   rwsCanEditElement(key){
     const u=this._rwsUser; if(!u)return false; if(u.role==='admin')return true;
@@ -835,12 +857,15 @@ class Component extends DCLogic {
     else {b.textContent='☁ Synced';b.style.color='var(--done)';}
   }
   rwsRenderUserBar(){
-    const info=this.root.querySelector('#rwsUserInfo'), lo=this.root.querySelector('#rwsLogoutBtn'), ab=this.root.querySelector('#rwsAdminBtn');
+    const info=this.root.querySelector('#rwsUserInfo'), lo=this.root.querySelector('#rwsLogoutBtn'), ab=this.root.querySelector('#rwsAdminBtn'), jb=this.root.querySelector('#exportJson');
     const u=this._rwsUser;
-    if(!u){info.textContent='';lo.style.display='none';ab.style.display='none';return;}
-    info.textContent='👤 '+(u.display_name||u.username)+(u.role==='admin'?' (admin)':'');
+    if(!u){info.textContent='';lo.style.display='none';ab.style.display='none';if(jb)jb.style.display='none';return;}
+    let areaTxt='';
+    if(u.role!=='admin'){const AL={EB:'Existing Basement',NB:'New Basement',MA:'Marine'};const a=Array.isArray(u.allowed_scopes)?u.allowed_scopes:[];areaTxt=a.length?' · '+a.map(c=>AL[c]||c).join(', '):' · read-only';}
+    info.textContent='👤 '+(u.display_name||u.username)+(u.role==='admin'?' (admin)':areaTxt);
     lo.style.display='';
-    ab.style.display=(this._adminEntry && u.role==='admin')?'':'none';
+    ab.style.display=(u.role==='admin')?'':'none';
+    if(jb)jb.style.display=(u.role==='admin')?'':'none';
   }
   async rwsBoot(){
     window.__rwsApp=this;
@@ -850,7 +875,7 @@ class Component extends DCLogic {
     if(cached){
       this._rwsUser=cached; this.rwsRenderUserBar(); this.rwsOnQueueChange();
       this.rwsAfterLogin();
-      rwsRestoreSession().then(fresh=>{if(fresh){this._rwsUser=fresh;this.rwsRenderUserBar();}});
+      rwsRestoreSession().then(fresh=>{if(fresh){this._rwsUser=fresh;this.rwsRenderUserBar();}else if(!rwsGetSession()){this._rwsUser=null;this.rwsRenderUserBar();this.root.querySelector('#rwsAuthGate').style.display='flex';}});
     } else {
       this.root.querySelector('#rwsAuthGate').style.display='flex';
     }
@@ -893,6 +918,12 @@ class Component extends DCLogic {
       if(state.slab_qty){ this._zpOv={...this._zpOv,...state.slab_qty}; if(this.zpApplyOv)this.zpApplyOv(); }
       if(state.qty_ov){ this._qtyOv={...this._qtyOv,...state.qty_ov}; try{localStorage.setItem('rws_qty_ov',JSON.stringify(this._qtyOv));}catch(e){} this.applyQtyOv(); }
       if(state.plan_qty_ov){ this._zpPlanOv={...this._zpPlanOv,...state.plan_qty_ov}; try{localStorage.setItem('rws_zp_plan_ov',JSON.stringify(this._zpPlanOv));}catch(e){} if(this.zpApplyOv)this.zpApplyOv(); }
+      if(state.act_total)  this._actTotal={...this._actTotal,...state.act_total};
+      if(state.act_plan)   this._actPlan={...this._actPlan,...state.act_plan};
+      if(state.act_done_m) this._actDoneM={...this._actDoneM,...state.act_done_m};
+      if(state.act_hidden) this._actHidden={...this._actHidden,...state.act_hidden};
+      if(state.elem_date){ this._elemDate={...(this._elemDate||{}),...state.elem_date}; this.saveElemDate(); }
+      if(state.act_total||state.act_plan||state.act_done_m||state.act_hidden) this.saveAct();
       if(state.zone_updates && state.zone_updates.length){
         state.zone_updates.forEach(row=>{
           const mk=row.zone_mk; if(!mk)return;
@@ -908,6 +939,7 @@ class Component extends DCLogic {
       if(this.selKey){const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);}
     }catch(e){ console.warn('[rws] cloud state pull skipped (offline?)',e); }
     rwsQueueFlush();
+    this.rwsMaybeDailyExport();
   }
   async rwsOpenAdmin(){
     if(!this.rwsIsAdmin())return;
@@ -918,17 +950,22 @@ class Component extends DCLogic {
   async rwsRenderAdmin(){
     const body=this.root.querySelector('#rwsAdminBody');
     body.innerHTML='<div class="empty">Loading…</div>';
+    const AL={EB:'Existing Basement',NB:'New Basement',MA:'Marine'};
     if(this._rwsAdminTab==='log'){
       try{
-        const rows=await rwsAdminActivityLog(300);
-        body.innerHTML='<table class="reg"><thead><tr><th>When</th><th>Who</th><th>Type</th><th>Target</th><th>Old</th><th>New</th></tr></thead><tbody>'+
-          rows.map(r=>`<tr><td>${this.esc(new Date(r.created_at).toLocaleString())}</td><td>${this.esc(r.username||'')}</td><td>${this.esc(this.rwsActionLabel(r))}</td><td>${this.esc(r.target_key||'')}</td><td>${this.esc(JSON.stringify(r.old_value??''))}</td><td>${this.esc(JSON.stringify(r.new_value??''))}</td></tr>`).join('')+
+        const rows=await rwsAdminActivityLog(500);
+        const fmtV=v=>{if(v==null||v==='')return '—';const s=(typeof v==='object')?JSON.stringify(v):String(v);return this.esc(s.replace(/^"|"$/g,''));};
+        body.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:11px;color:var(--dim)">${rows.length} most-recent changes · who did what, when</div><button class="hbtn" id="rwsLogCsv">⬇ Export log CSV</button></div>
+        <table class="reg"><thead><tr><th>When</th><th>Who</th><th>Type</th><th>Area</th><th>Level · Zone</th><th>Detail</th><th>Old→New</th></tr></thead><tbody>`+
+          rows.map(r=>{const d=this.rwsLogParts(r);return `<tr><td>${this.esc(new Date(r.created_at).toLocaleString())}</td><td>${this.esc(r.username||'')}</td><td>${this.esc(this.rwsActionLabel(r))}</td><td>${this.esc(d.area)}</td><td>${this.esc(d.zone)}</td><td>${this.esc(d.detail)}</td><td>${fmtV(r.old_value)} → ${fmtV(r.new_value)}</td></tr>`;}).join('')+
           '</tbody></table>';
+        const cb=body.querySelector('#rwsLogCsv'); if(cb)cb.addEventListener('click',()=>this.exportLogCsv(rows));
       }catch(e){ body.innerHTML='<div class="empty">Could not load activity log: '+this.esc(e.message)+'</div>'; }
       return;
     }
     try{
       const users=await rwsAdminListUsers();
+      const AREAS=[['EB','Existing Basement'],['NB','New Basement'],['MA','Marine']];
       body.innerHTML=`<div style="margin-bottom:14px;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--panel2)">
         <div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Add / update account</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
@@ -937,12 +974,26 @@ class Component extends DCLogic {
           <input id="rwsNuName" placeholder="display name" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)">
           <select id="rwsNuRole" style="padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--txt)"><option value="user">user</option><option value="admin">admin</option></select>
         </div>
+        <div style="font-size:9.5px;font-weight:700;color:var(--dim);margin-bottom:4px">Areas this user may edit (leave all unchecked = read-only)</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px">
+          ${AREAS.map(([c,l])=>`<label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--txt);cursor:pointer"><input type="checkbox" class="rwsNuArea" value="${c}" style="cursor:pointer">${l}</label>`).join('')}
+        </div>
         <button class="hbtn primary" id="rwsNuSave">Save account</button>
-        <div style="font-size:9.5px;color:var(--faint);margin-top:6px">No zone restriction — any "user" account can edit column status and slab quantities anywhere on the map. Only "admin" accounts can add zone-level site updates and manage accounts.</div>
+        <div style="font-size:9.5px;color:var(--faint);margin-top:6px">A "user" account can only change column status and actual completed quantities, and only inside the areas checked above. Admins can edit everything (plans, totals) and manage accounts.</div>
       </div>
-      <table class="reg"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Active</th></tr></thead><tbody>
-      ${users.map(u=>`<tr><td>${this.esc(u.username)}</td><td>${this.esc(u.display_name||'')}</td><td>${this.esc(u.role)}</td><td>${u.active?'yes':'no'}</td></tr>`).join('')}
-      </tbody></table>`;
+      <table class="reg"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Areas</th><th>Active</th></tr></thead><tbody>
+      ${users.map(u=>{const areas=Array.isArray(u.allowed_scopes)?u.allowed_scopes:[];return `<tr class="rwsUserRow" data-u="${this.esc(u.username)}" style="cursor:pointer"><td>${this.esc(u.username)}</td><td>${this.esc(u.display_name||'')}</td><td>${this.esc(u.role)}</td><td>${u.role==='admin'?'<span style=\"color:var(--faint)\">(all)</span>':this.esc(areas.map(c=>AL[c]||c).join(', ')||'—')}</td><td>${u.active?'yes':'no'}</td></tr>`;}).join('')}
+      </tbody></table>
+      <div style="font-size:9.5px;color:var(--faint);margin-top:6px">Tip: click a row to load that account into the form (change password or areas, then Save).</div>`;
+      const collectAreas=()=>[...body.querySelectorAll('.rwsNuArea:checked')].map(x=>x.value);
+      body.querySelectorAll('.rwsUserRow').forEach(tr=>tr.addEventListener('click',()=>{
+        const u=users.find(x=>x.username===tr.dataset.u); if(!u)return;
+        body.querySelector('#rwsNuUser').value=u.username;
+        body.querySelector('#rwsNuName').value=u.display_name||'';
+        body.querySelector('#rwsNuRole').value=u.role;
+        const areas=Array.isArray(u.allowed_scopes)?u.allowed_scopes:[];
+        body.querySelectorAll('.rwsNuArea').forEach(cb=>cb.checked=areas.indexOf(cb.value)>=0);
+      }));
       body.querySelector('#rwsNuSave').addEventListener('click',async()=>{
         const username=body.querySelector('#rwsNuUser').value.trim();
         if(!username){alert('username required');return;}
@@ -951,7 +1002,7 @@ class Component extends DCLogic {
             username, password:body.querySelector('#rwsNuPass').value,
             displayName:body.querySelector('#rwsNuName').value.trim(),
             role:body.querySelector('#rwsNuRole').value,
-            allowedScopes:[],
+            allowedScopes:collectAreas(),
             active:true
           });
           this.rwsRenderAdmin();
@@ -960,15 +1011,35 @@ class Component extends DCLogic {
     }catch(e){ body.innerHTML='<div class="empty">Could not load accounts: '+this.esc(e.message)+'</div>'; }
   }
   rwsActionLabel(r){
-    if(r.action==='slab_qty') return 'Slab qty';
+    const A={slab_qty:'Actual qty',act_total:'Total qty',act_plan:'Plan qty',act_done_m:'Actual done (month)',act_hidden:'Show/hide activity',elem_date:'Completion date',qty_ov:'Quantity total',zone_update:'Zone update',login:'Login'};
+    if(A[r.action])return A[r.action];
     if(r.action==='element_status'){
-      const parts=(r.target_key||'').split('||'); const t=parts[2];
+      const t=(r.target_key||'').split('||')[2];
       const map={col:'Column',pile:'Pile cap',beam:'Beam',lift:'Lift',stair:'Stair',core:'Core wall'};
       return map[t]||('Element'+(t?' ('+t+')':''));
     }
-    if(r.action==='zone_update') return 'Zone update';
-    if(r.action==='login') return 'Login';
     return r.action||'';
+  }
+  rwsLogParts(r){
+    const AL={EB:'Existing Basement',NB:'New Basement',MA:'Marine'};
+    if(!this._zoneLabel){ this._zoneLabel={}; this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{this._zoneLabel[lv+'||'+this.zid(z)]=z.label;})); }
+    const k=r.target_key||''; const p=k.split('||');
+    const zlabel=(lv,zmk)=>lv+' · '+((this._zoneLabel[lv+'||'+zmk]||this._zoneLabel[lv+'||_'+zmk])||zmk);
+    const areaOf=(lv,zmk)=>AL[this.zoneCat(lv,zmk)]||'';
+    if((r.action==='element_status'||r.action==='elem_date') && p.length>=4){ return {area:areaOf(p[0],p[1]),zone:zlabel(p[0],p[1]),detail:p[2]+' '+p[3]}; }
+    if((r.action==='act_total'||r.action==='act_hidden'||r.action==='qty_ov') && p.length>=3){ return {area:areaOf(p[0],p[1]),zone:zlabel(p[0],p[1]),detail:p[2]}; }
+    if((r.action==='act_plan'||r.action==='act_done_m') && p.length>=4){ return {area:areaOf(p[0],p[1]),zone:zlabel(p[0],p[1]),detail:p[2]+' · '+p[3]}; }
+    if(r.action==='slab_qty' && p.length>=3){ return {area:'',zone:p[0],detail:p[1]+' · row '+p[2]}; }
+    if(r.action==='zone_update'){ return {area:'',zone:k,detail:''}; }
+    return {area:'',zone:'',detail:k};
+  }
+  exportLogCsv(rows){
+    const esc=v=>'"'+String(v==null?'':(typeof v==='object'?JSON.stringify(v):v)).replace(/"/g,'""')+'"';
+    const lines=[['When','User','Type','Area','Level_Zone','Detail','Old','New'].join(',')];
+    rows.forEach(r=>{const d=this.rwsLogParts(r);lines.push([new Date(r.created_at).toISOString(),r.username||'',this.rwsActionLabel(r),d.area,d.zone,d.detail,r.old_value,r.new_value].map(esc).join(','));});
+    const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');
+    a.href=url;a.download='RWS_P1_activity_log_'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},400);
   }
 
   elemStatus(k){return this.elem[k]||'todo';}
@@ -1790,6 +1861,7 @@ class Component extends DCLogic {
     this.root.querySelector('#themeseg').addEventListener('click',e=>{if(e.target.dataset.t){this.root.closest('html')?.setAttribute('data-theme',e.target.dataset.t);document.documentElement.setAttribute('data-theme',e.target.dataset.t);this.root.querySelectorAll('#themeseg button').forEach(b=>b.classList.toggle('on',b===e.target));this.buildMetrics();this.buildTimeline();this.render();}});
     this.root.querySelector('#openTable').addEventListener('click',()=>this.openTable());
     this.root.querySelector('#exportXls').addEventListener('click',()=>this.exportExcel());
+    this.root.querySelector('#exportJson').addEventListener('click',()=>this.exportFullJson());
     this.root.querySelector('#saveLock').addEventListener('click',()=>this.saveLock());
     const lf=this.root.querySelector('#lockFile');
     this.root.querySelector('#loadLock').addEventListener('click',()=>lf.click());
@@ -1909,6 +1981,22 @@ class Component extends DCLogic {
   }
 
   /* ---------- lock file: persist all markers to a portable file & reload ---------- */
+  async buildFullExport(){
+    const AL={EB:'Existing Basement',NB:'New Basement',MA:'Marine'};
+    const zones=[];
+    this.DATA.order.forEach(lv=>{const seen={};this.DATA.levels[lv].zones.forEach(z=>{const zid=this.zid(z);if(seen[zid])return;seen[zid]=1;const c=z.counts||{};const p=z._p||{};
+      zones.push({level:lv,zone_mk:zid,label:z.label,area_code:z.cat||'NB',area:AL[z.cat||'NB'],critical:!!z.crit,
+        totals:{area_m2:z.area||0,columns:c.columns||0,pilecap:c.pilecap||0,mainbeam:c.mainbeam||0,steelbeam:c.steelbeam||0,lift:z.lifts?z.lifts.length:0,stair:z.stairs?z.stairs.length:0},
+        progress_pct:p.pct==null?null:p.pct,status:p.status||'todo'});});});
+    const out={meta:{project:'RWS P1 CJ',exported_at:new Date().toISOString(),exported_by:(this._rwsUser&&this._rwsUser.username)||'',project_pct:this.projPct,act_months:this.ACT_MONTHS},
+      current_state:{element_status:this.elem,element_dates:this._elemDate||{},act_total:this._actTotal||{},act_plan:this._actPlan||{},act_done_m:this._actDoneM||{},act_hidden:this._actHidden||{},slab_actual_qty:this._zpOv||{},quantity_overrides:this._qtyOv||{},plan_qty_overrides:this._zpPlanOv||{},critical:this._critOv||{},zone_updates:this.updates||{}},
+      zones};
+    if(this.rwsIsAdmin()){ try{out.accounts=await rwsAdminListUsers();}catch(e){out.accounts_error=e.message;} try{out.activity_log=await rwsAdminActivityLog(5000);}catch(e){out.activity_log_error=e.message;} }
+    return out;
+  }
+  _downloadJson(obj,name){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},400);}
+  async exportFullJson(){const btn=this.root.querySelector('#exportJson');if(btn)btn.textContent='⏳ Building…';try{const d=await this.buildFullExport();this._downloadJson(d,'RWS_P1_CJ_full_'+new Date().toISOString().slice(0,10)+'.json');}catch(e){alert('Export failed: '+e.message);}finally{if(btn)btn.textContent='⬇ Full JSON';}}
+  async rwsMaybeDailyExport(){if(!this.rwsIsAdmin())return;const today=new Date().toISOString().slice(0,10);let last='';try{last=localStorage.getItem('rws_last_daily_export')||'';}catch(e){}if(last===today)return;try{const d=await this.buildFullExport();this._downloadJson(d,'RWS_P1_CJ_daily_'+today+'.json');localStorage.setItem('rws_last_daily_export',today);}catch(e){console.warn('[rws] daily export failed',e);}}
   snapshot(){return {v:2,project:'RWS P1 CJ',savedAt:new Date().toISOString(),elem:this.elem,elemDate:this._elemDate,updates:this.updates,zpOv:this._zpOv,crit:this._critOv,actTotal:this._actTotal,actPlan:this._actPlan,actDoneM:this._actDoneM,actHidden:this._actHidden};}
   saveLock(){
     if(this._locking)return; this._locking=true; setTimeout(()=>{this._locking=false;},900);
@@ -1929,9 +2017,19 @@ class Component extends DCLogic {
       let txt=String(r.result);let elemN=0,updN=0;
       const m=txt.match(/<script id="locked-data"[^>]*>([\s\S]*?)<\/script>/i);
       if(m||(txt.trim()[0]==='{')){
-        const data=JSON.parse(m?m[1]:txt);
+        let data=JSON.parse(m?m[1]:txt);
+        if(data.current_state){const cs=data.current_state;data={elem:cs.element_status,elemDate:cs.element_dates,updates:cs.zone_updates,zpOv:cs.slab_actual_qty,qtyOv:cs.quantity_overrides,zpPlanOv:cs.plan_qty_overrides,crit:cs.critical,actTotal:cs.act_total,actPlan:cs.act_plan,actDoneM:cs.act_done_m,actHidden:cs.act_hidden};}
         if(data.elem){this.elem={...this.elem,...data.elem};elemN=Object.keys(data.elem).length;}
         if(data.updates){Object.keys(data.updates).forEach(k=>{this.updates[k]=data.updates[k];});updN=Object.keys(data.updates).length;}
+        if(data.elemDate){this._elemDate={...(this._elemDate||{}),...data.elemDate};}
+        if(data.zpOv){this._zpOv={...(this._zpOv||{}),...data.zpOv};}
+        if(data.qtyOv){this._qtyOv={...(this._qtyOv||{}),...data.qtyOv};}
+        if(data.zpPlanOv){this._zpPlanOv={...(this._zpPlanOv||{}),...data.zpPlanOv};}
+        if(data.crit){this._critOv={...(this._critOv||{}),...data.crit};}
+        if(data.actTotal){this._actTotal={...(this._actTotal||{}),...data.actTotal};}
+        if(data.actPlan){this._actPlan={...(this._actPlan||{}),...data.actPlan};}
+        if(data.actDoneM){this._actDoneM={...(this._actDoneM||{}),...data.actDoneM};}
+        if(data.actHidden){this._actHidden={...(this._actHidden||{}),...data.actHidden};}
       } else {
         // Excel/CSV/HTML-table archive: restore element marks from the Element Detail table
         this.buildLabelMap();
@@ -1950,7 +2048,7 @@ class Component extends DCLogic {
         }
         if(!elemN){alert('No recognisable element detail found in the file (needs an Element Detail table).');return;}
       }
-      this.saveElem();this.saveUpdatesStore();this.applyUpdates();
+      this.saveElem();this.saveUpdatesStore();if(this.saveAct)this.saveAct();if(this.saveElemDate)this.saveElemDate();try{localStorage.setItem('rws_zp_ov',JSON.stringify(this._zpOv||{}));localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv||{}));localStorage.setItem('rws_qty_ov',JSON.stringify(this._qtyOv||{}));}catch(e){}if(this.zpApplyOv)this.zpApplyOv();if(this.applyQtyOv)this.applyQtyOv();if(this.applyCritOv)this.applyCritOv();this.applyUpdates();
       this.buildRail();this.buildTimeline();this.render();this.refreshUpdBadge();
       if(this.selKey){const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);}
       alert('Loaded: '+this.doneCount()+' elements done, '+this.updateCount()+' zone entries. You can keep updating.');
