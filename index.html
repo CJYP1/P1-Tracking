@@ -675,6 +675,7 @@ class Component extends DCLogic {
     try{this._actDoneM=JSON.parse(localStorage.getItem('rws_act_donem')||'{}');}catch(e){this._actDoneM={};}
     try{this._actHidden=JSON.parse(localStorage.getItem('rws_act_hidden')||'{}');}catch(e){this._actHidden={};}
     try{this._actDefs=JSON.parse(localStorage.getItem('rws_act_defs')||'[]');}catch(e){this._actDefs=[];}
+    try{this._zdate=JSON.parse(localStorage.getItem('rws_zdate')||'{}');}catch(e){this._zdate={};}
     try{this._catAdd=JSON.parse(localStorage.getItem('rws_cat_add')||'[]');}catch(e){this._catAdd=[];}
     try{this._elemAdd=JSON.parse(localStorage.getItem('rws_elem_add')||'{}');}catch(e){this._elemAdd={};}
     this.loadUpdates();
@@ -700,6 +701,8 @@ class Component extends DCLogic {
   proj(p,H){return [p[0],H-p[1]];}
   centroid(r,H){let x=0,y=0;r.forEach(p=>{x+=p[0];y+=H-p[1];});return[x/r.length,y/r.length];}
   ml(m){const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return names[((m%12)+12)%12]+' '+(2024+Math.floor(m/12));}
+  _fmtD(iso){if(!iso)return '';const q=String(iso).split('-');if(q.length<3)return iso;const M=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return (+q[2])+' '+M[+q[1]]+" '"+q[0].slice(2);}
+  zd(lv,z){const v=(this._zdate||{})[lv+'||'+(z.mk||z.lid)];return v&&v.start?v:null;}
   hex2rgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
   lerpHex(a,b,t){const A=this.hex2rgb(a),B=this.hex2rgb(b);return 'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')';}
   progColor(p){p=p/100;return p<0.5?this.lerpHex('#e5484d','#f5b23c',p/0.5):this.lerpHex('#f5b23c','#22c55e',(p-0.5)/0.5);}
@@ -972,6 +975,7 @@ class Component extends DCLogic {
       if(state.crit){ this._critOv={...(this._critOv||{}),...state.crit}; try{localStorage.setItem('rws_crit_ov',JSON.stringify(this._critOv));}catch(e){} if(this.applyCritOv)this.applyCritOv(); this._critPlanSet=null; }
       if(state.elem_date){ this._elemDate={...(this._elemDate||{}),...state.elem_date}; this.saveElemDate(); }
       if(state.act_def){ this._actDefs=Object.keys(state.act_def).map(id=>({id,label:(state.act_def[id]&&state.act_def[id].label)||id,unit:(state.act_def[id]&&state.act_def[id].unit)||''})); }
+      if(state.zdate){ this._zdate={...(this._zdate||{}),...state.zdate}; try{localStorage.setItem('rws_zdate',JSON.stringify(this._zdate));}catch(e){} }
       if(Array.isArray(state.custom_cats)){const seen={};this._catAdd=[];state.custom_cats.forEach(c=>{if(c&&c.code&&!seen[c.code]){seen[c.code]=1;this._catAdd.push({code:c.code,label:c.label});}});}
       if(Array.isArray(state.custom_items)){this._elemAdd={};state.custom_items.forEach(it=>{if(!it)return;const k=it.level+'||'+it.zone_mk+'||'+it.type;(this._elemAdd[k]=this._elemAdd[k]||[]).push(it.elem_id);});}
       if(state.custom_cats||state.custom_items)this.saveCustom();
@@ -1324,7 +1328,7 @@ class Component extends DCLogic {
     this.tip.innerHTML=`<h4>${this.esc(z.label)} ${z.crit?'<span class="badge">CRIT PATH</span>':''}</h4>
      <div class="grp"><span class="cat" style="background:${ct.c}">${ct.label}</span> · <b style="color:var(--txt)">${this.fmt(z.area)} m²</b></div>
      ${catRow}
-     <div class="row"><span>Plan</span><b>${this.ml(Math.round(p.start))} → ${this.ml(Math.round(p.end))}</b></div>
+     <div class="row"><span>Plan</span><b>${this.zd(this.curLevel,z)?this._fmtD(this.zd(this.curLevel,z).start)+' → '+this._fmtD(this.zd(this.curLevel,z).end):this.ml(Math.round(p.start))+' → '+this.ml(Math.round(p.end))}</b></div>
      <div class="row" style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"><span>Columns / Piles</span><b>${c.columns||0} / ${c.pilecap||0}</b></div>
      <div class="row"><span>Beams (M/S)</span><b>${c.mainbeam||0} / ${c.steelbeam||0}</b></div>
      <div class="row"><span>Lifts / Stairs</span><b>${z.lifts.length} / ${z.stairs.length}</b></div>
@@ -1663,8 +1667,8 @@ class Component extends DCLogic {
         <div class="pbar"><i style="width:${p.pct}%;background:${this.progColor(p.pct)}"></i></div>
         <div class="prows">
           <div class="pr"><span>Status</span><b style="color:var(${st.v})">${st.label}</b></div>
-          <div class="pr"><span>Plan start</span><b>${this.ml(Math.round(p.start))}</b></div>
-          <div class="pr"><span>Plan end</span><b>${this.ml(Math.round(p.end))}</b></div>
+          <div class="pr"><span>Plan start</span><b>${this.zd(lv,z)?this._fmtD(this.zd(lv,z).start):this.ml(Math.round(p.start))}${this.zd(lv,z)?' <span style="color:var(--accent);font-size:8px">P6</span>':''}</b></div>
+          <div class="pr"><span>Plan end</span><b>${this.zd(lv,z)?this._fmtD(this.zd(lv,z).end):this.ml(Math.round(p.end))}</b></div>
           ${p.udate?`<div class="pr"><span>Updated</span><b>${p.udate}</b></div>`:''}
         </div>
       </div>
@@ -2097,7 +2101,7 @@ class Component extends DCLogic {
       const m=txt.match(/<script id="locked-data"[^>]*>([\s\S]*?)<\/script>/i);
       if(m||(txt.trim()[0]==='{')){
         let data=JSON.parse(m?m[1]:txt);
-        if(data.current_state){const cs=data.current_state;data={elem:cs.element_status,elemDate:cs.element_dates,updates:cs.zone_updates,zpOv:cs.slab_actual_qty,qtyOv:cs.quantity_overrides,zpPlanOv:cs.plan_qty_overrides,crit:cs.critical,actTotal:cs.act_total,actPlan:cs.act_plan,actDoneM:cs.act_done_m,actHidden:cs.act_hidden,actDefs:cs.act_defs,catAdd:cs.custom_categories,elemAdd:cs.custom_items};}
+        if(data.current_state){const cs=data.current_state;data={elem:cs.element_status,elemDate:cs.element_dates,updates:cs.zone_updates,zpOv:cs.slab_actual_qty,qtyOv:cs.quantity_overrides,zpPlanOv:cs.plan_qty_overrides,crit:cs.critical,actTotal:cs.act_total,actPlan:cs.act_plan,actDoneM:cs.act_done_m,actHidden:cs.act_hidden,actDefs:cs.act_defs,catAdd:cs.custom_categories,elemAdd:cs.custom_items,zdate:cs.zone_dates};}
         if(data.elem){this.elem={...this.elem,...data.elem};elemN=Object.keys(data.elem).length;}
         if(data.updates){Object.keys(data.updates).forEach(k=>{this.updates[k]=data.updates[k];});updN=Object.keys(data.updates).length;}
         if(data.elemDate){this._elemDate={...(this._elemDate||{}),...data.elemDate};}
@@ -2110,12 +2114,13 @@ class Component extends DCLogic {
         if(data.actDoneM){this._actDoneM={...(this._actDoneM||{}),...data.actDoneM};actN=Object.keys(data.actDoneM).length;}
         if(data.actHidden){this._actHidden={...(this._actHidden||{}),...data.actHidden};}
         if(Array.isArray(data.actDefs)){this._actDefs=this._actDefs||[];data.actDefs.forEach(d=>{if(d&&d.id&&!this._actDefs.some(x=>x.id===d.id))this._actDefs.push(d);});}
+        if(data.zdate&&typeof data.zdate==='object'){this._zdate={...(this._zdate||{}),...data.zdate};try{localStorage.setItem('rws_zdate',JSON.stringify(this._zdate));}catch(e){}}
         if(Array.isArray(data.catAdd)){this._catAdd=this._catAdd||[];data.catAdd.forEach(c=>{if(c&&c.code&&!this._catAdd.some(x=>x.code===c.code))this._catAdd.push({code:c.code,label:c.label});});}
         if(data.elemAdd&&typeof data.elemAdd==='object'){this._elemAdd=this._elemAdd||{};Object.keys(data.elemAdd).forEach(k=>{const cur=this._elemAdd[k]||(this._elemAdd[k]=[]);(data.elemAdd[k]||[]).forEach(id=>{if(cur.indexOf(id)<0)cur.push(id);});});}
         if(data.catAdd||data.elemAdd){this.saveCustom&&this.saveCustom();}
         try{if(typeof rwsGetSession==='function'&&rwsGetSession()){
           const pv=(store,obj,parse)=>{Object.keys(obj||{}).forEach(k=>{let lv=null,mk=null;if(parse){const pp=k.split('||');lv=pp[0];mk=pp[1];}rwsSyncKV(store,k,obj[k],lv,mk);});};
-          pv('act_plan',data.actPlan,true);pv('act_total',data.actTotal,true);pv('act_done_m',data.actDoneM,true);pv('act_hidden',data.actHidden,true);pv('elem_date',data.elemDate,true);pv('crit',data.crit,false);
+          pv('act_plan',data.actPlan,true);pv('act_total',data.actTotal,true);pv('act_done_m',data.actDoneM,true);pv('act_hidden',data.actHidden,true);pv('elem_date',data.elemDate,true);pv('crit',data.crit,false);pv('zdate',data.zdate,false);
           if(data.elem&&typeof rwsSyncElementStatus==='function')Object.keys(data.elem).forEach(k=>rwsSyncElementStatus(k,data.elem[k]));
         }}catch(e){console.warn('import cloud-sync skipped',e);}
       } else {
