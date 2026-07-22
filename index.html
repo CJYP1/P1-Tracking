@@ -686,7 +686,7 @@ class Component extends DCLogic {
     this.vb = {x:0,y:0,w:1,h:1}; this.base = {x:0,y:0,w:1,h:1};
     this.bindGlobal();
     this.buildRail(); this.buildMetrics(); this.buildTimeline();
-    this.root.querySelector('#foot').innerHTML = 'Zones coloured by construction area / derived progress / quantity heat. Geometry & quantities from RWS P1 CJ source; progress derived from activity counts + bottom-up schedule model (demo).';
+    this.root.querySelector('#foot').innerHTML = 'Zones coloured by construction area / derived progress / quantity heat. Geometry & quantities from RWS P1 CJ source; progress comes from element check-offs and manual zone updates; zones with no data show 0% (Not started).';
     this.render();
     this.rwsBoot();
   }
@@ -815,16 +815,18 @@ class Component extends DCLogic {
     }));
     this.DATA.order.forEach(lv=>this.DATA.levels[lv].zones.forEach(z=>{
       if(!z._base)return;
-      const es=z.mk&&emap[lv+'|'+z.mk];
-      if(es&&es.total&&(es.done+es.wip)>0){
-        const pct=Math.round(es.done/es.total*100);
-        const status=es.done===es.total?'done':'wip';
-        z._p={...z._base,pct,status,manual:true,source:'elem',es,udate:null,note:''};
+      const ap=this.zoneActPct(lv,z);
+      if(ap){
+        const pct=ap.pct;const status=pct>=100?'done':(pct>0?'wip':'todo');
+        z._p={...z._base,pct,status,manual:true,source:'act',es:null,udate:null,note:'',nAct:ap.n};
       } else {
         const u=this.latestUpdate(z.mk);
-        const pct=u&&u.pct!=null?u.pct:z._base.pct;
-        const status=u&&u.status?u.status:this.statusFor(pct);
-        z._p={...z._base,pct,status,manual:!!u,source:u?'zone':'derived',es:es||null,udate:u?u.date:null,note:u?u.note:''};
+        if(u){
+          const pct=(u.pct!=null?u.pct:(u.status==='done'?100:u.status==='wip'?50:0));
+          z._p={...z._base,pct,status:(u.status||this.statusFor(pct)),manual:true,source:'zone',es:null,udate:u.date,note:u.note||''};
+        } else {
+          z._p={...z._base,pct:0,status:'todo',manual:false,source:'none',es:null,udate:null,note:''};
+        }
       }
     }));
     this.computeRollup();
@@ -879,6 +881,25 @@ class Component extends DCLogic {
   _elemAct(id){return {col:{types:['col'],sec:'col',label:'columns'},pile:{types:['pile'],sec:'pile',label:'pile caps'},mbeam:{types:['beam'],sec:'beam',label:'main beams'}}[id]||null;}
   _zoneElemList(z,tp){return ({col:z.cols,pile:z.piles,beam:z.beams,lift:z.lifts,stair:z.stairs,core:z.cores})[tp]||[];}
   _zoneHasElems(lv,zmk,types){const z=(this.DATA.levels[lv]?this.DATA.levels[lv].zones:[]).find(x=>(x.mk||x.lid)===zmk);if(!z)return false;return types.some(tp=>this._zoneElemList(z,tp).length>0);}
+  _actTotalFor(lv,z,aid,c){c=c||z.counts||{};const zmk=z.mk||z.lid;
+    switch(aid){case 'col':return c.columns||0;case 'pile':return c.pilecap||0;case 'mbeam':return c.mainbeam||0;
+      case 'sbeam':return c.steelbeam||0;case 'ls':return this.lsAll(c);case 'exc':return this.excTotal(lv,z)||0;
+      case 'demo':return this.actTotal(lv,zmk,'demo',null)||0;case 'slab':return z.area||0;
+      default:return this.actTotal(lv,zmk,aid,null)||0;}}
+  /* Zone overall % = average of each applicable activity's cumulative done/total.
+     Activities with no data at all (total<=0 and nothing done) do NOT participate. */
+  zoneActPct(lv,z){const zmk=z.mk||z.lid,c=z.counts||{},M=this.ACT_MONTHS,parts=[];
+    const ids=['col','pile','mbeam','sbeam','ls','exc','demo','slab'].filter(a=>this._actApplies(a,lv,z));
+    (this._actDefs||[]).forEach(d=>ids.push(d.id));
+    ids.forEach(aid=>{const tot=this._actTotalFor(lv,z,aid,c);let done=0;M.forEach(m=>{done+=this.actDoneMonth(lv,zmk,aid,m)||0;});
+      if(tot>0||done>0)parts.push(tot>0?this.clamp(done/tot,0,1):(done>0?1:0));});
+    if(!parts.length)return null;
+    return {pct:Math.round(parts.reduce((a,b)=>a+b,0)/parts.length*100),n:parts.length};}
+  /* Slab casting status for map colouring (mirrors column status): none/todo/wip/done */
+  slabStatus(lv,z){const zmk=z.mk||z.lid,tot=z.area||0,M=this.ACT_MONTHS;let done=0;
+    M.forEach(m=>{done+=this.actDoneMonth(lv,zmk,'slab',m)||0;});
+    if(tot<=0&&done<=0)return 'none';const r=tot>0?done/tot:(done>0?1:0);
+    return r>=1?'done':(r>0?'wip':'todo');}
   elemDoneInMonth(lv,zmk,types,m){const z=(this.DATA.levels[lv]?this.DATA.levels[lv].zones:[]).find(x=>(x.mk||x.lid)===zmk);if(!z)return null;let n=0;types.forEach(tp=>{this._zoneElemList(z,tp).forEach(x=>{const id=(typeof x==='string')?x:x.id;const k=this.ekey(lv,z,tp,id);if(this.elemStatus(k)==='done'){const d=this.elemDate(k)||this.todayISOStr();if(this.dateToActMonth(d)===m)n++;}});});return n>0?n:null;}
 
   /* ---------- cloud sync (Supabase accounts + per-record sync) ---------- */
@@ -1158,7 +1179,12 @@ class Component extends DCLogic {
   progCategoryActive(){const t=this.catTypesFor(this.curMetric);if(!t)return false;return this.DATA.levels[this.curLevel].zones.some(z=>this.catStats(this.curLevel,z,t).total>0);}
 
   zoneFill(z){
-    if(this.colorMode==='area') return (this.CAT[z.cat]||this.CAT.NB).c;
+    if(this.colorMode==='area'){
+      const ss=this.slabStatus(this.curLevel,z);
+      if(ss==='done')return this.cssvar('--done');
+      if(ss==='wip')return this.cssvar('--wip');
+      return (this.CAT[z.cat]||this.CAT.NB).c;
+    }
     if(this.colorMode==='progress') return this.progColor(this.zoneDisplayPct(z).pct);
     // quantity heat
     const t=this.clamp(this.mval(z,this.curMetric)/this.levelMax(),0,1);
@@ -1665,7 +1691,7 @@ class Component extends DCLogic {
       ${this.rwsIsAdmin()?`<label style="display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:${z.crit?'var(--crit)':'var(--dim)'};margin:2px 0 8px;cursor:pointer;user-select:none"><input type="checkbox" id="critChk" ${z.crit?'checked':''} style="width:15px;height:15px;accent-color:var(--crit);cursor:pointer">Critical zone <span style="font-weight:500;color:var(--faint)">· auto-saved</span></label>`:(z.crit?'<div style="font-size:11.5px;font-weight:700;color:var(--crit);margin:2px 0 8px">◆ Critical zone</div>':'')}
       ${subHtml}
       <div class="progblock">
-        <div class="top"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--dim)">Site progress ${p.manual?'':'<span style="color:var(--faint);font-weight:600;text-transform:none">Derived</span>'}</div><div class="pc" style="color:${this.progColor(p.pct)}">${p.pct}%</div></div>
+        <div class="top"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--dim)">Site progress ${p.source==='none'?'<span style="color:var(--faint);font-weight:600;text-transform:none">No data yet</span>':''}</div><div class="pc" style="color:${this.progColor(p.pct)}">${p.pct}%</div></div>
         <div class="pbar"><i style="width:${p.pct}%;background:${this.progColor(p.pct)}"></i></div>
         <div class="prows">
           <div class="pr"><span>Status</span><b style="color:var(${st.v})">${st.label}</b></div>
