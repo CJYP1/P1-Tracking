@@ -253,7 +253,7 @@ svg.collabels .collbl{display:block}
 .acttgt{width:56px;font-size:9px;color:var(--faint);text-align:left;flex:0 0 auto;white-space:nowrap}
 .actbar{width:34px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;flex:0 0 auto}.actbar i{display:block;height:100%}
 .actpct{width:34px;text-align:right;font-size:11px;font-weight:700;flex:0 0 auto}
-.act-vis{width:13px;height:13px;accent-color:var(--accent);flex:0 0 auto;cursor:pointer}
+.act-vis{font-size:10px;padding:1px 3px;border:1px solid var(--accent);border-radius:4px;cursor:pointer;flex:0 0 auto;background:var(--panel);color:var(--txt)}
 .hiddentag{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;color:var(--crit);background:color-mix(in srgb,var(--crit) 12%,transparent);border:1px solid color-mix(in srgb,var(--crit) 35%,transparent);border-radius:4px;padding:1px 5px;white-space:nowrap}
 .actsub{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:10.5px;color:var(--dim);margin:-2px 0 8px 2px}
 .actsub .am{font-weight:500;color:var(--faint);text-transform:uppercase;letter-spacing:.2px;font-size:8.5px;opacity:.85}
@@ -760,14 +760,15 @@ class Component extends DCLogic {
   actDoneMonth(lv,zmk,a,m){const ea=this._elemAct(a);if(ea&&this._zoneHasElems(lv,zmk,ea.types))return this.elemDoneInMonth(lv,zmk,ea.types,m);const v=(this._actDoneM||{})[lv+'||'+zmk+'||'+a+'||'+m];return v==null?null:v;}
   actCumDone(lv,zmk,a){let s=0;this.ACT_MONTHS.forEach(m=>{const v=(this._actDoneM||{})[lv+'||'+zmk+'||'+a+'||'+m];if(v!=null)s+=v;});return s;}
   actCarry(lv,zmk,aid,mi){const M=this.ACT_MONTHS;let cpPrev=0,cdPrev=0;for(let i=0;i<mi;i++){cpPrev+=this.actPlan(lv,zmk,aid,M[i])||0;cdPrev+=this.actDoneMonth(lv,zmk,aid,M[i])||0;}const plan=this.actPlan(lv,zmk,aid,M[mi])||0;const done=this.actDoneMonth(lv,zmk,aid,M[mi])||0;const carryIn=Math.max(0,cpPrev-cdPrev);const required=plan+carryIn;const balance=(cpPrev+plan)-(cdPrev+done);const cleared=Math.min(done,carryIn);const current=Math.max(0,done-cleared);return {carryIn,plan,done,required,balance,cleared,current,hasData:(cpPrev+cdPrev+plan+done)>0};}
-  actHidden(lv,zmk,a){return !!(this._actHidden||{})[lv+'||'+zmk+'||'+a];}
+  actVisState(lv,zmk,a){const v=(this._actHidden||{})[lv+'||'+zmk+'||'+a];return (v===true||v==='hide')?'hide':(v==='show'?'show':'auto');}
+  actHidden(lv,zmk,a){return this.actVisState(lv,zmk,a)==='hide';}
   saveAct(){try{localStorage.setItem('rws_act_total',JSON.stringify(this._actTotal||{}));localStorage.setItem('rws_act_plan',JSON.stringify(this._actPlan||{}));localStorage.setItem('rws_act_donem',JSON.stringify(this._actDoneM||{}));localStorage.setItem('rws_act_hidden',JSON.stringify(this._actHidden||{}));localStorage.setItem('rws_act_defs',JSON.stringify(this._actDefs||[]));}catch(e){}}
   _actRerender(z){this.render();const zz=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(zz)this.selectZone(zz);else if(z)this.selectZone(z);}
   _numOrNull(raw){const s=String(raw==null?'':raw).replace(/,/g,'').trim();const v=s===''?null:parseFloat(s);if(v!=null&&(isNaN(v)||v<0))return undefined;return v;}
   setActTotal(lv,zmk,a,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the total.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a;this._actTotal=this._actTotal||{};if(v==null)delete this._actTotal[k];else this._actTotal[k]=v;this.saveAct();rwsSyncKV('act_total',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
   setActPlan(lv,zmk,a,m,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the planned quantity.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actPlan=this._actPlan||{};if(v==null)delete this._actPlan[k];else this._actPlan[k]=v;this.saveAct();rwsSyncKV('act_plan',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
   setActDoneMonth(lv,zmk,a,m,raw,z){if(!(this.rwsIsAdmin()||this.rwsScopeOk(lv,zmk))){this.rwsDeny('Outside your assigned zones.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actDoneM=this._actDoneM||{};if(v==null)delete this._actDoneM[k];else this._actDoneM[k]=v;this.saveAct();rwsSyncKV('act_done_m',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
-  setActVis(lv,zmk,a,shown,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can choose which activities show.');return;}const k=lv+'||'+zmk+'||'+a;this._actHidden=this._actHidden||{};if(shown)delete this._actHidden[k];else this._actHidden[k]=true;this.saveAct();rwsSyncKV('act_hidden',k,(shown?null:true),lv,zmk);this._actRerender(z);}
+  setActVis(lv,zmk,a,mode,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can choose which activities show.');return;}if(mode===true)mode='auto';else if(mode===false)mode='hide';const k=lv+'||'+zmk+'||'+a;this._actHidden=this._actHidden||{};if(mode==='auto')delete this._actHidden[k];else this._actHidden[k]=mode;this.saveAct();rwsSyncKV('act_hidden',k,(mode==='auto'?null:mode),lv,zmk);this._actRerender(z);}
   _selZone(){return this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);}
   addCustomAct(label,unit){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can add activities.');return;}label=(label||'').trim();if(!label)return;const id='act_'+label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,20)+'_'+Math.random().toString(36).slice(2,5);this._actDefs=this._actDefs||[];this._actDefs.push({id,label,unit:(unit||'').trim()});this.saveAct();rwsSyncKV('act_def',id,{label,unit:(unit||'').trim()},null,null);this._actRerender(this._selZone());}
   delCustomAct(id){if(!this.rwsIsAdmin())return;if(!confirm('Delete this custom activity everywhere?'))return;this._actDefs=(this._actDefs||[]).filter(d=>d.id!==id);this.saveAct();rwsSyncKV('act_def',id,null,null,null);this._actRerender(this._selZone());}
@@ -1620,18 +1621,18 @@ class Component extends DCLogic {
     ];
     (this._actDefs||[]).forEach(d=>acts.push({id:d.id,label:d.label,unit:d.unit||'',custom:true,total:this.actTotal(lv,zmk,d.id,null)}));
     const rows=acts.filter(a=>a.custom||this._actApplies(a.id,lv,z)).map(a=>{
-      const hidden=this.actHidden(lv,zmk,a.id); if(!admin&&hidden)return '';
+      const _vis=this.actVisState(lv,zmk,a.id); const hidden=(_vis==='hide');
       const total=a.total;
       const cumThrough=M.slice(0,mi+1).reduce((sx,mm)=>{const v=this.actDoneMonth(lv,zmk,a.id,mm);return sx+(v||0);},0);
       const doneMonths=M.map(mm=>({mm,v:this.actDoneMonth(lv,zmk,a.id,mm),p:this.actPlan(lv,zmk,a.id,mm)})).filter(x=>x.v!=null||x.p!=null);
       const plan=this.actPlan(lv,zmk,a.id,sm), dm=this.actDoneMonth(lv,zmk,a.id,sm);
       const cg=this.actCarry(lv,zmk,a.id,mi);
-      if(!admin && (plan==null||plan===0) && (dm==null||dm===0) && cg.balance<=0) return '';
+      if(!admin){ if(_vis==='hide') return ''; if(_vis!=='show' && (plan==null||plan===0) && (dm==null||dm===0) && cg.balance<=0) return ''; }
       const _balTxt=cg.balance>0?('<b style="color:var(--crit)">owe '+this.fmt(cg.balance)+'</b>'):(cg.balance<0?('<b style="color:var(--done)">ahead '+this.fmt(-cg.balance)+'</b>'):'<b style="color:var(--done)">on track</b>');
       const carryLine=cg.hasData?`<div class="actsub actcarry"><span class="am2" title="Backlog carried in from earlier months = cumulative plan − cumulative done">Backlog in</span> <b>${this.fmt(cg.carryIn)}</b><span class="asep">|</span><span class="am2" title="What to do this month = this-month plan + backlog">Target</span> <b>${this.fmt(cg.required)}</b><span class="asep">|</span><span class="am2">Balance</span> ${_balTxt}${(cg.carryIn>0&&cg.done>0)?`<span class="acum" title="Of what you did this month: cleared old backlog + this-month share">did ${this.fmt(cg.done)} = ${this.fmt(cg.cleared)} backlog + ${this.fmt(cg.current)} this-mo</span>`:''}</div>`:'';
       const pct=(total>0)?Math.min(100,Math.round(cumThrough/total*100)):null;
       const bc=pct==null?'var(--faint)':(pct>=100?'#35c08e':(pct>0?this.cssvar('--wip'):'var(--faint)'));
-      const chk=admin?`<input type="checkbox" class="act-vis" data-a="${a.id}" ${hidden?'':'checked'} title="Show this activity in this zone">`:'';
+      const chk=admin?`<select class="act-vis" data-a="${a.id}" title="User visibility — Auto: based on data · Show: always · Hide: never"><option value="auto"${_vis==='auto'?' selected':''}>Auto</option><option value="show"${_vis==='show'?' selected':''}>Show</option><option value="hide"${_vis==='hide'?' selected':''}>Hide</option></select>`:'';
       const planCell=admin?`<input class="act-plan" data-a="${a.id}" value="${plan==null?'':plan}" placeholder="—" title="Planned in ${sm} (admin)">`:`${plan==null?'—':this.fmt(plan)}`;
       const _ea=this._elemAct(a.id); const _derived=_ea&&this._zoneHasElems(lv,zmk,_ea.types);
       const doneCell=_derived?`<span class="act-derived" title="Auto-counted from the ${_ea.label} list below (by completion date) — stays in sync with the checklist">${dm==null?0:this.fmt(dm)}<span class="lnk" data-jump="${_ea.sec}" title="Jump to the ${_ea.label} list to mark each one complete">✎ Update ${_ea.label}</span></span>`:(canEdit?`<input class="act-donem" data-a="${a.id}" value="${dm==null?'':dm}" placeholder="—" title="Done in ${sm}"${canEdit?'':' disabled'}>`:`${dm==null?'—':this.fmt(dm)}`);
@@ -1795,7 +1796,7 @@ class Component extends DCLogic {
     {const _zk=[this.curLevel,z.mk||z.lid];
      sb.querySelectorAll('.act-plan').forEach(el=>{el.addEventListener('change',()=>{this._flashSel='.act-plan[data-a="'+el.dataset.a+'"]';this.setActPlan(_zk[0],_zk[1],el.dataset.a,this._actMonth,el.value,z);});el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});
      sb.querySelectorAll('.act-donem').forEach(el=>{el.addEventListener('change',()=>{this._flashSel='.act-donem[data-a="'+el.dataset.a+'"]';this.setActDoneMonth(_zk[0],_zk[1],el.dataset.a,this._actMonth,el.value,z);});el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});
-     sb.querySelectorAll('.act-vis').forEach(el=>el.addEventListener('change',()=>this.setActVis(_zk[0],_zk[1],el.dataset.a,el.checked,z)));
+     sb.querySelectorAll('.act-vis').forEach(el=>el.addEventListener('change',()=>this.setActVis(_zk[0],_zk[1],el.dataset.a,el.value,z)));
      sb.querySelectorAll('.actadd').forEach(el=>el.addEventListener('click',()=>{const nm=prompt('New activity name (e.g. Wall):');if(nm==null)return;const un=prompt('Unit (e.g. m, m2, nos) — optional:')||'';this.addCustomAct(nm,un);}));
      sb.querySelectorAll('.actdel').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();this.delCustomAct(el.dataset.a);}));
      const _am=sb.querySelector('.act-month');if(_am)_am.addEventListener('change',()=>{this._actMonth=_am.value;this.selectZone(z);});
