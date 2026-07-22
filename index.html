@@ -686,6 +686,7 @@ class Component extends DCLogic {
     try{this._actPlan=JSON.parse(localStorage.getItem('rws_act_plan')||'{}');}catch(e){this._actPlan={};}
     try{this._actDoneM=JSON.parse(localStorage.getItem('rws_act_donem')||'{}');}catch(e){this._actDoneM={};}
     try{this._actHidden=JSON.parse(localStorage.getItem('rws_act_hidden')||'{}');}catch(e){this._actHidden={};}
+    try{this._editedKeys=JSON.parse(localStorage.getItem('rws_edited_keys')||'{}');}catch(e){this._editedKeys={};}
     try{this._actDefs=JSON.parse(localStorage.getItem('rws_act_defs')||'[]');}catch(e){this._actDefs=[];}
     try{this._zdate=JSON.parse(localStorage.getItem('rws_zdate')||'{}');}catch(e){this._zdate={};}
     try{this._catAdd=JSON.parse(localStorage.getItem('rws_cat_add')||'[]');}catch(e){this._catAdd=[];}
@@ -763,11 +764,16 @@ class Component extends DCLogic {
   actVisState(lv,zmk,a){const v=(this._actHidden||{})[lv+'||'+zmk+'||'+a];return (v==='hide')?'hide':(v==='show'?'show':'auto');}
   actHidden(lv,zmk,a){return this.actVisState(lv,zmk,a)==='hide';}
   saveAct(){try{localStorage.setItem('rws_act_total',JSON.stringify(this._actTotal||{}));localStorage.setItem('rws_act_plan',JSON.stringify(this._actPlan||{}));localStorage.setItem('rws_act_donem',JSON.stringify(this._actDoneM||{}));localStorage.setItem('rws_act_hidden',JSON.stringify(this._actHidden||{}));localStorage.setItem('rws_act_defs',JSON.stringify(this._actDefs||[]));}catch(e){}}
+  saveEdited(){try{localStorage.setItem('rws_edited_keys',JSON.stringify(this._editedKeys||{}));}catch(e){}}
+  isEdited(store,k){return !!(this._editedKeys||{})[store+'||'+k];}
+  markEdited(store,k){this._editedKeys=this._editedKeys||{};this._editedKeys[store+'||'+k]=true;this.saveEdited();}
+  toggleEdited(store,k){this._editedKeys=this._editedKeys||{};const kk=store+'||'+k;if(this._editedKeys[kk])delete this._editedKeys[kk];else this._editedKeys[kk]=true;this.saveEdited();this._actRerender(this._selZone());}
+  _lockIco(store,k){if(!this.rwsIsAdmin())return '';const on=this.isEdited(store,k);return `<span class="act-lock" data-store="${store}" data-k="${this.esc(k)}" title="${on?'Locked — Import will NOT overwrite this value. Click to unlock.':'Click to lock — Import will not overwrite this value (editing still works).'}" style="cursor:pointer;font-size:11px;margin-left:2px">${on?'🔒':'🔓'}</span>`;}
   _actRerender(z){this.render();const zz=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(zz)this.selectZone(zz);else if(z)this.selectZone(z);}
   _numOrNull(raw){const s=String(raw==null?'':raw).replace(/,/g,'').trim();const v=s===''?null:parseFloat(s);if(v!=null&&(isNaN(v)||v<0))return undefined;return v;}
-  setActTotal(lv,zmk,a,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the total.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a;this._actTotal=this._actTotal||{};if(v==null)delete this._actTotal[k];else this._actTotal[k]=v;this.saveAct();rwsSyncKV('act_total',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
-  setActPlan(lv,zmk,a,m,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the planned quantity.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actPlan=this._actPlan||{};if(v==null)delete this._actPlan[k];else this._actPlan[k]=v;this.saveAct();rwsSyncKV('act_plan',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
-  setActDoneMonth(lv,zmk,a,m,raw,z){if(!(this.rwsIsAdmin()||this.rwsScopeOk(lv,zmk))){this.rwsDeny('Outside your assigned zones.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actDoneM=this._actDoneM||{};if(v==null)delete this._actDoneM[k];else this._actDoneM[k]=v;this.saveAct();rwsSyncKV('act_done_m',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
+  setActTotal(lv,zmk,a,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the total.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a;this._actTotal=this._actTotal||{};if(v==null)delete this._actTotal[k];else this._actTotal[k]=v;this.saveAct();this.markEdited('act_total',k);rwsSyncKV('act_total',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
+  setActPlan(lv,zmk,a,m,raw,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can set the planned quantity.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actPlan=this._actPlan||{};if(v==null)delete this._actPlan[k];else this._actPlan[k]=v;this.saveAct();this.markEdited('act_plan',k);rwsSyncKV('act_plan',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
+  setActDoneMonth(lv,zmk,a,m,raw,z){if(!(this.rwsIsAdmin()||this.rwsScopeOk(lv,zmk))){this.rwsDeny('Outside your assigned zones.');return;}const v=this._numOrNull(raw);if(v===undefined)return;const k=lv+'||'+zmk+'||'+a+'||'+m;this._actDoneM=this._actDoneM||{};if(v==null)delete this._actDoneM[k];else this._actDoneM[k]=v;this.saveAct();if(this.rwsIsAdmin())this.markEdited('act_done_m',k);rwsSyncKV('act_done_m',k,(v==null?null:v),lv,zmk);this._actRerender(z);}
   setActVis(lv,zmk,a,mode,z){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can choose which activities show.');return;}if(mode===true)mode='auto';else if(mode===false)mode='hide';const k=lv+'||'+zmk+'||'+a;this._actHidden=this._actHidden||{};if(mode==='auto')delete this._actHidden[k];else this._actHidden[k]=mode;this.saveAct();rwsSyncKV('act_hidden',k,(mode==='auto'?null:mode),lv,zmk);this._actRerender(z);}
   _selZone(){return this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);}
   addCustomAct(label,unit){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can add activities.');return;}label=(label||'').trim();if(!label)return;const id='act_'+label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,20)+'_'+Math.random().toString(36).slice(2,5);this._actDefs=this._actDefs||[];this._actDefs.push({id,label,unit:(unit||'').trim()});this.saveAct();rwsSyncKV('act_def',id,{label,unit:(unit||'').trim()},null,null);this._actRerender(this._selZone());}
@@ -1639,7 +1645,7 @@ class Component extends DCLogic {
       const mn=doneMonths.length?`<div class="actmn">Done/Plan: ${doneMonths.map(x=>`<span class="${x.mm===sm?'on':''}">${this.esc(x.mm)} <b>${this.fmt(x.v||0)}${x.p!=null?'/'+this.fmt(x.p):''}</b></span>`).join('')}</div>`:'';
       return `<div class="actrow ${hidden?'act-off':''}">${chk}<span class="actlbl">${a.label}${(admin&&hidden)?' <span class="hiddentag">hidden from users</span>':''}${(a.custom&&admin)?' <span class="lnk actdel" data-a="'+a.id+'" style="color:var(--crit);cursor:pointer" title="Delete custom activity">✕</span>':''}</span><span class="actbar"><i style="width:${Math.min(pct||0,100)}%;background:${bc}"></i></span><span class="actpct" style="color:${bc}">${pct==null?'—':pct+'%'}</span></div>`+
         (a.info?`<div class="actinfotext">&#9432; ${this.esc(a.info)}</div>`:``)+
-        `<div class="actsub"><span class="am">${sm}</span><span class="am2">Plan</span>${planCell}<span class="asep">|</span><span class="am2">Done</span>${doneCell}<span class="acum">by ${sm}: ${this.fmt(cumThrough)}${total==null?'':' / '+this.fmt(total)} ${a.unit}</span></div>`+carryLine+mn;
+        `<div class="actsub"><span class="am">${sm}</span><span class="am2">Plan</span>${planCell}${this._lockIco('act_plan',lv+'||'+zmk+'||'+a.id+'||'+sm)}<span class="asep">|</span><span class="am2">Done</span>${doneCell}${this._lockIco('act_done_m',lv+'||'+zmk+'||'+a.id+'||'+sm)}<span class="acum">by ${sm}: ${this.fmt(cumThrough)}${total==null?'':' / '+this.fmt(total)} ${a.unit}</span></div>`+carryLine+mn;
     }).join('');
     const opts=M.map(mm=>`<option value="${mm}" ${mm===sm?'selected':''}>${mm}${mm===curL?' (now)':''}</option>`).join('');
     const nav=`<div style="display:flex;align-items:center;gap:5px">
@@ -1796,6 +1802,7 @@ class Component extends DCLogic {
     {const _zk=[this.curLevel,z.mk||z.lid];
      sb.querySelectorAll('.act-plan').forEach(el=>{el.addEventListener('change',()=>{this._flashSel='.act-plan[data-a="'+el.dataset.a+'"]';this.setActPlan(_zk[0],_zk[1],el.dataset.a,this._actMonth,el.value,z);});el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});
      sb.querySelectorAll('.act-donem').forEach(el=>{el.addEventListener('change',()=>{this._flashSel='.act-donem[data-a="'+el.dataset.a+'"]';this.setActDoneMonth(_zk[0],_zk[1],el.dataset.a,this._actMonth,el.value,z);});el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});
+     sb.querySelectorAll('.act-lock').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();this.toggleEdited(el.dataset.store,el.dataset.k);}));
      sb.querySelectorAll('.act-vis').forEach(el=>el.addEventListener('change',()=>this.setActVis(_zk[0],_zk[1],el.dataset.a,el.value,z)));
      sb.querySelectorAll('.actadd').forEach(el=>el.addEventListener('click',()=>{const nm=prompt('New activity name (e.g. Wall):');if(nm==null)return;const un=prompt('Unit (e.g. m, m2, nos) — optional:')||'';this.addCustomAct(nm,un);}));
      sb.querySelectorAll('.actdel').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();this.delCustomAct(el.dataset.a);}));
@@ -2123,7 +2130,7 @@ class Component extends DCLogic {
         totals:{area_m2:z.area||0,columns:c.columns||0,pilecap:c.pilecap||0,mainbeam:c.mainbeam||0,steelbeam:c.steelbeam||0,lift:z.lifts?z.lifts.length:0,stair:z.stairs?z.stairs.length:0},
         progress_pct:p.pct==null?null:p.pct,status:p.status||'todo'});});});
     const out={meta:{project:'RWS P1 CJ',exported_at:new Date().toISOString(),exported_by:(this._rwsUser&&this._rwsUser.username)||'',project_pct:this.projPct,act_months:this.ACT_MONTHS},
-      current_state:{element_status:this.elem,element_dates:this._elemDate||{},act_total:this._actTotal||{},act_plan:this._actPlan||{},act_done_m:this._actDoneM||{},act_hidden:this._actHidden||{},act_defs:this._actDefs||[],custom_categories:this._catAdd||[],custom_items:this._elemAdd||{},slab_actual_qty:this._zpOv||{},quantity_overrides:this._qtyOv||{},plan_qty_overrides:this._zpPlanOv||{},critical:this._critOv||{},zone_updates:this.updates||{}},
+      current_state:{element_status:this.elem,element_dates:this._elemDate||{},act_total:this._actTotal||{},act_plan:this._actPlan||{},act_done_m:this._actDoneM||{},act_hidden:this._actHidden||{},act_defs:this._actDefs||[],custom_categories:this._catAdd||[],custom_items:this._elemAdd||{},slab_actual_qty:this._zpOv||{},quantity_overrides:this._qtyOv||{},plan_qty_overrides:this._zpPlanOv||{},critical:this._critOv||{},zone_updates:this.updates||{},edited_keys:this._editedKeys||{}},
       zones};
     if(this.rwsIsAdmin()){ try{out.accounts=await rwsAdminListUsers();}catch(e){out.accounts_error=e.message;} try{out.activity_log=await rwsAdminActivityLog(5000);}catch(e){out.activity_log_error=e.message;} }
     return out;
@@ -2131,7 +2138,7 @@ class Component extends DCLogic {
   _downloadJson(obj,name){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},400);}
   async exportFullJson(){const btn=this.root.querySelector('#exportJson');if(btn)btn.textContent='⏳ Building…';try{const d=await this.buildFullExport();this._downloadJson(d,'RWS_P1_CJ_full_'+new Date().toISOString().slice(0,10)+'.json');}catch(e){alert('Export failed: '+e.message);}finally{if(btn)btn.textContent='⬇ Full JSON';}}
   async rwsMaybeDailyExport(){if(!this.rwsIsAdmin())return;const today=new Date().toISOString().slice(0,10);let last='';try{last=localStorage.getItem('rws_last_daily_export')||'';}catch(e){}if(last===today)return;try{const d=await this.buildFullExport();this._downloadJson(d,'RWS_P1_CJ_daily_'+today+'.json');localStorage.setItem('rws_last_daily_export',today);}catch(e){console.warn('[rws] daily export failed',e);}}
-  snapshot(){return {v:2,project:'RWS P1 CJ',savedAt:new Date().toISOString(),elem:this.elem,elemDate:this._elemDate,updates:this.updates,zpOv:this._zpOv,crit:this._critOv,actTotal:this._actTotal,actPlan:this._actPlan,actDoneM:this._actDoneM,actHidden:this._actHidden,actDefs:this._actDefs,catAdd:this._catAdd,elemAdd:this._elemAdd};}
+  snapshot(){return {v:2,project:'RWS P1 CJ',savedAt:new Date().toISOString(),elem:this.elem,elemDate:this._elemDate,updates:this.updates,zpOv:this._zpOv,crit:this._critOv,actTotal:this._actTotal,actPlan:this._actPlan,actDoneM:this._actDoneM,actHidden:this._actHidden,actDefs:this._actDefs,catAdd:this._catAdd,elemAdd:this._elemAdd,editedKeys:this._editedKeys};}
   saveLock(){
     if(this._locking)return; this._locking=true; setTimeout(()=>{this._locking=false;},900);
     const S='<'+'script', ES='<'+'/script>';
@@ -2152,7 +2159,7 @@ class Component extends DCLogic {
       const m=txt.match(/<script id="locked-data"[^>]*>([\s\S]*?)<\/script>/i);
       if(m||(txt.trim()[0]==='{')){
         let data=JSON.parse(m?m[1]:txt);
-        if(data.current_state){const cs=data.current_state;data={elem:cs.element_status,elemDate:cs.element_dates,updates:cs.zone_updates,zpOv:cs.slab_actual_qty,qtyOv:cs.quantity_overrides,zpPlanOv:cs.plan_qty_overrides,crit:cs.critical,actTotal:cs.act_total,actPlan:cs.act_plan,actDoneM:cs.act_done_m,actHidden:cs.act_hidden,actDefs:cs.act_defs,catAdd:cs.custom_categories,elemAdd:cs.custom_items,zdate:cs.zone_dates};}
+        if(data.current_state){const cs=data.current_state;data={elem:cs.element_status,elemDate:cs.element_dates,updates:cs.zone_updates,zpOv:cs.slab_actual_qty,qtyOv:cs.quantity_overrides,zpPlanOv:cs.plan_qty_overrides,crit:cs.critical,actTotal:cs.act_total,actPlan:cs.act_plan,actDoneM:cs.act_done_m,actHidden:cs.act_hidden,actDefs:cs.act_defs,catAdd:cs.custom_categories,elemAdd:cs.custom_items,zdate:cs.zone_dates,editedKeys:cs.edited_keys};}
         if(data.elem){this.elem={...this.elem,...data.elem};elemN=Object.keys(data.elem).length;}
         if(data.updates){Object.keys(data.updates).forEach(k=>{this.updates[k]=data.updates[k];});updN=Object.keys(data.updates).length;}
         if(data.elemDate){this._elemDate={...(this._elemDate||{}),...data.elemDate};}
@@ -2160,18 +2167,20 @@ class Component extends DCLogic {
         if(data.qtyOv){this._qtyOv={...(this._qtyOv||{}),...data.qtyOv};}
         if(data.zpPlanOv){this._zpPlanOv={...(this._zpPlanOv||{}),...data.zpPlanOv};}
         if(data.crit){this._critOv={...(this._critOv||{}),...data.crit};critN=Object.keys(data.crit).length;}
-        if(data.actTotal){this._actTotal={...(this._actTotal||{}),...data.actTotal};}
-        if(data.actPlan){this._actPlan={...(this._actPlan||{}),...data.actPlan};planN=Object.keys(data.actPlan).length;}
-        if(data.actDoneM){this._actDoneM={...(this._actDoneM||{}),...data.actDoneM};actN=Object.keys(data.actDoneM).length;}
-        if(data.actHidden){this._actHidden={...(this._actHidden||{}),...data.actHidden};}
-        [['_actPlan',data.actPlan],['_actTotal',data.actTotal],['_actDoneM',data.actDoneM]].forEach(([s,src])=>{if(src){const ob=this[s];if(ob)Object.keys(src).forEach(k=>{if(src[k]==null)delete ob[k];});}});
+        const _applyKV=(store,localObj,src)=>{if(!src)return 0;let n=0;Object.keys(src).forEach(k=>{if(this.isEdited(store,k))return;const v=src[k];if(v==null)delete localObj[k];else localObj[k]=v;n++;});return n;};
+        this._actTotal=this._actTotal||{};this._actPlan=this._actPlan||{};this._actDoneM=this._actDoneM||{};this._actHidden=this._actHidden||{};
+        _applyKV('act_total',this._actTotal,data.actTotal);
+        planN=_applyKV('act_plan',this._actPlan,data.actPlan);
+        actN=_applyKV('act_done_m',this._actDoneM,data.actDoneM);
+        _applyKV('act_hidden',this._actHidden,data.actHidden);
+        if(data.editedKeys&&typeof data.editedKeys==='object'){this._editedKeys={...(this._editedKeys||{}),...data.editedKeys};this.saveEdited();}
         if(Array.isArray(data.actDefs)){this._actDefs=this._actDefs||[];data.actDefs.forEach(d=>{if(d&&d.id&&!this._actDefs.some(x=>x.id===d.id))this._actDefs.push(d);});}
         if(data.zdate&&typeof data.zdate==='object'){this._zdate={...(this._zdate||{}),...data.zdate};try{localStorage.setItem('rws_zdate',JSON.stringify(this._zdate));}catch(e){}}
         if(Array.isArray(data.catAdd)){this._catAdd=this._catAdd||[];data.catAdd.forEach(c=>{if(c&&c.code&&!this._catAdd.some(x=>x.code===c.code))this._catAdd.push({code:c.code,label:c.label});});}
         if(data.elemAdd&&typeof data.elemAdd==='object'){this._elemAdd=this._elemAdd||{};Object.keys(data.elemAdd).forEach(k=>{const cur=this._elemAdd[k]||(this._elemAdd[k]=[]);(data.elemAdd[k]||[]).forEach(id=>{if(cur.indexOf(id)<0)cur.push(id);});});}
         if(data.catAdd||data.elemAdd){this.saveCustom&&this.saveCustom();}
         try{if(typeof rwsGetSession==='function'&&rwsGetSession()){
-          const pv=(store,obj,parse)=>{Object.keys(obj||{}).forEach(k=>{let lv=null,mk=null;if(parse){const pp=k.split('||');lv=pp[0];mk=pp[1];}rwsSyncKV(store,k,obj[k],lv,mk);});};
+          const pv=(store,obj,parse)=>{Object.keys(obj||{}).forEach(k=>{if(this.isEdited(store,k))return;let lv=null,mk=null;if(parse){const pp=k.split('||');lv=pp[0];mk=pp[1];}rwsSyncKV(store,k,obj[k],lv,mk);});};
           pv('act_plan',data.actPlan,true);pv('act_total',data.actTotal,true);pv('act_done_m',data.actDoneM,true);pv('act_hidden',data.actHidden,true);pv('elem_date',data.elemDate,true);pv('crit',data.crit,false);pv('zdate',data.zdate,false);
           if(data.elem&&typeof rwsSyncElementStatus==='function')Object.keys(data.elem).forEach(k=>rwsSyncElementStatus(k,data.elem[k]));
         }}catch(e){console.warn('import cloud-sync skipped',e);}
