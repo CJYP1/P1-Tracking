@@ -718,7 +718,7 @@ class Component extends DCLogic {
   zd(lv,z){const v=(this._zdate||{})[lv+'||'+(z.mk||z.lid)];return v&&v.start?v:null;}
   hex2rgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
   lerpHex(a,b,t){const A=this.hex2rgb(a),B=this.hex2rgb(b);return 'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')';}
-  progColor(p){p=p/100;return p<0.5?this.lerpHex('#e5484d','#f5b23c',p/0.5):this.lerpHex('#f5b23c','#22c55e',(p-0.5)/0.5);}
+  progColor(p){p=this.clamp((p||0)/100,0,1);return p<0.5?this.lerpHex('#9aa0a8','#3b82f6',p/0.5):this.lerpHex('#3b82f6','#22c55e',(p-0.5)/0.5);}
   cssvar(v){return getComputedStyle(this.root).getPropertyValue(v).trim();}
   zid(z){return z.mk||('_'+z.lid);}
   zoneVisible(z){return this.filterCat==='all'||(z.cat||'NB')===this.filterCat;}
@@ -908,10 +908,6 @@ class Component extends DCLogic {
     if(!parts.length)return null;
     return {pct:Math.round(parts.reduce((a,b)=>a+b,0)/parts.length*100),n:parts.length};}
   /* Slab casting status for map colouring (mirrors column status): none/todo/wip/done */
-  slabStatus(lv,z){const zmk=z.mk||z.lid,tot=z.area||0,M=this.ACT_MONTHS;let done=0;
-    M.forEach(m=>{done+=this.actDoneMonth(lv,zmk,'slab',m)||0;});
-    if(tot<=0&&done<=0)return 'none';const r=tot>0?done/tot:(done>0?1:0);
-    return r>=1?'done':(r>0?'wip':'todo');}
   elemDoneInMonth(lv,zmk,types,m){const z=(this.DATA.levels[lv]?this.DATA.levels[lv].zones:[]).find(x=>(x.mk||x.lid)===zmk);if(!z)return null;let n=0;types.forEach(tp=>{this._zoneElemList(z,tp).forEach(x=>{const id=(typeof x==='string')?x:x.id;const k=this.ekey(lv,z,tp,id);if(this.elemStatus(k)==='done'){const d=this.elemDate(k)||this.todayISOStr();if(this.dateToActMonth(d)===m)n++;}});});return n>0?n:null;}
 
   /* ---------- cloud sync (Supabase accounts + per-record sync) ---------- */
@@ -1197,12 +1193,7 @@ class Component extends DCLogic {
   zoneHasPlan(lv,z,m){return this.zonePlanItems(lv,z,m).length>0;}
   zoneFill(z){
     if(this.colorMode==='plan') return this.zoneHasPlan(this.curLevel,z,this.planMonth())?(this.CAT[z.cat]||this.CAT.NB).c:'#9aa0a8';
-    if(this.colorMode==='area'){
-      const ss=this.slabStatus(this.curLevel,z);
-      if(ss==='done')return this.cssvar('--done');
-      if(ss==='wip')return this.cssvar('--wip');
-      return (this.CAT[z.cat]||this.CAT.NB).c;
-    }
+    if(this.colorMode==='area') return (this.CAT[z.cat]||this.CAT.NB).c;
     if(this.colorMode==='progress') return this.progColor(this.zoneDisplayPct(z).pct);
     // quantity heat
     const t=this.clamp(this.mval(z,this.curMetric)/this.levelMax(),0,1);
