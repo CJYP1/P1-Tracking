@@ -567,7 +567,7 @@ async function rwsAdminUpsertUser(u){ const s=rwsGetSession(); if(!s) throw new 
     <span id="rwsUserInfo" style="font-size:11px;color:var(--dim);font-weight:600"></span>
     <button class="hbtn" id="rwsLogoutBtn" style="display:none">Log out</button>
     <button class="hbtn" id="rwsAdminBtn" style="display:none">🔐 Admin</button>
-    <button class="hbtn primary" id="openSched">📅 Construction Schedule</button>
+    <button class="hbtn primary" id="openSched" style="display:none">📅 Construction Schedule</button>
     <button class="hbtn primary" id="saveLock" style="display:none" title="Save the whole page — all progress embedded — as one HTML file to forward or archive">💾 Save</button>
     <button class="hbtn" id="loadLock" style="display:none" title="Import data (P6 plan / saved backup) — merges into the map and syncs to the cloud">📥 Import</button>
     <button class="hbtn" id="exportXls" style="display:none" title="Export the progress table to Excel">⬇ Excel</button>
@@ -944,7 +944,7 @@ class Component extends DCLogic {
   }
   rwsRenderUserBar(){
     const info=this.root.querySelector('#rwsUserInfo'), lo=this.root.querySelector('#rwsLogoutBtn'), ab=this.root.querySelector('#rwsAdminBtn'), jb=this.root.querySelector('#exportJson');
-    const adminOnly=['#saveLock','#loadLock','#exportXls','#openTable','#exportJson'].map(s=>this.root.querySelector(s)).filter(Boolean);
+    const adminOnly=['#openSched','#saveLock','#loadLock','#exportXls','#openTable','#exportJson'].map(s=>this.root.querySelector(s)).filter(Boolean);
     const u=this._rwsUser;
     if(!u){info.textContent='';lo.style.display='none';ab.style.display='none';adminOnly.forEach(b=>b.style.display='none');return;}
     let areaTxt='';
