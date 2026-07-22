@@ -1625,8 +1625,8 @@ class Component extends DCLogic {
       const cumThrough=M.slice(0,mi+1).reduce((sx,mm)=>{const v=this.actDoneMonth(lv,zmk,a.id,mm);return sx+(v||0);},0);
       const doneMonths=M.map(mm=>({mm,v:this.actDoneMonth(lv,zmk,a.id,mm),p:this.actPlan(lv,zmk,a.id,mm)})).filter(x=>x.v!=null||x.p!=null);
       const plan=this.actPlan(lv,zmk,a.id,sm), dm=this.actDoneMonth(lv,zmk,a.id,sm);
-      if(!admin && (plan==null||plan===0) && (dm==null||dm===0)) return '';
       const cg=this.actCarry(lv,zmk,a.id,mi);
+      if(!admin && (plan==null||plan===0) && (dm==null||dm===0) && cg.balance<=0) return '';
       const _balTxt=cg.balance>0?('<b style="color:var(--crit)">owe '+this.fmt(cg.balance)+'</b>'):(cg.balance<0?('<b style="color:var(--done)">ahead '+this.fmt(-cg.balance)+'</b>'):'<b style="color:var(--done)">on track</b>');
       const carryLine=cg.hasData?`<div class="actsub actcarry"><span class="am2" title="Backlog carried in from earlier months = cumulative plan − cumulative done">Backlog in</span> <b>${this.fmt(cg.carryIn)}</b><span class="asep">|</span><span class="am2" title="What to do this month = this-month plan + backlog">Target</span> <b>${this.fmt(cg.required)}</b><span class="asep">|</span><span class="am2">Balance</span> ${_balTxt}${(cg.carryIn>0&&cg.done>0)?`<span class="acum" title="Of what you did this month: cleared old backlog + this-month share">did ${this.fmt(cg.done)} = ${this.fmt(cg.cleared)} backlog + ${this.fmt(cg.current)} this-mo</span>`:''}</div>`:'';
       const pct=(total>0)?Math.min(100,Math.round(cumThrough/total*100)):null;
