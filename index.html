@@ -752,6 +752,8 @@ class Component extends DCLogic {
   /* ---------- zone activities: per-month plan / actual (Total + Planned/Done by month) ---------- */
   actCurLabel(){const AB={January:'Jan',February:'Feb',March:'Mar',April:'Apr',May:'May',June:'Jun',July:'Jul',August:'Aug',September:'Sep',October:'Oct',November:'Nov',December:'Dec'};const p=((this.ZP&&this.ZP.current)||'July 2026').split(' ');return (AB[p[0]]||p[0])+"'"+String(p[1]||'2026').slice(2);}
   actDefaultMonth(){const c=this.actCurLabel();return this.ACT_MONTHS.indexOf(c)>=0?c:this.ACT_MONTHS[this.ACT_MONTHS.length-1];}
+  visMonths(){const M=this.ACT_MONTHS;if(this.rwsIsAdmin())return M;const i=M.indexOf("Aug'26");return i>=0?M.slice(0,i+1):M;}
+  actDefaultMonthVis(){const dm=this.actDefaultMonth(),VM=this.visMonths();return VM.indexOf(dm)>=0?dm:VM[VM.length-1];}
   actTotal(lv,zmk,a,def){const v=(this._actTotal||{})[lv+'||'+zmk+'||'+a];return v==null?def:v;}
   /* Auto excavation volume — NEW BASEMENT only: B1 area×8.5m, B2 area×6m */
   excDepth(lv){return lv==='B1'?8.5:(lv==='B2'?6:null);}
@@ -1195,7 +1197,7 @@ class Component extends DCLogic {
 
   /* ---- Monthly-plan overview: which zones have planned work in a given month ---- */
   _actMeta(){return [{id:'col',label:'Columns',unit:'nos'},{id:'pile',label:'Pile Caps',unit:'nos'},{id:'mbeam',label:'Main Beams',unit:'nos'},{id:'sbeam',label:'Steel Beams',unit:'nos'},{id:'ls',label:'Lift / Stairs',unit:'nos'},{id:'exc',label:'Excavation',unit:'m³'},{id:'demo',label:'Demolition',unit:'m³'},{id:'slab',label:'Cast Slab',unit:'m²'}].concat((this._actDefs||[]).map(d=>({id:d.id,label:d.label,unit:d.unit||''})));}
-  planMonth(){if(!this._planMonth||this.ACT_MONTHS.indexOf(this._planMonth)<0)this._planMonth=this.actDefaultMonth();return this._planMonth;}
+  planMonth(){if(!this._planMonth||this.visMonths().indexOf(this._planMonth)<0)this._planMonth=this.actDefaultMonthVis();return this._planMonth;}
   zonePlanItems(lv,z,m){const zmk=z.mk||z.lid;const out=[];this._actMeta().forEach(a=>{if(this.actHidden(lv,zmk,a.id))return;const p=this.actPlan(lv,zmk,a.id,m);if(p!=null&&p>0)out.push({label:a.label,qty:p,unit:a.unit});});return out;}
   zoneHasPlan(lv,z,m){return this.zonePlanItems(lv,z,m).length>0;}
   zoneFill(z){
@@ -1536,7 +1538,7 @@ class Component extends DCLogic {
     this.root.querySelector('#sideTitle').innerHTML=`<span>${this.curLevel} · ${this.esc(this.DATA.levels[this.curLevel].title)}</span><span class="pill">${arr.length} zones</span>`;
     let s=`<div class="listhint" style="font-size:11.5px;color:var(--faint);padding:16px 6px;line-height:1.7">Select a zone on the map to view its details.<br><span style="font-size:10px">${arr.length} zones on this level · switch <b>Colour</b> to <b>Planned (month)</b> for the monthly plan overview.</span></div>`;
     if(this.colorMode==='plan'){
-      const m=this.planMonth(), M=this.ACT_MONTHS, mi=M.indexOf(m), curL=this.actCurLabel();
+      const m=this.planMonth(), M=this.visMonths(), mi=M.indexOf(m), curL=this.actCurLabel();
       const planned=arr.map(z=>({z,items:this.zonePlanItems(this.curLevel,z,m)})).filter(x=>x.items.length)
                       .sort((a,b)=>this.esc(a.z.label).localeCompare(this.esc(b.z.label)));
       const opts=M.map(mm=>`<option value="${mm}" ${mm===m?'selected':''}>${mm}${mm===curL?' (now)':''}</option>`).join('');
@@ -1612,8 +1614,8 @@ class Component extends DCLogic {
   zpSection(z){
     const lv=this.curLevel, zmk=z.mk||z.lid;
     const canEdit=this.rwsIsAdmin()||this.rwsScopeOk(lv,zmk), admin=this.rwsIsAdmin();
-    const c=z.counts||{}, M=this.ACT_MONTHS;
-    if(!this._actMonth||M.indexOf(this._actMonth)<0)this._actMonth=this.actDefaultMonth();
+    const c=z.counts||{}, M=this.visMonths();
+    if(!this._actMonth||M.indexOf(this._actMonth)<0)this._actMonth=this.actDefaultMonthVis();
     const sm=this._actMonth, mi=M.indexOf(sm), curL=this.actCurLabel();
     const acts=[
       {id:'col',label:'Columns',unit:'nos',total:c.columns||0},
