@@ -374,6 +374,18 @@ details.sec>summary>span{margin-left:auto}
 .zst-info b{color:var(--txt);font-size:14px}
 .zst-sep{color:var(--line)}
 .zst-m{color:var(--accent);font-weight:800;font-size:12.5px}
+.planhd{margin-bottom:10px}
+.planhd .t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--accent)}
+.plan-monthbar{display:flex;align-items:center;gap:6px;margin:8px 0 6px}
+.plan-monthbar select{flex:1;font-size:12.5px;font-weight:700;padding:6px 8px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--txt)}
+.plan-sub{font-size:10px;color:var(--faint);line-height:1.5}
+.planzone{padding:8px 9px;border-radius:8px;margin-bottom:6px;border:1px solid var(--line);cursor:pointer;transition:.1s}
+.planzone:hover{background:var(--panel2);border-color:var(--accent)}
+.pz-nm{font-size:12.5px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.pz-nm .sw{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.pz-acts{display:flex;flex-direction:column;gap:2px}
+.pz-act{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;color:var(--dim)}
+.pz-act b{color:var(--txt);font-weight:700;white-space:nowrap}
 .foot{padding:8px 14px;font-size:9.5px;color:var(--faint);border-top:1px solid var(--line);line-height:1.5}
 .empty{color:var(--faint);font-size:10.5px;font-style:italic}
 .hbtn{border:1px solid var(--line);background:var(--panel2);color:var(--txt);border-radius:8px;padding:7px 12px;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap}
@@ -1178,7 +1190,13 @@ class Component extends DCLogic {
     return {pct:z._p?z._p.pct:0,cat:false};}
   progCategoryActive(){const t=this.catTypesFor(this.curMetric);if(!t)return false;return this.DATA.levels[this.curLevel].zones.some(z=>this.catStats(this.curLevel,z,t).total>0);}
 
+  /* ---- Monthly-plan overview: which zones have planned work in a given month ---- */
+  _actMeta(){return [{id:'col',label:'Columns',unit:'nos'},{id:'pile',label:'Pile Caps',unit:'nos'},{id:'mbeam',label:'Main Beams',unit:'nos'},{id:'sbeam',label:'Steel Beams',unit:'nos'},{id:'ls',label:'Lift / Stairs',unit:'nos'},{id:'exc',label:'Excavation',unit:'m³'},{id:'demo',label:'Demolition',unit:'m³'},{id:'slab',label:'Cast Slab',unit:'m²'}].concat((this._actDefs||[]).map(d=>({id:d.id,label:d.label,unit:d.unit||''})));}
+  planMonth(){if(!this._planMonth||this.ACT_MONTHS.indexOf(this._planMonth)<0)this._planMonth=this.actDefaultMonth();return this._planMonth;}
+  zonePlanItems(lv,z,m){const zmk=z.mk||z.lid;const out=[];this._actMeta().forEach(a=>{if(this.actHidden(lv,zmk,a.id))return;const p=this.actPlan(lv,zmk,a.id,m);if(p!=null&&p>0)out.push({label:a.label,qty:p,unit:a.unit});});return out;}
+  zoneHasPlan(lv,z,m){return this.zonePlanItems(lv,z,m).length>0;}
   zoneFill(z){
+    if(this.colorMode==='plan') return this.zoneHasPlan(this.curLevel,z,this.planMonth())?(this.CAT[z.cat]||this.CAT.NB).c:'#9aa0a8';
     if(this.colorMode==='area'){
       const ss=this.slabStatus(this.curLevel,z);
       if(ss==='done')return this.cssvar('--done');
@@ -1208,7 +1226,8 @@ class Component extends DCLogic {
       const vis=this.zoneVisible(z);
       const pts=z.ring.map(p=>{const q=this.proj(p,H);return q[0].toFixed(1)+','+q[1].toFixed(1);}).join(' ');
       const crit=vis&&this.showCrit&&z.crit?' critln':'';
-      const op=vis?(this.colorMode==='area'?0.5:0.72):0.05;
+      let op=vis?(this.colorMode==='area'?0.5:0.72):0.05;
+      if(vis&&this.colorMode==='plan')op=this.zoneHasPlan(this.curLevel,z,this.planMonth())?0.62:0.06;
       s+=`<polygon class="zone${vis?'':' dim'}${crit}" data-i="${i}" points="${pts}" fill="${this.zoneFill(z)}" fill-opacity="${op}"/>`;
     });
     {const _hk=['podcis','podium','transfer'].filter(k=>this.showOvl[k]);
@@ -1517,11 +1536,22 @@ class Component extends DCLogic {
     arr.sort((a,b)=>this.mval(b,this.curMetric)-this.mval(a,this.curMetric));
     const m=this.METRICS.find(x=>x.k===this.curMetric),mx=this.levelMax();
     this.root.querySelector('#sideTitle').innerHTML=`<span>${this.curLevel} · ${this.esc(this.DATA.levels[this.curLevel].title)}</span><span class="pill">${arr.length} zones</span>`;
-    let s=`<div class="listhint" style="font-size:11.5px;color:var(--faint);padding:16px 6px;line-height:1.7">Select a zone on the map to view its details.<br><span style="font-size:10px">${arr.length} zones on this level</span></div>`;
+    let s=`<div class="listhint" style="font-size:11.5px;color:var(--faint);padding:16px 6px;line-height:1.7">Select a zone on the map to view its details.<br><span style="font-size:10px">${arr.length} zones on this level · switch <b>Colour</b> to <b>Planned (month)</b> for the monthly plan overview.</span></div>`;
+    if(this.colorMode==='plan'){
+      const m=this.planMonth(), M=this.ACT_MONTHS, mi=M.indexOf(m), curL=this.actCurLabel();
+      const planned=arr.map(z=>({z,items:this.zonePlanItems(this.curLevel,z,m)})).filter(x=>x.items.length)
+                      .sort((a,b)=>this.esc(a.z.label).localeCompare(this.esc(b.z.label)));
+      const opts=M.map(mm=>`<option value="${mm}" ${mm===m?'selected':''}>${mm}${mm===curL?' (now)':''}</option>`).join('');
+      s=`<div class="planhd"><div class="t">📅 Monthly plan · ${this.curLevel}</div><div class="plan-monthbar"><button class="hbtn planm-nav" data-dir="-1" ${mi<=0?'disabled':''}>‹</button><select class="plan-month">${opts}</select><button class="hbtn planm-nav" data-dir="1" ${mi>=M.length-1?'disabled':''}>›</button></div><div class="plan-sub"><b style="color:var(--accent)">${planned.length}</b> of ${arr.length} zones have planned work in <b>${m}</b> · grey = none planned</div></div>`;
+      if(!planned.length){ s+=`<div class="empty" style="padding:16px 6px">No zones have planned activity in ${m}.</div>`; }
+      else { s+=planned.map(({z,items})=>`<div class="planzone" data-k="${this.esc(this.zid(z))}"><div class="pz-nm"><span class="sw" style="background:${(this.CAT[z.cat]||this.CAT.NB).c}"></span>${this.esc(z.label)}${z.crit?' <span style="color:var(--crit)">◆</span>':''}</div><div class="pz-acts">${items.map(it=>`<div class="pz-act"><span>${this.esc(it.label)}</span><b>${this.fmt(it.qty)} ${this.esc(it.unit)}</b></div>`).join('')}</div></div>`).join(''); }
+    }
     const sb=this.root.querySelector('#sidebody');
     if(!this.selKey||arr.every(z=>this.zid(z)!==this.selKey))sb.innerHTML=s;
     sb.querySelectorAll('.crow').forEach(el=>el.addEventListener('click',()=>{this.setLevel(el.dataset.lv);}));
-    sb.querySelectorAll('.zrow').forEach(el=>el.addEventListener('click',()=>{const z=arr.find(x=>this.zid(x)===el.dataset.k);this.selKey=this.zid(z);this.selectZone(z);this.paintSel();this.paintTimelineSel();}));
+    sb.querySelectorAll('.zrow,.planzone').forEach(el=>el.addEventListener('click',()=>{const z=arr.find(x=>this.zid(x)===el.dataset.k);if(z){this.selKey=this.zid(z);this.selectZone(z);this.paintSel();this.paintTimelineSel();}}));
+    const _pm=sb.querySelector('.plan-month');if(_pm)_pm.addEventListener('change',()=>{this._planMonth=_pm.value;this.render();});
+    sb.querySelectorAll('.planm-nav').forEach(b=>b.addEventListener('click',()=>{const sel=sb.querySelector('.plan-month');if(!sel)return;const i=sel.selectedIndex+(+b.dataset.dir);if(i<0||i>=sel.options.length)return;this._planMonth=sel.options[i].value;this.render();}));
     this.setSummaryVis();
   }
 
@@ -1940,7 +1970,7 @@ class Component extends DCLogic {
     const mc=this.root.querySelector('#metrics');mc.innerHTML='';
     const mkLbl=t=>{const s=document.createElement('span');s.className='mlbl';s.textContent=t;return s;};
     mc.appendChild(mkLbl('Colour:'));
-    const modes=[['area','Area',(this.CAT.NB).c],['progress','Progress',this.cssvar('--wip')],['quantity','Quantity heat',this.cssvar('--heat1')]];
+    const modes=[['area','Area',(this.CAT.NB).c],['progress','Progress',this.cssvar('--wip')],['quantity','Quantity heat',this.cssvar('--heat1')],['plan','Planned (month)',this.cssvar('--accent')]];
     const seg=document.createElement('div');seg.className='modeseg';
     modes.forEach(([k,lab,dot])=>{const btn=document.createElement('button');btn.className=k===this.colorMode?'on':'';btn.innerHTML=`<span class="dt" style="background:${dot}"></span>${lab}`;btn.addEventListener('click',()=>{this.colorMode=k;this.buildMetrics();this.render();});seg.appendChild(btn);});
     mc.appendChild(seg);
