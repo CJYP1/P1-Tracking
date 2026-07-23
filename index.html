@@ -736,7 +736,7 @@ class Component extends DCLogic {
     const cur=[],rest=[];
     (z.cols||[]).forEach(x=>{const id=(typeof x==='string')?x:x.id;(this.colMon(lv,zmk,id)===sm?cur:rest).push(x);});
     const dn=cur.filter(x=>this.elemStatus(this.ekey(lv,z,'col',(typeof x==='string')?x:x.id))==='done').length;
-    let out=`<div class="colmon on"><div class="colmon-hd">🗓 ${this.esc(sm)} · columns to do this month <span>${dn}/${cur.length} done</span></div>${cur.length?this.elRows(lv,z,'col',cur,meta,'',cf):'<div class="empty">none planned this month</div>'}</div>`;
+    let out=`<div class="colmon on"><div class="colmon-hd">🗓 ${this.esc(sm)} · plan ${cur.length} col${cur.length===1?'':'s'} this month <span>${dn}/${cur.length} done</span></div>${cur.length?this.elRows(lv,z,'col',cur,meta,'',cf):'<div class="empty">none planned this month</div>'}</div>`;
     if(rest.length) out+=this.elRows(lv,z,'col',rest,meta,'',cf);
     return out;}
   saveDates(){try{localStorage.setItem('rws_zdate',JSON.stringify(this._zdate||{}));localStorage.setItem('rws_act_date',JSON.stringify(this._actDate||{}));localStorage.setItem('rws_col_month',JSON.stringify(this._colMonth||{}));}catch(e){}}
