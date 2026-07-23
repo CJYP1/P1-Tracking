@@ -902,16 +902,19 @@ class Component extends DCLogic {
   }
 
   computeRollup(){
-    this.levelProg={}; let wSum=0,wArea=0;
+    this.levelProg={}; const gph={};
     this.DATA.order.forEach(lv=>{
       const seen={},uniq=[];
       this.DATA.levels[lv].zones.forEach(z=>{const k=z.mk||('_'+z.lid);if(!seen[k]){seen[k]=1;uniq.push(z);}});
       let done=0,wip=0,todo=0,sum=0;
-      uniq.forEach(z=>{const p=z._p||{pct:0,status:'todo'};sum+=p.pct;wSum+=p.pct*(z.area||1);wArea+=(z.area||1);
-        if(p.status==='done')done++;else if(p.status==='wip')wip++;else todo++;});
+      uniq.forEach(z=>{const p=z._p||{pct:0,status:'todo'};sum+=p.pct;
+        if(p.status==='done')done++;else if(p.status==='wip')wip++;else todo++;
+        const zp=this._zonePhases(lv,z);Object.keys(zp).forEach(k=>{(gph[k]=gph[k]||[]).push(zp[k]);});});
       this.levelProg[lv]={avg:Math.round(sum/Math.max(1,uniq.length)),done,wip,todo,count:uniq.length};
     });
-    this.projPct=Math.round(wSum/Math.max(1,wArea));
+    const W=this._pw();let wsum=0,acc=0;
+    Object.keys(gph).forEach(ph=>{const w=W[ph]||0;const rs=gph[ph];const pr=rs.length?rs.reduce((a,b)=>a+b,0)/rs.length:0;wsum+=w;acc+=pr*w;});
+    this.projPct=wsum?Math.round(acc/wsum*100):0;
   }
 
   /* ---------- site-update store (persistent, per zone) ---------- */
@@ -957,13 +960,18 @@ class Component extends DCLogic {
       default:return this.actTotal(lv,zmk,aid,null)||0;}}
   /* Zone overall % = average of each applicable activity's cumulative done/total.
      Activities with no data at all (total<=0 and nothing done) do NOT participate. */
-  zoneActPct(lv,z){const zmk=z.mk||z.lid,c=z.counts||{},M=this.ACT_MONTHS,parts=[];
-    const ids=['col','pile','mbeam','sbeam','ls','exc','demo','slab'].filter(a=>this._actApplies(a,lv,z));
-    (this._actDefs||[]).forEach(d=>ids.push(d.id));
-    ids.forEach(aid=>{const tot=this._actTotalFor(lv,z,aid,c);let done=0;M.forEach(m=>{done+=this.actDoneMonth(lv,zmk,aid,m)||0;});
-      if(tot>0||done>0)parts.push(tot>0?this.clamp(done/tot,0,1):(done>0?1:0));});
-    if(!parts.length)return null;
-    return {pct:Math.round(parts.reduce((a,b)=>a+b,0)/parts.length*100),n:parts.length};}
+  _pw(){return {demo:8,pilewall:22,exc:11,pilecap:1,baseslab:1,beamslab:32,wallcol:25};}
+  _actPhase(aid,lv){if(aid==='demo')return 'demo';if(aid==='exc')return 'exc';if(aid==='pile')return 'pilecap';if(aid==='col'||aid==='act_wall'||aid==='act_corewall')return 'wallcol';if(aid==='mbeam'||aid==='sbeam')return 'beamslab';if(aid==='slab')return (lv==='B2'||lv==='B1'||lv==='B1M')?'baseslab':'beamslab';return null;}
+  /* per-zone phase completions {phase:ratio 0-1}; each phase = average of its activities' ratios (avoids mixing units) */
+  _zonePhases(lv,z){const zmk=z.mk||z.lid,sm=this._actMonth||(this.actDefaultMonth?this.actDefaultMonth():this.ACT_MONTHS[0]),ph={};
+    const ids=['col','pile','mbeam','sbeam','exc','demo','slab'].filter(a=>this._actApplies(a,lv,z)).concat(['act_wall','act_corewall']);
+    ids.forEach(aid=>{const p=this._actPhase(aid,lv);if(!p)return;const plan=this.actPlan(lv,zmk,aid,sm);if(plan==null||plan<=0)return;const done=this.actDoneMonth(lv,zmk,aid,sm)||0;(ph[p]=ph[p]||[]).push(this.clamp(done/plan,0,1));});
+    const out={};Object.keys(ph).forEach(k=>{out[k]=ph[k].reduce((a,b)=>a+b,0)/ph[k].length;});return out;}
+  /* zone overall % = weighted average of present phases (renormalized). Piling+D-wall (22%) counts 0% on basement zones. */
+  zoneActPct(lv,z){const ph=this._zonePhases(lv,z);const W=this._pw();
+    const present=Object.keys(ph);if(!present.length)return null;
+    let wsum=0,acc=0;present.forEach(p=>{const w=W[p]||0;wsum+=w;acc+=ph[p]*w;});
+    return wsum?{pct:Math.round(acc/wsum*100),n:present.length}:null;}
   /* Slab casting status for map colouring (mirrors column status): none/todo/wip/done */
   elemDoneInMonth(lv,zmk,types,m){const z=(this.DATA.levels[lv]?this.DATA.levels[lv].zones:[]).find(x=>(x.mk||x.lid)===zmk);if(!z)return null;let n=0;types.forEach(tp=>{this._zoneElemList(z,tp).forEach(x=>{const id=(typeof x==='string')?x:x.id;const k=this.ekey(lv,z,tp,id);if(this.elemStatus(k)==='done'){const d=this.elemDate(k)||this.todayISOStr();if(this.dateToActMonth(d)===m)n++;}});});return n>0?n:null;}
 
@@ -1689,7 +1697,7 @@ class Component extends DCLogic {
       if(!admin){ if(_vis==='hide') return ''; if(_vis!=='show' && (plan==null||plan===0) && (dm==null||dm===0) && cg.balance<=0) return ''; }
       const _balTxt=cg.balance>0?('<b style="color:var(--crit)">owe '+this.fmt(cg.balance)+'</b>'):(cg.balance<0?('<b style="color:var(--done)">ahead '+this.fmt(-cg.balance)+'</b>'):'<b style="color:var(--done)">on track</b>');
       const carryLine=cg.hasData?`<div class="actsub actcarry"><span class="am2" title="Backlog carried in from earlier months = cumulative plan − cumulative done">Backlog in</span> <b>${this.fmt(cg.carryIn)}</b><span class="asep">|</span><span class="am2" title="What to do this month = this-month plan + backlog">Target</span> <b>${this.fmt(cg.required)}</b><span class="asep">|</span><span class="am2">Balance</span> ${_balTxt}${(cg.carryIn>0&&cg.done>0)?`<span class="acum" title="Of what you did this month: cleared old backlog + this-month share">did ${this.fmt(cg.done)} = ${this.fmt(cg.cleared)} backlog + ${this.fmt(cg.current)} this-mo</span>`:''}</div>`:'';
-      const pct=(total>0)?Math.min(100,Math.round(cumThrough/total*100)):null;
+      const pct=(plan!=null&&plan>0)?Math.min(100,Math.round((dm||0)/plan*100)):null;
       const bc=pct==null?'var(--faint)':(pct>=100?'#35c08e':(pct>0?this.cssvar('--wip'):'var(--faint)'));
       const chk=admin?`<select class="act-vis" data-a="${a.id}" title="User visibility — Auto: based on data · Show: always · Hide: never"><option value="auto"${_vis==='auto'?' selected':''}>Auto</option><option value="show"${_vis==='show'?' selected':''}>Show</option><option value="hide"${_vis==='hide'?' selected':''}>Hide</option></select>`:'';
       const planCell=admin?`<input class="act-plan" data-a="${a.id}" value="${plan==null?'':plan}" placeholder="—" title="Planned in ${sm} (admin)">`:`${plan==null?'—':this.fmt(plan)}`;
