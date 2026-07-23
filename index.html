@@ -728,7 +728,7 @@ class Component extends DCLogic {
   colMon(lv,zmk,id){return (this._colMonth||{})[lv+'||'+zmk+'||col||'+id]||'';}
   _zdateRow(lv,z,label,which,fb){const v=(this._zdate||{})[lv+'||'+(z.mk||z.lid)]||{};const iso=v[which]||'';
     if(this.rwsIsAdmin())return `<div class="pr"><span>${label}</span><input type="date" class="zdate-in" data-which="${which}" value="${iso}" style="font-size:11px;padding:1px 4px;border:1px dashed var(--accent);border-radius:5px;background:var(--panel);color:var(--txt)"></div>`;
-    return `<div class="pr"><span>${label}</span><b>${iso?this._fmtD(iso):this.ml(Math.round(fb))}${iso?' <span style="color:var(--accent);font-size:8px">P6</span>':''}</b></div>`;}
+    return `<div class="pr"><span>${label}</span><b>${iso?this._fmtD(iso):'—'}${iso?' <span style="color:var(--accent);font-size:8px">P6</span>':''}</b></div>`;}
   colHtmlFor(lv,z){const zmk=z.mk||z.lid,sm=this._actMonth;const meta=x=>this.esc(x.sz||'')+(x.c?' · crit':''),cf=x=>x.c;
     const hasMon=(z.cols||[]).some(x=>this.colMon(lv,zmk,(typeof x==='string')?x:x.id));
     if(!hasMon)return this.elRows(lv,z,'col',z.cols,meta,'none listed',cf);
@@ -1395,7 +1395,7 @@ class Component extends DCLogic {
     this.tip.innerHTML=`<h4>${this.esc(z.label)} ${z.crit?'<span class="badge">CRIT PATH</span>':''}</h4>
      <div class="grp"><span class="cat" style="background:${ct.c}">${ct.label}</span> · <b style="color:var(--txt)">${this.fmt(z.area)} m²</b></div>
      ${catRow}
-     <div class="row"><span>Plan</span><b>${this.zd(this.curLevel,z)?this._fmtD(this.zd(this.curLevel,z).start)+' → '+this._fmtD(this.zd(this.curLevel,z).end):this.ml(Math.round(p.start))+' → '+this.ml(Math.round(p.end))}</b></div>
+     <div class="row"><span>Plan</span><b>${this.zd(this.curLevel,z)?this._fmtD(this.zd(this.curLevel,z).start)+' → '+this._fmtD(this.zd(this.curLevel,z).end):'—'}</b></div>
      <div class="row" style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"><span>Columns / Piles</span><b>${c.columns||0} / ${c.pilecap||0}</b></div>
      <div class="row"><span>Beams (M/S)</span><b>${c.mainbeam||0} / ${c.steelbeam||0}</b></div>
      <div class="row"><span>Lifts / Stairs</span><b>${z.lifts.length} / ${z.stairs.length}</b></div>
