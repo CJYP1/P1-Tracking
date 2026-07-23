@@ -99,6 +99,13 @@ header .sub{font-size:11px;color:var(--dim)}
 @keyframes colmkflash{0%,100%{stroke-width:650}50%{stroke-width:1250}}
 .colmk.focusmk{stroke:#3b82f6 !important;animation:colmkflash .5s ease-in-out 2}
 .collink{cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px}
+.cmtpanel{margin:2px 0 8px;padding:7px 9px;background:color-mix(in srgb,var(--accent) 6%,transparent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:8px}
+.cmtrow{font-size:11.5px;padding:3px 0;border-bottom:1px dashed color-mix(in srgb,var(--dim) 25%,transparent)}
+.cmt-t{color:var(--txt)} .cmt-m{color:var(--faint);font-size:10px;margin-left:6px}
+.cmt-del{color:var(--crit);cursor:pointer;margin-left:6px}
+.cmt-add{display:flex;gap:6px;margin-top:6px}
+.cmt-in{flex:1;font-size:11.5px;padding:3px 6px;border:1px solid var(--accent);border-radius:6px;background:var(--panel);color:var(--txt);font-family:inherit}
+.cmt-send{padding:2px 10px;font-size:11px}
 .colmon{margin:3px 0;border-radius:8px}
 .colmon-hd{font-size:10px;font-weight:800;color:var(--dim);padding:3px 6px;display:flex;justify-content:space-between;align-items:center}
 .colmon.on{background:rgba(93,162,246,.12);box-shadow:inset 0 0 0 1px var(--accent)}
@@ -697,6 +704,7 @@ class Component extends DCLogic {
     try{this._zdate=JSON.parse(localStorage.getItem('rws_zdate')||'{}');}catch(e){this._zdate={};}
     try{this._actDate=JSON.parse(localStorage.getItem('rws_act_date')||'{}');}catch(e){this._actDate={};}
     try{this._colMonth=JSON.parse(localStorage.getItem('rws_col_month')||'{}');}catch(e){this._colMonth={};}
+    try{this._actCmt=JSON.parse(localStorage.getItem('rws_act_cmt')||'{}');}catch(e){this._actCmt={};}
     try{this._catAdd=JSON.parse(localStorage.getItem('rws_cat_add')||'[]');}catch(e){this._catAdd=[];}
     try{this._elemAdd=JSON.parse(localStorage.getItem('rws_elem_add')||'{}');}catch(e){this._elemAdd={};}
     this.loadUpdates();
@@ -740,6 +748,15 @@ class Component extends DCLogic {
     if(rest.length) out+=this.elRows(lv,z,'col',rest,meta,'',cf);
     return out;}
   saveDates(){try{localStorage.setItem('rws_zdate',JSON.stringify(this._zdate||{}));localStorage.setItem('rws_act_date',JSON.stringify(this._actDate||{}));localStorage.setItem('rws_col_month',JSON.stringify(this._colMonth||{}));}catch(e){}}
+  saveActCmt(){try{localStorage.setItem('rws_act_cmt',JSON.stringify(this._actCmt||{}));}catch(e){}}
+  actCmts(lv,zmk,aid){const pre=lv+'||'+zmk+'||'+aid+'||';const o=this._actCmt||{};return Object.keys(o).filter(k=>k.indexOf(pre)===0).map(k=>({k,...o[k]})).sort((a,b)=>String(a.ts||'').localeCompare(String(b.ts||'')));}
+  addActCmt(lv,zmk,aid,text){text=(text||'').trim();if(!text)return;if(!(this.rwsIsAdmin()||this.rwsScopeOk(lv,zmk))){this.rwsDeny('Outside your assigned zones.');return;}const s=(typeof rwsGetSession==='function'&&rwsGetSession())||{};const ts=new Date().toISOString();const k=lv+'||'+zmk+'||'+aid+'||'+ts+'_'+Math.random().toString(36).slice(2,6);const v={t:text,by:s.username||'user',ts};this._actCmt=this._actCmt||{};this._actCmt[k]=v;this.saveActCmt();if(typeof rwsSyncKV==='function')rwsSyncKV('act_cmt',k,v,lv,zmk);this._actRerender(this._selZone());}
+  delActCmt(k){if(!this.rwsIsAdmin())return;if(this._actCmt)delete this._actCmt[k];this.saveActCmt();if(typeof rwsSyncKV==='function'){const p=k.split('||');rwsSyncKV('act_cmt',k,null,p[0],p[1]);}this._actRerender(this._selZone());}
+  _cmtBtn(lv,zmk,aid){const n=this.actCmts(lv,zmk,aid).length;return `<span class="actcmt-btn" data-a="${aid}" title="Comments — click to open/close" style="cursor:pointer;font-size:11px;margin-left:8px;color:${n?'var(--accent)':'var(--dim)'}">💬${n?' '+n:''}</span>`;}
+  _cmtPanel(lv,zmk,aid){if(this._cmtOpen!==lv+'||'+zmk+'||'+aid)return '';const cmts=this.actCmts(lv,zmk,aid);const admin=this.rwsIsAdmin();const canAdd=admin||this.rwsScopeOk(lv,zmk);
+    const list=cmts.length?cmts.map(c=>`<div class="cmtrow"><span class="cmt-t">${this.esc(c.t)}</span><span class="cmt-m">— ${this.esc(c.by||'')} · ${String(c.ts||'').slice(0,10)}${admin?' <span class="cmt-del" data-k="'+this.esc(c.k)+'" title="Delete">✕</span>':''}</span></div>`).join(''):'<div class="empty" style="padding:4px 2px">no comments yet</div>';
+    const add=canAdd?`<div class="cmt-add"><input class="cmt-in" data-a="${aid}" placeholder="Write a comment…"><button class="hbtn cmt-send" data-a="${aid}">Send</button></div>`:'';
+    return `<div class="cmtpanel">${list}${add}</div>`;}
   setZoneDate(lv,z,which,iso){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can edit dates.');return;}const k=lv+'||'+(z.mk||z.lid);this._zdate=this._zdate||{};const o={...(this._zdate[k]||{})};o[which]=iso||'';if(!o.start&&!o.end)delete this._zdate[k];else this._zdate[k]=o;this.saveDates();if(typeof rwsSyncKV==='function')rwsSyncKV('zdate',k,(this._zdate[k]||null),null,null);this._actRerender(z);}
   setActDate(lv,zmk,aid,which,iso){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can edit dates.');return;}const k=lv+'||'+zmk+'||'+aid;this._actDate=this._actDate||{};const o={...(this._actDate[k]||{})};o[which]=iso||'';if(!o.start&&!o.end)delete this._actDate[k];else this._actDate[k]=o;this.saveDates();if(typeof rwsSyncKV==='function')rwsSyncKV('act_date',k,(this._actDate[k]||null),null,null);this._actRerender(this._selZone());}
   hex2rgb(h){h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
@@ -1040,6 +1057,7 @@ class Component extends DCLogic {
       if(state.zdate){ this._zdate={...(this._zdate||{}),...state.zdate}; try{localStorage.setItem('rws_zdate',JSON.stringify(this._zdate));}catch(e){} }
       if(state.act_date){ this._actDate={...(this._actDate||{}),...state.act_date}; try{localStorage.setItem('rws_act_date',JSON.stringify(this._actDate));}catch(e){} }
       if(state.col_month){ this._colMonth={...(this._colMonth||{}),...state.col_month}; try{localStorage.setItem('rws_col_month',JSON.stringify(this._colMonth));}catch(e){} }
+      if(state.act_cmt){ this._actCmt={...(this._actCmt||{}),...state.act_cmt}; this.saveActCmt(); }
       if(Array.isArray(state.custom_cats)){const seen={};this._catAdd=[];state.custom_cats.forEach(c=>{if(c&&c.code&&!seen[c.code]){seen[c.code]=1;this._catAdd.push({code:c.code,label:c.label});}});}
       if(Array.isArray(state.custom_items)){this._elemAdd={};state.custom_items.forEach(it=>{if(!it)return;const k=it.level+'||'+it.zone_mk+'||'+it.type;(this._elemAdd[k]=this._elemAdd[k]||[]).push(it.elem_id);});}
       if(state.custom_cats||state.custom_items)this.saveCustom();
@@ -1672,9 +1690,9 @@ class Component extends DCLogic {
       const mn=doneMonths.length?`<div class="actmn">Done/Plan: ${doneMonths.map(x=>`<span class="${x.mm===sm?'on':''}">${this.esc(x.mm)} <b>${this.fmt(x.v||0)}${x.p!=null?'/'+this.fmt(x.p):''}</b></span>`).join('')}</div>`:'';
       const _adv=(this._actDate||{})[lv+'||'+zmk+'||'+a.id]||{};
       const actDateLine=admin?`<div class="actsub actdate"><span class="am2">Dates</span> <input type="date" class="actdate-in" data-a="${a.id}" data-which="start" value="${_adv.start||''}" title="${a.label} start"> <span class="asep">→</span> <input type="date" class="actdate-in" data-a="${a.id}" data-which="end" value="${_adv.end||''}" title="${a.label} end"></div>`:((_adv.start||_adv.end)?`<div class="actsub actdate"><span class="am2">Dates</span> <b>${_adv.start?this._fmtD(_adv.start):'—'} → ${_adv.end?this._fmtD(_adv.end):'—'}</b></div>`:'');
-      return `<div class="actrow ${hidden?'act-off':''}">${chk}<span class="actlbl">${a.label}${(admin&&hidden)?' <span class="hiddentag">hidden from users</span>':''}${(a.custom&&admin)?' <span class="lnk actdel" data-a="'+a.id+'" style="color:var(--crit);cursor:pointer" title="Delete custom activity">✕</span>':''}</span><span class="actbar"><i style="width:${Math.min(pct||0,100)}%;background:${bc}"></i></span><span class="actpct" style="color:${bc}">${pct==null?'—':pct+'%'}</span></div>`+
+      return `<div class="actrow ${hidden?'act-off':''}">${chk}<span class="actlbl">${a.label}${(admin&&hidden)?' <span class="hiddentag">hidden from users</span>':''}${(a.custom&&admin)?' <span class="lnk actdel" data-a="'+a.id+'" style="color:var(--crit);cursor:pointer" title="Delete custom activity">✕</span>':''}</span><span class="actbar"><i style="width:${Math.min(pct||0,100)}%;background:${bc}"></i></span><span class="actpct" style="color:${bc}">${pct==null?'—':pct+'%'}</span>${this._cmtBtn(lv,zmk,a.id)}</div>`+
         (a.info?`<div class="actinfotext">&#9432; ${this.esc(a.info)}</div>`:``)+
-        `<div class="actsub"><span class="am">${sm}</span><span class="am2">Plan</span>${planCell}${this._lockIco('act_plan',lv+'||'+zmk+'||'+a.id+'||'+sm)}<span class="asep">|</span><span class="am2">Done</span>${doneCell}${this._lockIco('act_done_m',lv+'||'+zmk+'||'+a.id+'||'+sm)}<span class="acum">by ${sm}: ${this.fmt(cumThrough)}${total==null?'':' / '+this.fmt(total)} ${a.unit}</span></div>`+carryLine+mn+actDateLine;
+        `<div class="actsub"><span class="am">${sm}</span><span class="am2">Plan</span>${planCell}${this._lockIco('act_plan',lv+'||'+zmk+'||'+a.id+'||'+sm)}<span class="asep">|</span><span class="am2">Done</span>${doneCell}${this._lockIco('act_done_m',lv+'||'+zmk+'||'+a.id+'||'+sm)}<span class="acum">by ${sm}: ${this.fmt(cumThrough)}${total==null?'':' / '+this.fmt(total)} ${a.unit}</span></div>`+carryLine+mn+actDateLine+this._cmtPanel(lv,zmk,a.id);
     }).join('');
     const opts=M.map(mm=>`<option value="${mm}" ${mm===sm?'selected':''}>${mm}${mm===curL?' (now)':''}</option>`).join('');
     const nav=`<div style="display:flex;align-items:center;gap:5px">
@@ -1830,6 +1848,10 @@ class Component extends DCLogic {
     sb.querySelectorAll('.zp-plan-in').forEach(el=>{el.addEventListener('focus',()=>{const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});el.addEventListener('input',()=>{el.dataset.dirty='1';this._zpDirty=true;const b=sb.querySelector('#zpSaveBtn');if(b)b.style.display='flex';});});
     {const _zk=[this.curLevel,z.mk||z.lid];
      sb.querySelectorAll('.act-plan').forEach(el=>{el.addEventListener('change',()=>{this._flashSel='.act-plan[data-a="'+el.dataset.a+'"]';this.setActPlan(_zk[0],_zk[1],el.dataset.a,this._actMonth,el.value,z);});el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});
+     sb.querySelectorAll('.actcmt-btn').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();const key=_zk[0]+'||'+_zk[1]+'||'+el.dataset.a;this._cmtOpen=(this._cmtOpen===key)?null:key;this._actRerender(z);}));
+     sb.querySelectorAll('.cmt-send').forEach(el=>el.addEventListener('click',()=>{const inp=sb.querySelector('.cmt-in[data-a="'+el.dataset.a+'"]');if(inp){this.addActCmt(_zk[0],_zk[1],el.dataset.a,inp.value);}}));
+     sb.querySelectorAll('.cmt-in').forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter'){this.addActCmt(_zk[0],_zk[1],el.dataset.a,el.value);}}));
+     sb.querySelectorAll('.cmt-del').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();this.delActCmt(el.dataset.k);}));
      sb.querySelectorAll('.act-donem').forEach(el=>{el.addEventListener('change',()=>{this._flashSel='.act-donem[data-a="'+el.dataset.a+'"]';this.setActDoneMonth(_zk[0],_zk[1],el.dataset.a,this._actMonth,el.value,z);});el.addEventListener('keydown',e=>{if(e.key==='Enter')el.blur();});});
      sb.querySelectorAll('.act-lock').forEach(el=>el.addEventListener('click',ev=>{ev.stopPropagation();this.toggleEdited(el.dataset.store,el.dataset.k);}));
      sb.querySelectorAll('.zdate-in').forEach(el=>el.addEventListener('change',()=>this.setZoneDate(this.curLevel,z,el.dataset.which,el.value)));
@@ -2161,7 +2183,7 @@ class Component extends DCLogic {
         totals:{area_m2:z.area||0,columns:c.columns||0,pilecap:c.pilecap||0,mainbeam:c.mainbeam||0,steelbeam:c.steelbeam||0,lift:z.lifts?z.lifts.length:0,stair:z.stairs?z.stairs.length:0},
         progress_pct:p.pct==null?null:p.pct,status:p.status||'todo'});});});
     const out={meta:{project:'RWS P1 CJ',exported_at:new Date().toISOString(),exported_by:(this._rwsUser&&this._rwsUser.username)||'',project_pct:this.projPct,act_months:this.ACT_MONTHS},
-      current_state:{element_status:this.elem,element_dates:this._elemDate||{},act_total:this._actTotal||{},act_plan:this._actPlan||{},act_done_m:this._actDoneM||{},act_hidden:this._actHidden||{},act_defs:this._actDefs||[],custom_categories:this._catAdd||[],custom_items:this._elemAdd||{},slab_actual_qty:this._zpOv||{},quantity_overrides:this._qtyOv||{},plan_qty_overrides:this._zpPlanOv||{},critical:this._critOv||{},zone_updates:this.updates||{},edited_keys:this._editedKeys||{},act_date:this._actDate||{},col_month:this._colMonth||{}},
+      current_state:{element_status:this.elem,element_dates:this._elemDate||{},act_total:this._actTotal||{},act_plan:this._actPlan||{},act_done_m:this._actDoneM||{},act_hidden:this._actHidden||{},act_defs:this._actDefs||[],custom_categories:this._catAdd||[],custom_items:this._elemAdd||{},slab_actual_qty:this._zpOv||{},quantity_overrides:this._qtyOv||{},plan_qty_overrides:this._zpPlanOv||{},critical:this._critOv||{},zone_updates:this.updates||{},edited_keys:this._editedKeys||{},act_date:this._actDate||{},col_month:this._colMonth||{},act_cmt:this._actCmt||{}},
       zones};
     if(this.rwsIsAdmin()){ try{out.accounts=await rwsAdminListUsers();}catch(e){out.accounts_error=e.message;} try{out.activity_log=await rwsAdminActivityLog(5000);}catch(e){out.activity_log_error=e.message;} }
     return out;
@@ -2169,7 +2191,7 @@ class Component extends DCLogic {
   _downloadJson(obj,name){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},400);}
   async exportFullJson(){const btn=this.root.querySelector('#exportJson');if(btn)btn.textContent='⏳ Building…';try{const d=await this.buildFullExport();this._downloadJson(d,'RWS_P1_CJ_full_'+new Date().toISOString().slice(0,10)+'.json');}catch(e){alert('Export failed: '+e.message);}finally{if(btn)btn.textContent='⬇ Full JSON';}}
   async rwsMaybeDailyExport(){if(!this.rwsIsAdmin())return;const today=new Date().toISOString().slice(0,10);let last='';try{last=localStorage.getItem('rws_last_daily_export')||'';}catch(e){}if(last===today)return;try{const d=await this.buildFullExport();this._downloadJson(d,'RWS_P1_CJ_daily_'+today+'.json');localStorage.setItem('rws_last_daily_export',today);}catch(e){console.warn('[rws] daily export failed',e);}}
-  snapshot(){return {v:2,project:'RWS P1 CJ',savedAt:new Date().toISOString(),elem:this.elem,elemDate:this._elemDate,updates:this.updates,zpOv:this._zpOv,crit:this._critOv,actTotal:this._actTotal,actPlan:this._actPlan,actDoneM:this._actDoneM,actHidden:this._actHidden,actDefs:this._actDefs,catAdd:this._catAdd,elemAdd:this._elemAdd,editedKeys:this._editedKeys,actDate:this._actDate,colMonth:this._colMonth};}
+  snapshot(){return {v:2,project:'RWS P1 CJ',savedAt:new Date().toISOString(),elem:this.elem,elemDate:this._elemDate,updates:this.updates,zpOv:this._zpOv,crit:this._critOv,actTotal:this._actTotal,actPlan:this._actPlan,actDoneM:this._actDoneM,actHidden:this._actHidden,actDefs:this._actDefs,catAdd:this._catAdd,elemAdd:this._elemAdd,editedKeys:this._editedKeys,actDate:this._actDate,colMonth:this._colMonth,actCmt:this._actCmt};}
   saveLock(){
     if(this._locking)return; this._locking=true; setTimeout(()=>{this._locking=false;},900);
     const S='<'+'script', ES='<'+'/script>';
@@ -2190,7 +2212,7 @@ class Component extends DCLogic {
       const m=txt.match(/<script id="locked-data"[^>]*>([\s\S]*?)<\/script>/i);
       if(m||(txt.trim()[0]==='{')){
         let data=JSON.parse(m?m[1]:txt);
-        if(data.current_state){const cs=data.current_state;data={elem:cs.element_status,elemDate:cs.element_dates,updates:cs.zone_updates,zpOv:cs.slab_actual_qty,qtyOv:cs.quantity_overrides,zpPlanOv:cs.plan_qty_overrides,crit:cs.critical,actTotal:cs.act_total,actPlan:cs.act_plan,actDoneM:cs.act_done_m,actHidden:cs.act_hidden,actDefs:cs.act_defs,catAdd:cs.custom_categories,elemAdd:cs.custom_items,zdate:cs.zone_dates,editedKeys:cs.edited_keys,actDate:cs.act_date,colMonth:cs.col_month};}
+        if(data.current_state){const cs=data.current_state;data={elem:cs.element_status,elemDate:cs.element_dates,updates:cs.zone_updates,zpOv:cs.slab_actual_qty,qtyOv:cs.quantity_overrides,zpPlanOv:cs.plan_qty_overrides,crit:cs.critical,actTotal:cs.act_total,actPlan:cs.act_plan,actDoneM:cs.act_done_m,actHidden:cs.act_hidden,actDefs:cs.act_defs,catAdd:cs.custom_categories,elemAdd:cs.custom_items,zdate:cs.zone_dates,editedKeys:cs.edited_keys,actDate:cs.act_date,colMonth:cs.col_month,actCmt:cs.act_cmt};}
         if(data.elem){this.elem={...this.elem,...data.elem};elemN=Object.keys(data.elem).length;}
         if(data.updates){Object.keys(data.updates).forEach(k=>{this.updates[k]=data.updates[k];});updN=Object.keys(data.updates).length;}
         if(data.elemDate){this._elemDate={...(this._elemDate||{}),...data.elemDate};}
@@ -2209,13 +2231,14 @@ class Component extends DCLogic {
         if(data.zdate&&typeof data.zdate==='object'){this._zdate={...(this._zdate||{}),...data.zdate};}
         if(data.actDate&&typeof data.actDate==='object'){this._actDate={...(this._actDate||{}),...data.actDate};}
         if(data.colMonth&&typeof data.colMonth==='object'){this._colMonth={...(this._colMonth||{}),...data.colMonth};}
+        if(data.actCmt&&typeof data.actCmt==='object'){this._actCmt={...(this._actCmt||{}),...data.actCmt};this.saveActCmt();}
         if(data.zdate||data.actDate||data.colMonth)this.saveDates();
         if(Array.isArray(data.catAdd)){this._catAdd=this._catAdd||[];data.catAdd.forEach(c=>{if(c&&c.code&&!this._catAdd.some(x=>x.code===c.code))this._catAdd.push({code:c.code,label:c.label});});}
         if(data.elemAdd&&typeof data.elemAdd==='object'){this._elemAdd=this._elemAdd||{};Object.keys(data.elemAdd).forEach(k=>{const cur=this._elemAdd[k]||(this._elemAdd[k]=[]);(data.elemAdd[k]||[]).forEach(id=>{if(cur.indexOf(id)<0)cur.push(id);});});}
         if(data.catAdd||data.elemAdd){this.saveCustom&&this.saveCustom();}
         try{if(typeof rwsGetSession==='function'&&rwsGetSession()){
           const pv=(store,obj,parse)=>{Object.keys(obj||{}).forEach(k=>{if(this.isEdited(store,k))return;let lv=null,mk=null;if(parse){const pp=k.split('||');lv=pp[0];mk=pp[1];}rwsSyncKV(store,k,obj[k],lv,mk);});};
-          pv('act_plan',data.actPlan,true);pv('act_total',data.actTotal,true);pv('act_done_m',data.actDoneM,true);pv('act_hidden',data.actHidden,true);pv('elem_date',data.elemDate,true);pv('crit',data.crit,false);pv('zdate',data.zdate,false);pv('act_date',data.actDate,false);pv('col_month',data.colMonth,false);
+          pv('act_plan',data.actPlan,true);pv('act_total',data.actTotal,true);pv('act_done_m',data.actDoneM,true);pv('act_hidden',data.actHidden,true);pv('elem_date',data.elemDate,true);pv('crit',data.crit,false);pv('zdate',data.zdate,false);pv('act_date',data.actDate,false);pv('col_month',data.colMonth,false);pv('act_cmt',data.actCmt,true);
           if(data.elem&&typeof rwsSyncElementStatus==='function')Object.keys(data.elem).forEach(k=>rwsSyncElementStatus(k,data.elem[k]));
         }}catch(e){console.warn('import cloud-sync skipped',e);}
       } else {
