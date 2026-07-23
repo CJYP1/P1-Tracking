@@ -733,9 +733,12 @@ class Component extends DCLogic {
   colHtmlFor(lv,z){const zmk=z.mk||z.lid,sm=this._actMonth;const meta=x=>this.esc(x.sz||'')+(x.c?' · crit':''),cf=x=>x.c;
     const hasMon=(z.cols||[]).some(x=>this.colMon(lv,zmk,(typeof x==='string')?x:x.id));
     if(!hasMon)return this.elRows(lv,z,'col',z.cols,meta,'none listed',cf);
-    const g={},order=[];(z.cols||[]).forEach(x=>{const id=(typeof x==='string')?x:x.id;const mo=this.colMon(lv,zmk,id)||'__none__';if(!g[mo]){g[mo]=[];order.push(mo);}g[mo].push(x);});
-    const MO=this.ACT_MONTHS;order.sort((a,b)=>{const ia=MO.indexOf(a),ib=MO.indexOf(b);return (ia<0?999:ia)-(ib<0?999:ib);});
-    return order.map(mo=>{const lbl=(mo==='__none__')?'Unscheduled':mo;const hl=(mo===sm);const nd=g[mo].filter(x=>this.elemStatus(this.ekey(lv,z,'col',(typeof x==='string')?x:x.id))==='done').length;const rows=this.elRows(lv,z,'col',g[mo],meta,'none listed',cf);return `<div class="colmon${hl?' on':''}"><div class="colmon-hd">🗓 ${this.esc(lbl)} <span>${nd}/${g[mo].length} done</span></div>${rows}</div>`;}).join('');}
+    const cur=[],rest=[];
+    (z.cols||[]).forEach(x=>{const id=(typeof x==='string')?x:x.id;(this.colMon(lv,zmk,id)===sm?cur:rest).push(x);});
+    const dn=cur.filter(x=>this.elemStatus(this.ekey(lv,z,'col',(typeof x==='string')?x:x.id))==='done').length;
+    let out=`<div class="colmon on"><div class="colmon-hd">🗓 ${this.esc(sm)} · columns to do this month <span>${dn}/${cur.length} done</span></div>${cur.length?this.elRows(lv,z,'col',cur,meta,'',cf):'<div class="empty">none planned this month</div>'}</div>`;
+    if(rest.length) out+=this.elRows(lv,z,'col',rest,meta,'',cf);
+    return out;}
   saveDates(){try{localStorage.setItem('rws_zdate',JSON.stringify(this._zdate||{}));localStorage.setItem('rws_act_date',JSON.stringify(this._actDate||{}));localStorage.setItem('rws_col_month',JSON.stringify(this._colMonth||{}));}catch(e){}}
   setZoneDate(lv,z,which,iso){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can edit dates.');return;}const k=lv+'||'+(z.mk||z.lid);this._zdate=this._zdate||{};const o={...(this._zdate[k]||{})};o[which]=iso||'';if(!o.start&&!o.end)delete this._zdate[k];else this._zdate[k]=o;this.saveDates();if(typeof rwsSyncKV==='function')rwsSyncKV('zdate',k,(this._zdate[k]||null),null,null);this._actRerender(z);}
   setActDate(lv,zmk,aid,which,iso){if(!this.rwsIsAdmin()){this.rwsDeny('Only admin can edit dates.');return;}const k=lv+'||'+zmk+'||'+aid;this._actDate=this._actDate||{};const o={...(this._actDate[k]||{})};o[which]=iso||'';if(!o.start&&!o.end)delete this._actDate[k];else this._actDate[k]=o;this.saveDates();if(typeof rwsSyncKV==='function')rwsSyncKV('act_date',k,(this._actDate[k]||null),null,null);this._actRerender(this._selZone());}
