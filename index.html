@@ -529,6 +529,20 @@ async function rwsSyncKV(store, key, value, level, zoneMk){
   if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
   return r;
 }
+async function rwsSetLock(k, locked){
+  const s = rwsGetSession(); if (!s) return { ok:false };
+  const args = { p_token:s.token, p_k:k, p_locked:!!locked };
+  const r = await rwsCall('rws_set_lock', args);
+  if (!r.ok && r.offline) rwsQueuePush('rws_set_lock', args);
+  if (window.__rwsApp) window.__rwsApp.rwsOnQueueChange();
+  return r;
+}
+async function rwsGetLocks(){
+  const s = rwsGetSession(); if (!s) return null;
+  const r = await rwsCall('rws_get_locks', { p_token:s.token });
+  if (!r.ok || !r.data) return null;
+  return (r.data.locks && typeof r.data.locks==='object') ? r.data.locks : {};
+}
 async function rwsAddCat(code,label){const s=rwsGetSession();if(!s)return{ok:false};const a={p_token:s.token,p_code:code,p_label:label};const r=await rwsCall('rws_add_cat',a);if(!r.ok&&r.offline)rwsQueuePush('rws_add_cat',a);if(window.__rwsApp)window.__rwsApp.rwsOnQueueChange();return r;}
 async function rwsDelCat(code){const s=rwsGetSession();if(!s)return{ok:false};const a={p_token:s.token,p_code:code};const r=await rwsCall('rws_del_cat',a);if(!r.ok&&r.offline)rwsQueuePush('rws_del_cat',a);if(window.__rwsApp)window.__rwsApp.rwsOnQueueChange();return r;}
 async function rwsAddItem(itemKey,level,zoneMk,type,elemId){const s=rwsGetSession();if(!s)return{ok:false};const a={p_token:s.token,p_item_key:itemKey,p_level:level,p_zone_mk:zoneMk,p_type:type,p_elem_id:elemId};const r=await rwsCall('rws_add_item',a);if(!r.ok&&r.offline)rwsQueuePush('rws_add_item',a);if(window.__rwsApp)window.__rwsApp.rwsOnQueueChange();return r;}
@@ -872,8 +886,8 @@ class Component extends DCLogic {
   saveAct(){try{localStorage.setItem('rws_act_total',JSON.stringify(this._actTotal||{}));localStorage.setItem('rws_act_plan',JSON.stringify(this._actPlan||{}));localStorage.setItem('rws_act_donem',JSON.stringify(this._actDoneM||{}));localStorage.setItem('rws_act_hidden',JSON.stringify(this._actHidden||{}));localStorage.setItem('rws_act_defs',JSON.stringify(this._actDefs||[]));}catch(e){}}
   saveEdited(){try{localStorage.setItem('rws_edited_keys',JSON.stringify(this._editedKeys||{}));}catch(e){}}
   isEdited(store,k){return !!(this._editedKeys||{})[store+'||'+k];}
-  markEdited(store,k){this._editedKeys=this._editedKeys||{};this._editedKeys[store+'||'+k]=true;this.saveEdited();}
-  toggleEdited(store,k){this._editedKeys=this._editedKeys||{};const kk=store+'||'+k;if(this._editedKeys[kk])delete this._editedKeys[kk];else this._editedKeys[kk]=true;this.saveEdited();this._actRerender(this._selZone());}
+  markEdited(store,k){this._editedKeys=this._editedKeys||{};this._editedKeys[store+'||'+k]=true;this.saveEdited();if(typeof rwsSetLock==='function')rwsSetLock(store+'||'+k,true);}
+  toggleEdited(store,k){this._editedKeys=this._editedKeys||{};const kk=store+'||'+k;let _on;if(this._editedKeys[kk]){delete this._editedKeys[kk];_on=false;}else{this._editedKeys[kk]=true;_on=true;}this.saveEdited();if(typeof rwsSetLock==='function')rwsSetLock(kk,_on);this._actRerender(this._selZone());}
   _lockIco(store,k){if(!this.rwsIsAdmin())return '';const on=this.isEdited(store,k);return `<span class="act-lock" data-store="${store}" data-k="${this.esc(k)}" title="${on?'Locked — Import will NOT overwrite this value. Click to unlock.':'Click to lock — Import will not overwrite this value (editing still works).'}" style="cursor:pointer;font-size:11px;margin-left:2px">${on?'🔒':'🔓'}</span>`;}
   _actRerender(z){this.applyUpdates();if(this.buildRail)this.buildRail();if(this.buildTimeline)this.buildTimeline();this.render();const zz=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(zz)this.selectZone(zz);else if(z)this.selectZone(z);}
   _numOrNull(raw){const s=String(raw==null?'':raw).replace(/,/g,'').trim();const v=s===''?null:parseFloat(s);if(v!=null&&(isNaN(v)||v<0))return undefined;return v;}
@@ -1213,6 +1227,7 @@ class Component extends DCLogic {
       if(state.zdate){ this._zdate={...(this._zdate||{}),...state.zdate}; try{localStorage.setItem('rws_zdate',JSON.stringify(this._zdate));}catch(e){} }
       if(state.act_date){ this._actDate={...(this._actDate||{}),...state.act_date}; try{localStorage.setItem('rws_act_date',JSON.stringify(this._actDate));}catch(e){} }
       if(state.col_month){ this._colMonth={...(this._colMonth||{}),...state.col_month}; try{localStorage.setItem('rws_col_month',JSON.stringify(this._colMonth));}catch(e){} }
+      try{ if(typeof rwsGetLocks==='function'){ const _lk=await rwsGetLocks(); if(_lk){ this._editedKeys=_lk; this.saveEdited(); } } }catch(e){}
       if(state.act_cmt){ this._actCmt={...(this._actCmt||{}),...state.act_cmt}; this.saveActCmt(); }
       if(Array.isArray(state.custom_cats)){const seen={};this._catAdd=[];state.custom_cats.forEach(c=>{if(c&&c.code&&!seen[c.code]){seen[c.code]=1;this._catAdd.push({code:c.code,label:c.label});}});}
       if(Array.isArray(state.custom_items)){this._elemAdd={};state.custom_items.forEach(it=>{if(!it)return;const k=it.level+'||'+it.zone_mk+'||'+it.type;(this._elemAdd[k]=this._elemAdd[k]||[]).push(it.elem_id);});}
@@ -1229,7 +1244,7 @@ class Component extends DCLogic {
       }
       this.saveElem(); this.saveUpdatesStore();
       try{localStorage.setItem('rws_zp_ov',JSON.stringify(this._zpOv));}catch(e){}
-      this.applyUpdates(); this.buildRail(); this.buildTimeline(); this.render(); this.refreshUpdBadge();
+      this.applyUpdates(); this.buildRail(); this.buildTimeline(); this.render(); this.refreshUpdBadge(); if(this._liveStart)this._liveStart();
       if(this.selKey){const z=this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey);if(z)this.selectZone(z);}
     }catch(e){ console.warn('[rws] cloud state pull skipped (offline?)',e); }
     rwsQueueFlush();
@@ -2261,6 +2276,65 @@ class Component extends DCLogic {
     const cx=(minx+maxx)/2, cy=(miny+maxy)/2, w=Math.max(maxx-minx,maxy-miny)*2.4; this.vb={x:cx-w/2,y:cy-w/2,w:w,h:w}; this.svg.setAttribute('viewBox',cx-w/2+' '+(cy-w/2)+' '+w+' '+w); if(this.colLOD)this.colLOD();
     el.classList.add('zflash'); setTimeout(()=>{try{el.classList.remove('zflash');}catch(e){}},2200);
   }catch(e){} }
+  /* ===== live collaboration: poll cloud every 5s, merge deltas, never clobber the field you're editing ===== */
+  _liveFocusedZmk(){ try{ const ae=document.activeElement; if(!ae)return null; const sb=this.root.querySelector('#sidebody'); if(!sb||!sb.contains(ae))return null; const tag=(ae.tagName||'').toUpperCase(); if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA') return this.selKey||'__none__'; return null; }catch(e){return null;} }
+  _liveZoneSig(lv,zmk){ const parts=[]; const scan=o=>{ if(!o)return; Object.keys(o).forEach(k=>{ const p=k.split('||'); if(p[0]===lv&&p[1]===zmk) parts.push(k+'='+JSON.stringify(o[k])); }); }; [this.elem,this._elemDate,this._actPlan,this._actDoneM,this._actTotal,this._actHidden,this._actDate,this._colMonth,this._actCmt,this._zdate,this._zpOv,this._qtyOv,this._zpPlanOv].forEach(scan); parts.sort(); return parts.join('|'); }
+  _liveMerge(state, skipZmk){ let ch=0;
+    const kv=(obj,src)=>{ if(!src||typeof src!=='object')return; Object.keys(src).forEach(k=>{ if(skipZmk && (k.split('||')[1]===skipZmk))return; if(JSON.stringify(obj[k])!==JSON.stringify(src[k])){ obj[k]=src[k]; ch++; } }); };
+    this._actTotal=this._actTotal||{}; kv(this._actTotal, state.act_total);
+    this._actPlan=this._actPlan||{};  kv(this._actPlan, state.act_plan);
+    this._actDoneM=this._actDoneM||{}; kv(this._actDoneM, state.act_done_m);
+    this._actHidden=this._actHidden||{}; kv(this._actHidden, state.act_hidden);
+    this._actDate=this._actDate||{};  kv(this._actDate, state.act_date);
+    this._colMonth=this._colMonth||{}; kv(this._colMonth, state.col_month);
+    this._actCmt=this._actCmt||{};    kv(this._actCmt, state.act_cmt);
+    this._zdate=this._zdate||{};      kv(this._zdate, state.zdate);
+    this.elem=this.elem||{};          kv(this.elem, state.elements);
+    this._elemDate=this._elemDate||{}; kv(this._elemDate, state.elem_date);
+    if(state.slab_qty){ this._zpOv=this._zpOv||{}; const b=ch; kv(this._zpOv, state.slab_qty); if(ch>b&&this.zpApplyOv)this.zpApplyOv(); }
+    if(state.qty_ov){ this._qtyOv=this._qtyOv||{}; const b=ch; kv(this._qtyOv, state.qty_ov); if(ch>b&&this.applyQtyOv)this.applyQtyOv(); }
+    if(state.plan_qty_ov){ this._zpPlanOv=this._zpPlanOv||{}; const b=ch; kv(this._zpPlanOv, state.plan_qty_ov); if(ch>b&&this.zpApplyOv)this.zpApplyOv(); }
+    if(state.crit){ this._critOv=this._critOv||{}; const b=ch; Object.keys(state.crit).forEach(k=>{ if(JSON.stringify(this._critOv[k])!==JSON.stringify(state.crit[k])){this._critOv[k]=state.crit[k];ch++;} }); if(ch>b&&this.applyCritOv)this.applyCritOv(); }
+    if(Array.isArray(state.act_def)? false : (state.act_def&&typeof state.act_def==='object')){ this._actDefs=this._actDefs||[]; Object.keys(state.act_def).forEach(id=>{ if(!this._actDefs.some(x=>x.id===id)){ const v=state.act_def[id]||{}; const o={id,label:v.label||id,unit:v.unit||''}; if(v.phase)o.phase=v.phase; this._actDefs.push(o); ch++; } }); }
+    if(Array.isArray(state.zone_updates)){ state.zone_updates.forEach(row=>{ const mk=row.zone_mk; if(!mk)return; if(skipZmk&&mk===skipZmk)return; const arr=this.updates[mk]=this.updates[mk]||[]; const ts=row.created_at?new Date(row.created_at).getTime():Date.now(); if(!arr.some(e=>e.ts===ts&&e.pct===row.pct)){ arr.push({pct:row.pct,status:row.status,date:row.update_date,note:row.note,crew:row.crew,level:row.level,zone:row.zone_label,ts}); ch++; } }); Object.keys(this.updates).forEach(mk=>this.updates[mk].sort((a,b)=>(a.ts||0)-(b.ts||0))); }
+    return ch; }
+  _liveBanner(show){ let b=this.root.querySelector('#liveBanner'); const host=this.root.querySelector('#stagewrap'); if(!host)return;
+    if(!show){ if(b)b.style.display='none'; return; }
+    if(!b){ b=document.createElement('div'); b.id='liveBanner'; b.style.cssText='position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:70;background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;box-shadow:0 6px 20px rgba(0,0,0,.28);cursor:pointer;display:flex;align-items:center;gap:8px';
+      b.innerHTML='🔄 This zone was updated by a teammate — click to refresh';
+      b.addEventListener('click',()=>{ const z=this.selKey&&this.DATA.levels[this.curLevel].zones.find(x=>this.zid(x)===this.selKey); if(z)this.selectZone(z); this._liveBanner(false); });
+      host.appendChild(b); }
+    b.style.display='flex'; }
+  async _liveSync(){
+    if(this._liveBusy)return;
+    if(typeof rwsGetSession!=='function')return; const s=rwsGetSession(); if(!s)return;
+    if(typeof navigator!=='undefined' && navigator.onLine===false)return;
+    if(typeof document!=='undefined' && document.visibilityState && document.visibilityState!=='visible')return;
+    this._liveBusy=true;
+    try{
+      const state=await rwsGetState(s.token);
+      if(state){
+        const skip=this._liveFocusedZmk();               // don't overwrite the zone you're typing in
+        const openMk=this.selKey;
+        const sigBefore=openMk?this._liveZoneSig(this.curLevel,openMk):null;
+        let ch=this._liveMerge(state, skip);
+        // global locks (cloud authoritative-ish; additive to avoid losing un-synced local)
+        if(typeof rwsGetLocks==='function'){ try{ const lk=await rwsGetLocks(); if(lk){ const before=JSON.stringify(this._editedKeys||{}); this._editedKeys={...(this._editedKeys||{}),...lk}; if(JSON.stringify(this._editedKeys)!==before){this.saveEdited();ch++;} } }catch(e){} }
+        if(ch){
+          this.applyUpdates(); if(this.buildRail)this.buildRail(); this.render(); if(this.refreshUpdBadge)this.refreshUpdBadge();
+          if(openMk){ this.paintSel();
+            const sigAfter=this._liveZoneSig(this.curLevel,openMk);
+            if(sigAfter!==sigBefore && !skip){ this._liveBanner(true); }     // your open zone changed & you're not editing it -> nudge
+          }
+        }
+        this._liveOk=Date.now();
+      }
+    }catch(e){ /* transient / offline — ignore, retry next tick */ }
+    finally{ this._liveBusy=false; }
+  }
+  _liveStart(){ if(this._liveTimer)return; this._liveTimer=setInterval(()=>{ this._liveSync(); }, 5000);
+    if(typeof document!=='undefined'){ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible')this._liveSync(); }); } }
+
   syncRail(){this.root.querySelectorAll('.rbtn').forEach(x=>x.classList.toggle('on',x.dataset.lv===this.curLevel));}
 
   buildRail(){
@@ -2320,6 +2394,7 @@ class Component extends DCLogic {
     this.root.querySelector('#themeseg').addEventListener('click',e=>{if(e.target.dataset.t){this.root.closest('html')?.setAttribute('data-theme',e.target.dataset.t);document.documentElement.setAttribute('data-theme',e.target.dataset.t);this.root.querySelectorAll('#themeseg button').forEach(b=>b.classList.toggle('on',b===e.target));this.buildMetrics();this.buildTimeline();this.render();}});
     this.root.querySelector('#openTable').addEventListener('click',()=>this.openTable());
     const _zfi=this.root.querySelector('#zoneFind')||document.getElementById('zoneFind');const _zfr=document.getElementById('zoneFindRes');if(_zfi&&_zfr){const _run=()=>{const hits=this._zxSearch(_zfi.value);if(!hits.length){_zfr.style.display='none';return;}_zfr.innerHTML=hits.map((h,ix)=>`<div class="zfrow" data-ix="${ix}" style="padding:7px 9px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px">`+`<span style="font-size:9px;font-weight:800;color:#fff;background:${({EB:'#e8590c',NB:'#c2255c',MA:'#1c7ed6'})[h.area]||'#888'};padding:1px 6px;border-radius:20px">${h.lv}</span>`+`<b style="color:var(--txt)">${this.esc(h.label)}</b>${h.via?`<span style="color:var(--dim);font-size:10px">← ${this.esc(h.via)}</span>`:''}</div>`).join('');_zfr.style.display='block';this._zfHits=hits;};_zfi.addEventListener('input',_run);_zfi.addEventListener('focus',_run);_zfi.addEventListener('keydown',e=>{if(e.key==='Enter'){const h=(this._zfHits||[])[0];if(h)this.gotoZone(h.lv,h.mk);}else if(e.key==='Escape'){_zfr.style.display='none';_zfi.blur();}});_zfr.addEventListener('click',e=>{const r=e.target.closest('.zfrow');if(!r)return;const h=(this._zfHits||[])[+r.dataset.ix];if(h)this.gotoZone(h.lv,h.mk);});_zfr.addEventListener('mouseover',e=>{const r=e.target.closest('.zfrow');if(r)r.style.background='var(--panel2)';});_zfr.addEventListener('mouseout',e=>{const r=e.target.closest('.zfrow');if(r)r.style.background='';});document.addEventListener('click',e=>{if(!e.target.closest('#zoneFindWrap'))_zfr.style.display='none';});}
+    if(this._liveStart)this._liveStart();
     const _zlc=document.getElementById('zlookupClose');if(_zlc)_zlc.addEventListener('click',()=>{const m=document.getElementById('zlookupModal');if(m)m.style.display='none';});
     const _zlm=document.getElementById('zlookupModal');if(_zlm)_zlm.addEventListener('click',e=>{if(e.target===_zlm)_zlm.style.display='none';});
     this.root.querySelector('#exportXls').addEventListener('click',()=>this.exportExcel());
@@ -2494,7 +2569,7 @@ class Component extends DCLogic {
         planN=_applyKV('act_plan',this._actPlan,data.actPlan);
         actN=_applyKV('act_done_m',this._actDoneM,data.actDoneM);
         _applyKV('act_hidden',this._actHidden,data.actHidden);
-        if(data.editedKeys&&typeof data.editedKeys==='object'){this._editedKeys={...(this._editedKeys||{}),...data.editedKeys};this.saveEdited();}
+        if(data.editedKeys&&typeof data.editedKeys==='object'){this._editedKeys={...(this._editedKeys||{}),...data.editedKeys};this.saveEdited();if(typeof rwsSetLock==='function')Object.keys(data.editedKeys).forEach(k=>{if(data.editedKeys[k])rwsSetLock(k,true);});}
         if(Array.isArray(data.actDefs)){this._actDefs=this._actDefs||[];data.actDefs.forEach(d=>{if(d&&d.id&&!this._actDefs.some(x=>x.id===d.id))this._actDefs.push(d);});}
         if(data.zdate&&typeof data.zdate==='object'){this._zdate={...(this._zdate||{}),...data.zdate};}
         if(data.actDate&&typeof data.actDate==='object'){this._actDate={...(this._actDate||{}),...data.actDate};}
